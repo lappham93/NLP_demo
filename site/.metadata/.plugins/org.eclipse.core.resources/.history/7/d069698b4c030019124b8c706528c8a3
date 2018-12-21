@@ -1,0 +1,36 @@
+package com.mit.suggest.responses;
+
+import com.mit.common.entities.ObjectRef;
+import com.mit.suggest.entities.ElasticSuggester;
+
+/**
+ * Created by Lap Pham on 6/19/17.
+ */
+public class SuggestResponse {
+    private String keyword;
+    private ObjectRef objectRef;
+
+    public SuggestResponse() {
+    }
+
+    public SuggestResponse(ElasticSuggester elasticSuggester) {
+        this.keyword = elasticSuggester.getKeyword();
+        this.objectRef = elasticSuggester.getObjectRef();
+    }
+
+    public String getKeyword() {
+        return keyword;
+    }
+
+    public void setKeyword(String keyword) {
+        this.keyword = keyword;
+    }
+
+    public ObjectRef getObjectRef() {
+        return objectRef;
+    }
+
+    public void setObjectRef(ObjectRef objectRef) {
+        this.objectRef = objectRef;
+    }
+}

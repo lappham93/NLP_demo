@@ -1,0 +1,71 @@
+package com.mit.event.responses;
+
+import com.mit.address.responses.EventAddressResponse;
+import com.mit.banner.responses.BannerResponse;
+import com.mit.common.enums.ObjectType;
+import com.mit.event.entities.BusinessHour;
+import com.mit.event.entities.Event;
+import com.mit.react.entities.ReactStat;
+import com.mit.utils.LinkBuilder;
+import org.springframework.util.CollectionUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by Hung on 6/18/2017.
+ */
+public class EventResponse extends EventShortResponse {
+    private BusinessHour businessHour;
+    private List<String> otherPhotos;
+    private List<BannerResponse> banners;
+    private boolean isBeingOnline;
+
+    public EventResponse() {
+    }
+
+    public EventResponse(Event event, List<EventCategoryResponse> category, EventAddressResponse address, List<ReactStat> reactStats, long userId, double lon, double lat, int totalLive, List<BannerResponse> banners, boolean isBeingOnline) {
+        super(event, category, address, reactStats, userId, lon, lat, totalLive);
+        this.businessHour = event.getBusinessHour();
+        if (!CollectionUtils.isEmpty(event.getOtherPhotos())) {
+            this.otherPhotos = new ArrayList<>(event.getOtherPhotos().size());
+            for (long photo: event.getOtherPhotos()) {
+                this.otherPhotos.add(LinkBuilder.buildPhotoLink(photo, ObjectType.EVENT.getLowerName()));
+            }
+        }
+        this.banners = banners;
+        this.isBeingOnline = isBeingOnline;
+    }
+
+    public BusinessHour getBusinessHour() {
+        return businessHour;
+    }
+
+    public void setBusinessHour(BusinessHour businessHour) {
+        this.businessHour = businessHour;
+    }
+
+    public List<String> getOtherPhotos() {
+        return otherPhotos;
+    }
+
+    public void setOtherPhotos(List<String> otherPhotos) {
+        this.otherPhotos = otherPhotos;
+    }
+
+    public List<BannerResponse> getBanners() {
+        return banners;
+    }
+
+    public void setBanners(List<BannerResponse> banners) {
+        this.banners = banners;
+    }
+
+    public boolean isBeingOnline() {
+        return isBeingOnline;
+    }
+
+    public void setBeingOnline(boolean beingOnline) {
+        isBeingOnline = beingOnline;
+    }
+}

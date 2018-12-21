@@ -1,0 +1,235 @@
+package com.mit.stat.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.asset.entities.TopList;
+
+/**
+ * Created by Lap Pham on 4/19/17.
+ */
+@Document(collection = "app_stat")
+public class AppStatTotal {
+	public static final int TOP_SIZE = 20;
+	
+	@Id
+	private long id;
+	private long totalSignUp;
+	private long totalUser;
+	private long totalEvent;
+	private long totalFinishEvent;
+	private long totalOngoingEvent;
+	private long totalUpcomingEvent;
+	
+	private long totalBooth;
+	private long totalProduct;
+
+	private long totalFollow;
+	private long totalFeed;
+	private long totalComment;
+	private long totalLike;
+	private long totalShare;
+	private long statTime; 
+	private boolean global;
+	private boolean temp;
+	
+	private TopList<String> keySearch;
+	private TopList<String> placeSearch;
+	
+	public AppStatTotal clone() {
+		AppStatTotal appStat = new AppStatTotal();
+		appStat.setTotalSignUp(totalSignUp);
+		appStat.setTotalUser(totalSignUp);
+		appStat.setTotalFeed(totalFeed);
+		appStat.setTotalFollow(totalFollow);
+		appStat.setTotalComment(totalComment);
+		appStat.setTotalLike(totalLike);
+		appStat.setTotalShare(totalShare);
+		appStat.setKeySearch(this.keySearch != null ? this.keySearch.clone() : null);
+		appStat.setPlaceSearch(this.placeSearch != null ? this.placeSearch.clone() : null);
+		return appStat;
+	}
+	
+	public void add(AppStatTotal appStatTotal) {
+		this.totalSignUp += appStatTotal.getTotalSignUp();
+		this.totalUser += appStatTotal.getTotalSignUp();
+		this.totalFollow += appStatTotal.getTotalFollow();
+		this.totalFeed += appStatTotal.getTotalFeed();
+		this.totalComment += appStatTotal.getTotalComment();
+		this.totalLike += appStatTotal.getTotalLike();
+		this.totalShare += appStatTotal.getTotalShare();
+		if (this.keySearch == null) {
+			this.keySearch = new TopList<>(TOP_SIZE);
+		}
+		this.keySearch.mergeKey(appStatTotal.getKeySearch());
+		if (this.placeSearch == null) {
+			this.placeSearch = new TopList<>(TOP_SIZE);
+		}
+		this.placeSearch.mergeKey(appStatTotal.getPlaceSearch());
+	}
+	
+	public void reset() {
+		this.totalSignUp = 0;
+		this.totalUser = 0;
+		this.totalFollow = 0;
+		this.totalFeed = 0;
+		this.totalComment = 0;
+		this.totalLike = 0;
+		this.totalShare = 0;
+		this.keySearch = new TopList<>(TOP_SIZE);
+		this.placeSearch = new TopList<>(TOP_SIZE);
+	}
+	
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public long getTotalSignUp() {
+		return totalSignUp;
+	}
+
+	public void setTotalSignUp(long totalSignUp) {
+		this.totalSignUp = totalSignUp;
+	}
+
+	public long getTotalUser() {
+		return totalUser;
+	}
+
+	public void setTotalUser(long totalUser) {
+		this.totalUser = totalUser;
+	}
+
+	public long getTotalEvent() {
+		return totalEvent;
+	}
+
+	public void setTotalEvent(long totalEvent) {
+		this.totalEvent = totalEvent;
+	}
+
+	public long getTotalBooth() {
+		return totalBooth;
+	}
+
+	public void setTotalBooth(long totalBooth) {
+		this.totalBooth = totalBooth;
+	}
+
+	public long getTotalProduct() {
+		return totalProduct;
+	}
+
+	public void setTotalProduct(long totalProduct) {
+		this.totalProduct = totalProduct;
+	}
+
+	public long getTotalFollow() {
+		return totalFollow;
+	}
+
+	public void setTotalFollow(long totalFollow) {
+		this.totalFollow = totalFollow;
+	}
+
+	public long getTotalFeed() {
+		return totalFeed;
+	}
+
+	public void setTotalFeed(long totalFeed) {
+		this.totalFeed = totalFeed;
+	}
+
+	public long getTotalComment() {
+		return totalComment;
+	}
+
+	public void setTotalComment(long totalComment) {
+		this.totalComment = totalComment;
+	}
+
+	public long getTotalLike() {
+		return totalLike;
+	}
+
+	public void setTotalLike(long totalLike) {
+		this.totalLike = totalLike;
+	}
+
+	public long getTotalShare() {
+		return totalShare;
+	}
+
+	public void setTotalShare(long totalShare) {
+		this.totalShare = totalShare;
+	}
+
+	public long getStatTime() {
+		return statTime;
+	}
+
+	public void setStatTime(long statTime) {
+		this.statTime = statTime;
+	}
+
+	public boolean isGlobal() {
+		return global;
+	}
+
+	public void setGlobal(boolean global) {
+		this.global = global;
+	}
+
+	public long getTotalFinishEvent() {
+		return totalFinishEvent;
+	}
+
+	public void setTotalFinishEvent(long totalFinishEvent) {
+		this.totalFinishEvent = totalFinishEvent;
+	}
+
+	public long getTotalOngoingEvent() {
+		return totalOngoingEvent;
+	}
+
+	public void setTotalOngoingEvent(long totalOngoingEvent) {
+		this.totalOngoingEvent = totalOngoingEvent;
+	}
+
+	public long getTotalUpcomingEvent() {
+		return totalUpcomingEvent;
+	}
+
+	public void setTotalUpcomingEvent(long totalUpcomingEvent) {
+		this.totalUpcomingEvent = totalUpcomingEvent;
+	}
+
+	public boolean isTemp() {
+		return temp;
+	}
+
+	public void setTemp(boolean temp) {
+		this.temp = temp;
+	}
+
+	public TopList<String> getKeySearch() {
+		return keySearch;
+	}
+
+	public void setKeySearch(TopList<String> keySearch) {
+		this.keySearch = keySearch;
+	}
+
+	public TopList<String> getPlaceSearch() {
+		return placeSearch;
+	}
+
+	public void setPlaceSearch(TopList<String> placeSearch) {
+		this.placeSearch = placeSearch;
+	}
+
+}

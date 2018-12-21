@@ -1,0 +1,44 @@
+package com.mit.event.responses;
+
+import com.mit.common.entities.ObjectRef;
+import com.mit.event.entities.Advertisement;
+
+public class AdvertisementResponse {
+	private long id;
+	private ObjectRef objectRef;
+	private String content;
+
+	public AdvertisementResponse() {
+	}
+
+	public AdvertisementResponse(Advertisement adv) {
+		this.id = adv.getId();
+		this.objectRef = adv.getObjectRef();
+		this.content = adv.getContent();
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public ObjectRef getObjectRef() {
+		return objectRef;
+	}
+
+	public void setObjectRef(ObjectRef objectRef) {
+		this.objectRef = objectRef;
+	}
+
+	public String getContent() {
+		return content;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+}

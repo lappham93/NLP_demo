@@ -1,0 +1,42 @@
+package com.mit.blog.repositories;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import com.mit.blog.entities.BlogCategory;
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.seq.repositories.SeqIdRepo;
+
+@Repository
+public class BlogCategoryRepo extends TimeDocRepo<BlogCategory> {
+    @Autowired
+    MongoOperations mongoOps;
+
+    @Autowired
+    SeqIdRepo seqIdRepo;
+    
+    public BlogCategory getById(long id) {
+        return mongoOps.findById(id, BlogCategory.class);
+    }
+    
+    public List<BlogCategory> getAll(boolean onlyActive) {
+    	Criteria criteria = Criteria.where("isDeleted").is(false);
+    	if (onlyActive) {
+    		criteria.and("isActive").is(true);
+    	}
+        List<BlogCategory> categories = mongoOps.find(new Query(criteria), BlogCategory.class);
+        return categories;
+    }
+    
+    public void delete(long id) {
+    	Update update = new Update().set("isDeleted", true);
+    	Query query = new Query(Criteria.where("id").is(id));
+    	mongoOps.updateFirst(query, update, BlogCategory.class);
+    }
+}

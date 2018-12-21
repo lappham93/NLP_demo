@@ -1,0 +1,81 @@
+package com.mit.navigation.responses;
+
+import java.util.List;
+
+/**
+ * Created by Lap Pham on 6/21/17.
+ */
+public class RouteListResponse {
+
+    private List<RouteResponse> routes;
+    private FloorShortResponse floor;
+    private long floorId;
+    private double x;
+    private double y;
+    private boolean isFound;
+    private IndoorLocationResponse indoorObject;
+
+    public RouteListResponse() {
+    }
+
+    public RouteListResponse(List<RouteResponse> routes) {
+        this.routes = routes;
+    }
+
+    public List<RouteResponse> getRoutes() {
+        return routes;
+    }
+
+    public void setRoutes(List<RouteResponse> routes) {
+        this.routes = routes;
+    }
+
+    public FloorShortResponse getFloor() {
+        return floor;
+    }
+
+    public void setFloor(FloorShortResponse floor) {
+        this.floor = floor;
+    }
+
+    public long getFloorId() {
+        return floorId;
+    }
+
+    public void setFloorId(long floorId) {
+        this.floorId = floorId;
+    }
+
+    public double getX() {
+        return x;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setY(double y) {
+        this.y = y;
+    }
+
+    public boolean isFound() {
+        return isFound;
+    }
+
+    public void setFound(boolean found) {
+        isFound = found;
+    }
+
+	public IndoorLocationResponse getIndoorObject() {
+		return indoorObject;
+	}
+
+	public void setIndoorObject(IndoorLocationResponse indoorObject) {
+		this.indoorObject = indoorObject;
+	}
+    
+}

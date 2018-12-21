@@ -1,0 +1,54 @@
+package com.mit.sensor.enums;
+
+import com.mit.navigation.enums.EscalatorDirection;
+
+/**
+ * Created by Hung on 8/25/2017.
+ */
+public enum SensorType {
+    ACCELEROMETER(1, "Accelerometer"),
+    GYROSCOPE_UNCALIBRATED(2, "Gyroscope"),
+    MAGNETIC_FIELD_UNCALIBRATED(3, "Magnetic Field"),
+    GYROSCOPE(4, "Gyroscope Calibrated"),
+    MAGNETIC_FIELD(5, "Magnetic Field Calibrated"),
+    GAME_ROTATION_VECTOR(6, "Game Rotation Vector"),
+    GEOMAGNETIC_ROTATION_VECTOR(7, "Geomagnetic Rotation Vector"),
+    GRAVITY(8, "Gravity"),
+    LINEAR_ACCELERATION(9, "Linear Acceleration"),
+    ROTATION_VECTOR(10, "Rotation Vector"),
+    SIGNIFICANT_MOTION(11, "Significant Motion Detector"),
+    STEP_COUNTER(12, "Step Counter"),
+    STEP_DETECTOR(13, "Step Detector"),
+    PROXIMITY(14, "Proximity"),
+    BLUETOOTH(15, "Bluetooth signals"),
+    WIFI(16, "Wifi signals"),
+    NMEA(17, "NMEA data"),
+    LOCATION_GPS(18, "GPS Location"),
+    LOCATION_PASSIVE(19, "Passive Location"),
+    LOCATION_CELL_WIFI(20, "Cell and Wifi Location");
+
+    int value;
+    String name;
+
+    SensorType(int value, String name) {
+        this.value = value;
+        this.name = name;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public static EscalatorDirection getDirection(int value) {
+        for (EscalatorDirection direction: EscalatorDirection.values()) {
+            if (direction.getValue() == value) {
+                return direction;
+            }
+        }
+        return null;
+    }
+}

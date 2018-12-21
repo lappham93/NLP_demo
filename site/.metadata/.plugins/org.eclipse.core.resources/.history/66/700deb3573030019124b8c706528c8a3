@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+	layout:decorator="layout">
+<head>
+	<script type="text/javascript" th:src="${resources_path} + '/js/app/home.js?201804131000'"></script>
+	
+	<link th:href="${resources_path} + '/css/app/home.css'" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+	<div class="col-sm-12" layout:fragment="body">
+		<div class="col-sm-7 restaurant">
+			<img alt="Restaurant" th:src="${resources_path} + '/images/restaurant.jpg'"/>
+		</div>
+		<div class="review col-sm-12">
+			<input type="text" id="" name="" class="review-ipt"/>
+			<button class="btn search-btn"></button>
+		</div>
+		<div class="predict">
+			<img alt="Positive" th:src="${resources_path} + '/images/positive.png'" />
+			<img alt="Negative" th:src="${resources_path} + '/images/negative.png'" />
+		</div>
+		<div class="confirm">
+			<img alt="Correct" th:src="${resources_path} + '/images/correct.png'" />
+			<img alt="Incorrect" th:src="${resources_path} + '/images/incorrect.png'" />
+		</div>
+	</div>
+</body>
+</html>

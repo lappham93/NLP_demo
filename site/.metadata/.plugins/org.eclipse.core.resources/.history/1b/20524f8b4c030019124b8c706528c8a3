@@ -1,0 +1,25 @@
+package com.mit.user.bodies;
+
+import java.util.List;
+
+public class UserSettingBody {
+	private List<Long> eventCategoryIds;
+	private double eventDistanceFilter;
+
+	public List<Long> getEventCategoryIds() {
+		return eventCategoryIds;
+	}
+
+	public void setEventCategoryIds(List<Long> eventCategoryIds) {
+		this.eventCategoryIds = eventCategoryIds;
+	}
+
+	public double getEventDistanceFilter() {
+		return eventDistanceFilter;
+	}
+
+	public void setEventDistanceFilter(double eventDistanceFilter) {
+		this.eventDistanceFilter = eventDistanceFilter;
+	}
+
+}

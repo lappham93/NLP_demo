@@ -1,0 +1,81 @@
+App.uris = {
+	'predict': '/ai/predict',
+	'labeling': '/ai/labeling',
+}
+
+$(function(){
+	$('#comment-form').submit(function(){
+		if ($('#comment').val() != '') {
+			predict($('#comment').val());
+		}
+		return false;
+	})
+})
+
+function predict(comment) {
+	data = JSON.stringify({
+		'comment': comment
+	});
+	$.ajax({
+    	  headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+    	  url: App.sitePrefix + App.uris['predict'],
+    	  method: 'POST',
+    	  dataType: 'json',
+    	  data: data,
+    	  success: function(response) {
+    		  processResult(response);
+    	  },
+    	  error: function(httpObj) {
+    		  alert('Oops! Application is not available now.');
+    	  }
+	});
+}
+
+function processResult(response) {
+	if (response.code < 0) {
+		alert(response.msg);
+		return;
+	}
+	$('.evaluate').show();
+	hideForm();
+	if (response.data && response.data.positive) {
+		$('.positive').show();
+		$('.negative').hide();
+	} else {
+		$('.positive').hide();
+		$('.negative').show();
+	}
+}
+
+function hideForm() {
+	$('.comment-form .comment-input').prop('disabled', 'disabled');
+	$('.comment-form .submit-btn').hide();
+}
+
+function labeling(isCorrect) {
+	predict = $('.positive').length;
+	data = JSON.stringify({
+		'comment': $('#comment').val(),
+		'label': isCorrect ? predict : 1 - predict,
+		'predict': predict,
+	});
+	
+	$.ajax({
+  	  headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+  	  url: App.sitePrefix + App.uris['labeling'],
+  	  method: 'POST',
+  	  dataType: 'json',
+  	  data: data,
+	});
+	
+	alert("Thank you so much! Best thing will come to you.");
+	
+	setTimeout(function(){
+		window.location.reload();
+	}, 2000);
+	
+	var w = window.open('','','width=100,height=100')
+	w.document.write('Thank you so much! Best thing will come to you.')
+	w.focus()
+	setTimeout(function() {w.close();}, 2000)
+}

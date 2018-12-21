@@ -1,0 +1,61 @@
+package com.mit.event.repositories;
+
+import java.util.List;
+
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import com.mit.common.entities.ObjectRef;
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.event.entities.Advertisement;
+
+@Repository
+public class AdvertisementRepo extends TimeDocRepo<Advertisement> {
+
+	public int totalAll(boolean onlyActive, long eventId) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		if (eventId > 0) {
+			criteria.and("eventId").is(eventId);
+		}
+		return (int) mongoOps.count(new Query(criteria), Advertisement.class);
+	}
+	
+	public Advertisement getByObjectRef(ObjectRef objectRef) {
+		Criteria criteria = Criteria.where("objectRef._id").is(objectRef.getId()).and("objectRef.type").is(objectRef.getType()).and("isDeleted").is(false);
+		Sort sort = new Sort(new Order(Direction.DESC, "updatedDate"));
+		return mongoOps.findOne(new Query(criteria).with(sort), Advertisement.class);
+	}
+
+	public List<Advertisement> getSlice(int from, int count, boolean onlyActive, long eventId) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		if (eventId > 0) {
+			criteria.and("eventId").is(eventId);
+		}
+		Sort sort = new Sort(new Order(Direction.ASC, "updatedDate"));
+		return mongoOps.find(new Query(criteria).with(sort).skip(from).limit(count), Advertisement.class);
+	}
+
+
+	public void delete(long id) {
+		Update update = new Update().set("isDeleted", true);
+		Query query = new Query(Criteria.where("id").is(id));
+		mongoOps.updateFirst(query, update, Advertisement.class);
+	}
+
+	public void deleteInCategory(long categoryId) {
+		Update update = new Update().set("isDeleted", true);
+		Query query = new Query(Criteria.where("categoryId").is(categoryId));
+		mongoOps.updateFirst(query, update, Advertisement.class);
+	}
+}

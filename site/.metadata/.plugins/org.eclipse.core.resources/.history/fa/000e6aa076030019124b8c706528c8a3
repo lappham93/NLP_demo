@@ -1,0 +1,5 @@
+package com.mit.comment.bodies;
+
+public class CommentBody {
+
+}

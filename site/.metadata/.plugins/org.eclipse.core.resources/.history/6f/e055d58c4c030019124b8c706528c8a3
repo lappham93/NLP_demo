@@ -1,0 +1,99 @@
+package com.mit.navigation.responses;
+
+import com.mit.map.entities.Point;
+import com.mit.navigation.entities.Path;
+import com.mit.navigation.enums.PathDirection;
+
+/**
+ * Created by Lap Pham on 6/21/17.
+ */
+public class PathResponse {
+    private Point fromPoint;
+    private Point toPoint;
+    private int direction;
+    private double distance;
+    private long roundDistanceInYd;
+    private String instruction;
+
+    public PathResponse(Path path, FloorShortResponse floor) {
+        super();
+        this.fromPoint = path.getFromPoint();
+        this.toPoint = path.getToPoint();
+        this.direction = path.getDirection();
+        this.distance = path.getDistance();
+
+        StringBuffer instruction = new StringBuffer();
+        if (direction == PathDirection.STRAIGHT.getValue()) {
+            instruction.append("Go straight");
+        } else if (direction == PathDirection.LEFT.getValue()) {
+            instruction.append("Turn left and go");
+        } else if (direction == PathDirection.RIGHT.getValue()) {
+            instruction.append("Turn right and go");
+        } else if (direction == PathDirection.SLIGHT_LEFT.getValue()) {
+            instruction.append("Slight left and go");
+        } else if (direction == PathDirection.SLIGHT_RIGHT.getValue()) {
+            instruction.append("Slight right and go");
+        }
+
+        distance = fromPoint.subtract(toPoint).multiply(floor.getActualWidth(), floor.getActualHeight()).length();
+//        roundDistanceInYd = Math.round(distance * 1.0936);
+        roundDistanceInYd = Math.round(distance);
+        if (roundDistanceInYd == 0) {
+        	roundDistanceInYd = 1;
+        }
+        if (roundDistanceInYd < 1000) {
+            instruction.append(" " + roundDistanceInYd + " m.");
+        } else {
+            instruction.append(" " + Math.round(roundDistanceInYd / 100.0) / 10 + " km.");
+        }
+        this.instruction = instruction.toString();
+    }
+
+    public Point getFromPoint() {
+        return fromPoint;
+    }
+
+    public void setFromPoint(Point fromPoint) {
+        this.fromPoint = fromPoint;
+    }
+
+    public Point getToPoint() {
+        return toPoint;
+    }
+
+    public void setToPoint(Point toPoint) {
+        this.toPoint = toPoint;
+    }
+
+    public int getDirection() {
+        return direction;
+    }
+
+    public void setDirection(int direction) {
+        this.direction = direction;
+    }
+
+    public double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(double distance) {
+        this.distance = distance;
+    }
+
+    public long getRoundDistanceInYd() {
+        return roundDistanceInYd;
+    }
+
+    public void setRoundDistanceInYd(long roundDistanceInYd) {
+        this.roundDistanceInYd = roundDistanceInYd;
+    }
+
+    public String getInstruction() {
+        return instruction;
+    }
+
+    public void setInstruction(String instruction) {
+        this.instruction = instruction;
+    }
+}

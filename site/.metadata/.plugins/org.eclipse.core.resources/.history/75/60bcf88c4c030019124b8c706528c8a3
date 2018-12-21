@@ -1,0 +1,55 @@
+package com.mit.navigation.repositories;
+
+import com.mit.common.repositories.ActiveTimeDocRepo;
+import com.mit.navigation.entities.NavigationPoint;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Repository
+public class NavigationPointRepo extends ActiveTimeDocRepo<NavigationPoint> {
+
+	public NavigationPoint getById(long id) {
+		return mongoOps.findById(id, NavigationPoint.class);
+	}
+	
+	public List<NavigationPoint> getAll(long floorId) {
+		Criteria criteria = new Criteria();
+		if (floorId > 0) {
+			criteria = criteria.and("floorId").is(floorId);
+		}
+		return mongoOps.find(new Query(criteria), NavigationPoint.class);
+	}
+	
+	public Map<Long, NavigationPoint> getAllMap(long floorId) {
+		List<NavigationPoint> points = getAll(floorId);
+		Map<Long, NavigationPoint> map = new HashMap<>();
+		if (!CollectionUtils.isEmpty(points)) {
+			points.forEach(t -> map.put(t.getId(), t));
+		}
+		return map;
+	}
+
+	public Map<Long, NavigationPoint> getMapByFloorId(long floorId) {
+		return list2Map(getListByFloorId(floorId));
+	}
+
+	public List<NavigationPoint> getListByFloorId(long floorId) {
+		Criteria criteria = Criteria.where("floorId").is(floorId);
+
+		return getList(criteria);
+	}
+	
+	public void delete(long id) {
+		mongoOps.remove(new Query(Criteria.where("id").is(id)), NavigationPoint.class);
+	}
+	
+	public void deleteByFloorId(long floorId) {
+		mongoOps.remove(new Query(Criteria.where("floorId").is(floorId)), NavigationPoint.class);
+	}
+}

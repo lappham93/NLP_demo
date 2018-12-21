@@ -1,0 +1,153 @@
+package com.mit.navigation.entities;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.asset.entities.HashTag;
+import com.mit.common.enums.ObjectType;
+
+/**
+ * Created by Lap Pham on 6/13/17.
+ */
+
+@Document(collection = "booth_product")
+public class BoothProduct extends HashTag {
+    @Id
+	private long id;
+    private long boothId;
+    private long eventId;
+    private String name;
+    private String desc;
+    private long photo;
+    private List<Long> otherPhotos;
+    private BigDecimal retailPrice;
+    private BigDecimal salePrice;
+    private int displayOrder;
+    private boolean isFeature;
+    private int status;
+    
+    public BoothProduct clone() {
+		BoothProduct boothProduct = new BoothProduct();
+		boothProduct.setId(id);
+		boothProduct.setBoothId(boothId);
+		boothProduct.setEventId(eventId);
+		boothProduct.setName(name);
+		boothProduct.setDesc(desc);
+		boothProduct.setPhoto(photo);
+		boothProduct.setOtherPhotos(otherPhotos);
+		boothProduct.setRetailPrice(retailPrice);
+		boothProduct.setSalePrice(salePrice);
+		boothProduct.setDisplayOrder(displayOrder);
+		boothProduct.setFeature(isFeature);
+		boothProduct.setStatus(status);
+		boothProduct.setCreatedDate(createdDate);
+		boothProduct.setUpdatedDate(updatedDate);
+		boothProduct.setHashTags(getHashTags());
+		return boothProduct;
+	}
+    
+	@Override
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public long getBoothId() {
+        return boothId;
+    }
+
+    public void setBoothId(long boothId) {
+        this.boothId = boothId;
+    }
+
+    public long getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(long eventId) {
+        this.eventId = eventId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
+    }
+
+    public long getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(long photo) {
+        this.photo = photo;
+    }
+
+    public List<Long> getOtherPhotos() {
+        return otherPhotos;
+    }
+
+    public void setOtherPhotos(List<Long> otherPhotos) {
+        this.otherPhotos = otherPhotos;
+    }
+
+    public BigDecimal getRetailPrice() {
+        return retailPrice;
+    }
+
+    public void setRetailPrice(BigDecimal retailPrice) {
+        this.retailPrice = retailPrice;
+    }
+
+    public BigDecimal getSalePrice() {
+        return salePrice;
+    }
+
+    public void setSalePrice(BigDecimal salePrice) {
+        this.salePrice = salePrice;
+    }
+
+    public int getDisplayOrder() {
+        return displayOrder;
+    }
+
+    public void setDisplayOrder(int displayOrder) {
+        this.displayOrder = displayOrder;
+    }
+
+    public boolean isFeature() {
+        return isFeature;
+    }
+
+    public void setFeature(boolean feature) {
+        isFeature = feature;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+	@Override
+	public int getObjectType() {
+		return ObjectType.PRODUCT.getValue();
+	}
+}

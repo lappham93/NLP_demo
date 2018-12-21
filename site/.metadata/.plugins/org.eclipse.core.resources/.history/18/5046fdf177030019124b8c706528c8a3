@@ -1,0 +1,5 @@
+package com.mit.comment.services;
+
+public class SentimentService {
+
+}

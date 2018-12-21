@@ -1,0 +1,39 @@
+App.formObject.formEles = {
+		userName: ["#userNameAddIptId", App.formEleType.INPUT],
+		email: ["#emailAddIptId", App.formEleType.INPUT],
+		company: ["#companyAddIptId", App.formEleType.INPUT],
+		password: ["#passwordAddIptId", App.formEleType.INPUT],
+		agree: ["#agreeAddIptId", App.formEleType.CHECKBOX]
+}
+App.formObject.formId = '#registerFrmId';
+App.formObject.submitId = '#registerBtnId';
+App.formObject.checkData = function(data) {
+	if (!data) {
+		data = App.getFormData();
+	}
+	return data.userName && App.validateEmail(data.email) && data.password && data.agree;
+}
+
+$(function(){
+	$(formId).submit(function(e) {
+		App.showLoader("Processing", App.formObject.formId);
+		App.initAjaxRequest(App.formObject.formId);
+		
+		var data = App.getFormData();
+		if (App.formObject.checkData(data)) {
+			var url = App.getFullUri(App.uris.registerEmail);
+			App.ajaxRequest('POST', url, data, function(resp) {
+				var errors = [App.errors.PARAMS_INVALID, App.errors.MISSING_PARAM, App.errors.USERNAME_EXIST];
+				App.callbackAjaxRequest2($(App.formObject.formId), resp, errors, App.uris.home, "", "");
+			})
+		} else {
+			var msgErr = "Please fill out all required fields!";
+			$(App.formObject.formId + ' .form-error').text(msgErr);
+			$(App.formObject.formId + ' .form-error').show();
+			App.hideLoader();
+		}
+		
+		
+		return false;
+	});
+});

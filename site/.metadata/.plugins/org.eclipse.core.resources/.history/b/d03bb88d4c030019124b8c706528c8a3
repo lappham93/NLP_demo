@@ -1,0 +1,35 @@
+package com.mit.atlas.repositories;
+
+import java.util.List;
+
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import com.mit.atlas.entities.AtlasFloor;
+import com.mit.common.repositories.ActiveTimeDocRepo;
+
+@Repository
+public class AtlasFloorRepo extends ActiveTimeDocRepo<AtlasFloor> {
+	
+	public AtlasFloor getByIdRef(String idRef, long userId) {
+		return mongoOps.findOne(new Query(initCriteria().and("idRef").is(idRef).and("userId").is(userId)), entityClass);
+	}
+	
+	public List<AtlasFloor> getListByUser(long userId) {
+		return mongoOps.find(new Query(initCriteria().and("userId").is(userId)), entityClass);
+	}
+	
+	public List<AtlasFloor> getListByLocation(String locationId) {
+		Sort sort = new Sort(new Order(Direction.ASC, "number"), new Order(Direction.DESC, "createdDate"));
+		return mongoOps.find(new Query(initCriteria().and("locationId").is(locationId)).with(sort), entityClass);
+	}
+	
+	public void deleteFloor(long userId, String floorId) {
+		mongoOps.findAndModify(new Query(Criteria.where("userId").is(userId).and("idRef").is(floorId)), new Update().set("isActive", false).set("isDeleted", true), entityClass);
+	}
+}

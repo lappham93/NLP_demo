@@ -1,0 +1,22 @@
+package com.mit.stat.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+/**
+ * Created by Lap Pham on 4/19/17.
+ */
+
+@Document(collection = "timeline_stats")
+public class TimelineStat {
+    @Id
+    private TimelineStatId id;
+
+    public TimelineStatId getId() {
+        return id;
+    }
+
+    public void setId(TimelineStatId id) {
+        this.id = id;
+    }
+}

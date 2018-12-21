@@ -1,0 +1,5 @@
+package com.mit.common.responses;
+
+public class ApiResponse {
+
+}

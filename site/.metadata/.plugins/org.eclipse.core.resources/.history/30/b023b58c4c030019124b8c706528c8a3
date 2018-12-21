@@ -1,0 +1,215 @@
+package com.mit.navigation.responses;
+
+import java.util.List;
+
+import com.mit.navigation.entities.Floor;
+import com.mit.utils.LinkBuilder;
+
+public class FloorShortResponse {
+	private long id;
+	private String atlasId;
+	private long eventId;
+	private int number;
+	private String name;
+	private int numLevel;
+	private MapboxResponse mapbox;
+	private double actualWidth;
+	private double actualHeight;
+	private List<MapLevelResponse> mapLevels;
+	private int mapPxW;
+	private int mapPxH;
+	private double rotate;
+	private String photo;
+	private int status;
+	private long createTime;
+	private long updateTime;
+	
+	public FloorShortResponse() {
+		super();
+	}
+
+	public FloorShortResponse(Floor floor, List<MapLevelResponse> mapLevels) {
+		super();
+		this.id = floor.getId();
+		this.atlasId = floor.getAtlasId();
+		this.eventId = floor.getEventId();
+		this.number = floor.getNumber();
+		this.name = floor.buildName(); //floor.getName();
+		this.numLevel = floor.getNumLevel();
+		this.actualWidth = floor.getActualWidth();
+		this.actualHeight = floor.getActualHeight();
+		this.mapPxH = (int) floor.getPxHeight();
+		this.mapPxW = (int) floor.getPxWidth();
+		this.photo = LinkBuilder.buildMapTile(floor.getId());
+		this.rotate = Math.toRadians(floor.getRotate());
+		this.status = floor.getStatus();
+		this.createTime = floor.getCreatedDate().getTime();
+		this.updateTime = floor.getUpdatedDate().getTime();
+		this.mapLevels = mapLevels;
+		this.mapbox = new MapboxResponse(floor.getMapbox(), false);
+	}
+	
+	public FloorShortResponse(Floor floor, List<MapLevelResponse> mapLevels, boolean ignoreMapbox) {
+		super();
+		this.id = floor.getId();
+		this.atlasId = floor.getAtlasId();
+		this.eventId = floor.getEventId();
+		this.number = floor.getNumber();
+		this.name = floor.buildName(); //floor.getName();
+		this.numLevel = floor.getNumLevel();
+		this.actualWidth = floor.getActualWidth();
+		this.actualHeight = floor.getActualHeight();
+		this.mapPxH = (int) floor.getPxHeight();
+		this.mapPxW = (int) floor.getPxWidth();
+		this.photo = LinkBuilder.buildMapTile(floor.getId());
+		this.rotate = Math.toRadians(floor.getRotate());
+		this.status = floor.getStatus();
+		this.createTime = floor.getCreatedDate().getTime();
+		this.updateTime = floor.getUpdatedDate().getTime();
+		this.mapLevels = mapLevels;
+		if (!ignoreMapbox) {
+			this.mapbox = new MapboxResponse(floor.getMapbox(), false);
+		}
+	}
+	
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+	public int getNumber() {
+		return number;
+	}
+
+	public void setNumber(int number) {
+		this.number = number;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public int getNumLevel() {
+		return numLevel;
+	}
+
+	public void setNumLevel(int numLevel) {
+		this.numLevel = numLevel;
+	}
+
+	public double getActualWidth() {
+		return actualWidth;
+	}
+
+	public void setActualWidth(double actualWidth) {
+		this.actualWidth = actualWidth;
+	}
+
+	public double getActualHeight() {
+		return actualHeight;
+	}
+
+	public void setActualHeight(double actualHeight) {
+		this.actualHeight = actualHeight;
+	}
+
+	public List<MapLevelResponse> getMapLevels() {
+		return mapLevels;
+	}
+
+	public double getRotate() {
+		return rotate;
+	}
+
+	public FloorShortResponse setMapLevels(List<MapLevelResponse> mapLevels) {
+		this.mapLevels = mapLevels;
+
+		if (mapLevels != null && !mapLevels.isEmpty()) {
+			for (MapLevelResponse mapLevel : mapLevels) {
+				mapPxW = Math.max(mapLevel.getMapPxW(), mapPxW);
+				mapPxH = Math.max(mapLevel.getMapPxH(), mapPxH);
+			}
+		}
+		return this;
+	}
+
+	public int getMapPxW() {
+		return mapPxW;
+	}
+
+	public void setMapPxW(int mapPxW) {
+		this.mapPxW = mapPxW;
+	}
+
+	public int getMapPxH() {
+		return mapPxH;
+	}
+
+	public void setMapPxH(int mapPxH) {
+		this.mapPxH = mapPxH;
+	}
+
+	public String getPhoto() {
+		return photo;
+	}
+
+	public void setPhoto(String photo) {
+		this.photo = photo;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	public long getCreateTime() {
+		return createTime;
+	}
+
+	public void setCreateTime(long createTime) {
+		this.createTime = createTime;
+	}
+
+	public long getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(long updateTime) {
+		this.updateTime = updateTime;
+	}
+
+	public String getAtlasId() {
+		return atlasId;
+	}
+
+	public void setAtlasId(String atlasId) {
+		this.atlasId = atlasId;
+	}
+
+	public MapboxResponse getMapbox() {
+		return mapbox;
+	}
+
+	public void setMapbox(MapboxResponse mapbox) {
+		this.mapbox = mapbox;
+	}
+
+}

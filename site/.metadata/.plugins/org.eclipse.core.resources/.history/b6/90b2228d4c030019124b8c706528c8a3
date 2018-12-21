@@ -1,0 +1,43 @@
+package com.mit.navigation.entities;
+
+public class TilePosition {
+	private int tileX;
+	private int tileY;
+	private int level;
+	
+	public TilePosition() {
+		super();
+	}
+
+	public TilePosition(int tileX, int tileY, int level) {
+		super();
+		this.tileX = tileX;
+		this.tileY = tileY;
+		this.level = level;
+	}
+
+	public int getTileX() {
+		return tileX;
+	}
+
+	public void setTileX(int tileX) {
+		this.tileX = tileX;
+	}
+
+	public int getTileY() {
+		return tileY;
+	}
+
+	public void setTileY(int tileY) {
+		this.tileY = tileY;
+	}
+
+	public int getLevel() {
+		return level;
+	}
+
+	public void setLevel(int level) {
+		this.level = level;
+	}
+	
+}

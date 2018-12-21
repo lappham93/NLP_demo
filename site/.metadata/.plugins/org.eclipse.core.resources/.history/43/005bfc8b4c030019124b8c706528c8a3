@@ -1,0 +1,14 @@
+package com.mit.sensor.repositories;
+
+import com.mit.common.repositories.ActiveTimeDocRepo;
+import com.mit.sensor.entities.Route;
+import org.springframework.stereotype.Repository;
+
+/**
+ * Created by Hung on 8/25/2017.
+ */
+
+@Repository
+public class RouteRepo extends ActiveTimeDocRepo<Route> {
+
+}

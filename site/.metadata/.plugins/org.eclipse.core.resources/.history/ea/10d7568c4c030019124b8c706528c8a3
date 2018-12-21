@@ -1,0 +1,276 @@
+package com.mit.react.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "comment")
+public class Comment extends React<Long> {
+	@Id
+	private long id;
+	private long userId;
+	private String text;
+	private String sticker;
+	private long photoCmtId;
+	private int status;
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	public String getText() {
+		return text;
+	}
+
+	public void setText(String text) {
+		this.text = text;
+	}
+
+	public String getSticker() {
+		return sticker;
+	}
+
+	public void setSticker(String sticker) {
+		this.sticker = sticker;
+	}
+
+	public long getPhotoCmtId() {
+		return photoCmtId;
+	}
+
+	public void setPhotoCmtId(long photoCmtId) {
+		this.photoCmtId = photoCmtId;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	// public CommentView buildCommentView(long viewUserId) {
+	// return new CommentView(this, viewUserId);
+	// }
+	//
+	// public static List<CommentView> buildListCommentView(List<Comment> cmts,
+	// long viewUserId) {
+	// List<CommentView> proCmts = new ArrayList<>();
+	// if (cmts != null && !cmts.isEmpty()) {
+	// for (Comment cmt : cmts) {
+	// proCmts.add(cmt.buildCommentView(viewUserId));
+	// }
+	// }
+	// return proCmts;
+	// }
+
+	// public class CommentView {
+	// private long id;
+	// private long userId;
+	// private String avatar;
+	// private String displayName;
+	// private int type = CommentType.MESSAGE.getValue();
+	// private String sticker;
+	// private String content;
+	// private PhotoInfo.PhotoView photoCmt;
+	// private boolean isFollowed;
+	// private long createTime;
+	// private long updateTime;
+	//
+	// public CommentView(Comment cmt, long viewUserId) {
+	// id = cmt.getId();
+	// userId = cmt.getUserId();
+	// UserInfo ui = UserInfoDAO.getInstance().getById((int)userId);
+	// if (ui != null) {
+	// this.avatar = LinkBuilder.buildUserPhotoLink(ui.getPhoto());
+	// this.displayName = ui.getFirstName() + " " + ui.getLastName();
+	// }
+	// sticker = cmt.getSticker();
+	// content = cmt.getText();
+	// photoCmt = new PhotoInfo().new PhotoView(cmt.getPhotoCmtId(),
+	// PhotoType.COMMENT.getValue());
+	// photoCmt.setPhotoLink(LinkBuilder.buildCommentPhotoLink(cmt.getPhotoCmtId()));
+	// if (sticker != null && !sticker.isEmpty()) {
+	// type = CommentType.STICKER.getValue();
+	// } else if (cmt.getPhotoCmtId() > 0) {
+	// type = CommentType.PHOTO.getValue();
+	// }
+	//// List<Long> followings = UserStatDAO.getInstance().getList(viewUserId,
+	// UserStat.ListType.FOLLOWING.getValue());
+	//// isFollowed = followings != null &&
+	// followings.contains(cmt.getUserId());
+	//
+	// createTime = cmt.getCreateTime();
+	// updateTime = cmt.getUpdateTime();
+	// }
+	//
+	// public long getId() {
+	// return id;
+	// }
+	//
+	// public long getUserId() {
+	// return userId;
+	// }
+	//
+	// public String getAvatar() {
+	// return avatar;
+	// }
+	//
+	// public String getDisplayName() {
+	// return displayName;
+	// }
+	//
+	// public int getType() {
+	// return type;
+	// }
+	//
+	// public String getSticker() {
+	// return sticker;
+	// }
+	//
+	// public String getContent() {
+	// return content;
+	// }
+	//
+	// public PhotoInfo.PhotoView getPhotoCmt() {
+	// return photoCmt;
+	// }
+	//
+	// public boolean getIsFollowed() {
+	// return isFollowed;
+	// }
+	//
+	// public long getCreateTime() {
+	// return createTime;
+	// }
+	//
+	// public long getUpdateTime() {
+	// return updateTime;
+	// }
+	//
+	// }
+	//
+	// public ProductCommentView buildProductCommentView(long viewUserId) {
+	// return new ProductCommentView(this, viewUserId);
+	// }
+	//
+	// public static List<ProductCommentView>
+	// buildListProductCommentView(List<Comment> cmts, long viewUserId) {
+	// List<ProductCommentView> proCmts = new ArrayList<>();
+	// if (cmts != null && !cmts.isEmpty()) {
+	// for (Comment cmt : cmts) {
+	// proCmts.add(cmt.buildProductCommentView(viewUserId));
+	// }
+	// }
+	// return proCmts;
+	// }
+	//
+	// public class ProductCommentView extends CommentView{
+	// private boolean isRated = false;
+	// private double ratingPoint = 0;
+	//
+	// public ProductCommentView(Comment cmt, long viewUserId) {
+	// super(cmt, viewUserId);
+	// Rating rating =
+	// RatingDAO.getInstance().getByObjectAndUser(cmt.getObjectType(),
+	// cmt.getObjectId(), cmt.getUserId());
+	// if (rating != null) {
+	// isRated = true;
+	// ratingPoint = rating.getPoint();
+	// }
+	// }
+	//
+	// public boolean isRated() {
+	// return isRated;
+	// }
+	//
+	// public double getRatingPoint() {
+	// return ratingPoint;
+	// }
+	// }
+	//
+	// public static List<FeedCommentView>
+	// buildListFeedCommentView(List<Comment> cmts, long viewUserId) {
+	// List<FeedCommentView> proCmts = new ArrayList<>();
+	// if (cmts != null && !cmts.isEmpty()) {
+	// for (Comment cmt : cmts) {
+	// proCmts.add(cmt.buildFeedCommentView(viewUserId));
+	// }
+	// }
+	// return proCmts;
+	// }
+	//
+	// public FeedCommentView buildFeedCommentView(long viewUserId) {
+	// return new FeedCommentView(this, viewUserId);
+	// }
+	//
+	// public class FeedCommentView extends CommentView{
+	// private int likes;
+	// private boolean isLiked;
+	// private int childCount;
+	// private FeedCommentView lstChild;
+	//
+	// public FeedCommentView(Comment cmt, long viewUserId) {
+	// super(cmt, viewUserId);
+	// this.childCount = cmt.getTotalChild();
+	// Comment lCmt =
+	// CommentDAO.getInstance().getLast(ObjectType.COMMENT.getValue(),
+	// cmt.getId());
+	// this.lstChild = lCmt != null ? lCmt.buildFeedCommentView(viewUserId) :
+	// null;
+	// ReactStat rs =
+	// ReactStatDAO.getInstance().getByObjectAndSocialType(ObjectType.COMMENT.getValue(),
+	// cmt.getId(), ReactType.LIKE.getValue());
+	// if (rs != null) {
+	// this.likes = rs.getTotal();
+	// this.isLiked = rs.getUserIds() != null &&
+	// rs.getUserIds().contains(viewUserId);
+	// }
+	// }
+	//
+	// public int getLikes() {
+	// return likes;
+	// }
+	//
+	// public void setLikes(int likes) {
+	// this.likes = likes;
+	// }
+	//
+	// public boolean getIsLiked() {
+	// return isLiked;
+	// }
+
+	// public void setLiked(boolean isLiked) {
+	// this.isLiked = isLiked;
+	// }
+	//
+	// public int getChildCount() {
+	// return childCount;
+	// }
+	//
+	// public void setChildCount(int childCount) {
+	// this.childCount = childCount;
+	// }
+	//
+	// public FeedCommentView getLstChild() {
+	// return lstChild;
+	// }
+	//
+	// public void setLstChild(FeedCommentView lstChild) {
+	// this.lstChild = lstChild;
+	// }
+
+	// }
+}

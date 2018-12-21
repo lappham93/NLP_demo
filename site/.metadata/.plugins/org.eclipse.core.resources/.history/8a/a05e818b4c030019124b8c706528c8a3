@@ -1,0 +1,281 @@
+package com.mit.stat.services;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.address.entities.ZipCode;
+import com.mit.address.repositories.ZipCodeRepo;
+import com.mit.event.enums.EventStatus;
+import com.mit.event.repositories.EventRepo;
+import com.mit.navigation.enums.IndoorLocationType;
+import com.mit.navigation.repositories.BoothProductRepo;
+import com.mit.navigation.repositories.IndoorLocationRepo;
+import com.mit.stat.entities.AppStatTotal;
+import com.mit.stat.entities.Region;
+import com.mit.stat.entities.Timeline;
+import com.mit.stat.entities.ZipCodeStatTotal;
+import com.mit.stat.enums.RegionType;
+import com.mit.stat.enums.TimelineType;
+import com.mit.stat.repositories.AppStatTotalRepo;
+import com.mit.stat.repositories.ZipCodeStatRepo;
+import com.mit.stat.responses.AppStatGroupResponse;
+import com.mit.stat.responses.AppStatResponse;
+import com.mit.utils.DateTimeUtils;
+
+/**
+ * Created by Lap Pham on 4/19/17.
+ */
+
+@Service
+public class StatService {
+	private Logger logger = LoggerFactory.getLogger(StatService.class);
+	
+    @Autowired
+    private ZipCodeRepo zipCodeRepo;
+    @Autowired
+    private ZipCodeStatRepo zipCodeStatRepo;
+    @Autowired
+    private AppStatTotalRepo appStatRepo;
+    @Autowired 
+    private EventRepo eventRepo;
+    @Autowired
+    private IndoorLocationRepo boothRepo;
+    @Autowired
+    private BoothProductRepo productRepo;
+
+    public List<Timeline> calcTimelines(Date statTime) {
+        List<Timeline> timelines = new ArrayList<>(TimelineType.values().length);
+
+        timelines.add(new Timeline());
+
+        Calendar calendar = DateTimeUtils.toCalendar(statTime);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        timelines.add(new Timeline(TimelineType.MINUTE.getValue(), calendar.getTime()));
+
+        calendar.set(Calendar.MINUTE, 0);
+
+        timelines.add(new Timeline(TimelineType.HOUR.getValue(), calendar.getTime()));
+
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+
+        timelines.add(new Timeline(TimelineType.DAY.getValue(), calendar.getTime()));
+
+        int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+        calendar.set(Calendar.DAY_OF_WEEK, calendar.getActualMinimum(Calendar.DAY_OF_WEEK));
+
+        timelines.add(new Timeline(TimelineType.WEEK.getValue(), calendar.getTime()));
+
+        calendar.set(Calendar.DAY_OF_WEEK, dayOfWeek);
+        calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMinimum(Calendar.DAY_OF_MONTH));
+
+        timelines.add(new Timeline(TimelineType.MONTH.getValue(), calendar.getTime()));
+
+        calendar.set(Calendar.MONTH, calendar.getActualMinimum(Calendar.MONTH));
+
+        timelines.add(new Timeline(TimelineType.YEAR.getValue(), calendar.getTime()));
+
+        return timelines;
+    }
+
+    public Calendar roundTime(Date time, int timelineType) {
+        Calendar calendar = DateTimeUtils.toCalendar(time);
+//        calendar.setTimeZone(TimeZone.getTimeZone(ZoneId.of("UTC")));
+        if (timelineType >= TimelineType.MINUTE.getValue()) {
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
+        }
+
+        if (timelineType >= TimelineType.HOUR.getValue()) {
+            calendar.set(Calendar.MINUTE, 0);
+        }
+
+        if (timelineType >= TimelineType.DAY.getValue()) {
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+        }
+
+        if (timelineType == TimelineType.WEEK.getValue()) {
+            calendar.set(Calendar.DAY_OF_WEEK, calendar.getActualMinimum(Calendar.DAY_OF_WEEK));
+        }
+
+        if (timelineType >= TimelineType.MONTH.getValue()) {
+            calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMinimum(Calendar.DAY_OF_MONTH));
+        }
+
+        if (timelineType == TimelineType.YEAR.getValue()) {
+            calendar.set(Calendar.MONTH, calendar.getActualMinimum(Calendar.MONTH));
+        }
+
+        return calendar;
+    }
+
+    public void nextTime(Calendar calendar, int timelineType) {
+        if (timelineType == TimelineType.MINUTE.getValue()) {
+            calendar.add(Calendar.MINUTE, 1);
+        } else if (timelineType == TimelineType.HOUR.getValue()) {
+            calendar.add(Calendar.HOUR_OF_DAY, 1);
+        } else if (timelineType == TimelineType.DAY.getValue()) {
+            calendar.add(Calendar.DAY_OF_YEAR, 1);
+        } else if (timelineType == TimelineType.WEEK.getValue()) {
+            calendar.add(Calendar.DAY_OF_YEAR, 7);
+        } else if (timelineType == TimelineType.MONTH.getValue()) {
+            calendar.add(Calendar.MONTH, 1);
+        } else if (timelineType == TimelineType.YEAR.getValue()) {
+            calendar.add(Calendar.YEAR, 1);
+        }
+    }
+
+    public List<Date> calcTimelineRange(Date fromTime, Date toTime, int timelineType) {
+        List<Date> timelines = new ArrayList<>();
+
+        Calendar calendar = roundTime(fromTime, timelineType);
+//        if (calendar.getTime() != fromTime) {
+//            nextTime(calendar, timelineType);
+//        }
+        System.out.println(calendar.getTime().toString());
+        while (calendar.getTime().compareTo(toTime) <= 0) {
+            timelines.add(calendar.getTime());
+            nextTime(calendar, timelineType);
+        }
+
+        return timelines;
+    }
+
+    public List<Region> calcRegions(String zipCode) {
+        List<Region> regions = new ArrayList<>(RegionType.values().length);
+
+//        regions.add(new Region());
+
+        regions.add(new Region(zipCode, RegionType.ZIP_CODE.getValue()));
+
+        ZipCode zipCodeInfo = zipCodeRepo.getByCode(zipCode);
+
+        if (zipCodeInfo != null) {
+            regions.add(new Region(zipCodeInfo.getCityId() + "", RegionType.CITY.getValue()));
+            regions.add(new Region(zipCodeInfo.getStateId() + "", RegionType.STATE.getValue()));
+            regions.add(new Region(zipCodeInfo.getCountryCode() + "", RegionType.COUNTRY.getValue()));
+        }
+
+        return regions;
+    }
+
+    public void addActiveProviderInZipCodeStat(String id, long providerId) {
+        zipCodeStatRepo.addToSetActiveProvider(id, providerId);
+    }
+
+    public void addActiveClientInZipCodeStat(String id, long clientId) {
+        zipCodeStatRepo.addToSetActiveClient(id, clientId);
+    }
+
+    public void incStatTotalInZipCodeStat(String id, List<Long> serviceIds, ZipCodeStatTotal statTotal) {
+        zipCodeStatRepo.inc(id, serviceIds, statTotal);
+    }
+
+    public AppStatGroupResponse buildAppStatResponse(List<AppStatTotal> appStats, int timelineType, Date fromTime, Date toTime) {
+    	if (CollectionUtils.isEmpty(appStats)) {
+    		return null;
+    	}
+    	AppStatGroupResponse appStatGroup = new AppStatGroupResponse();
+    	List<AppStatResponse> appStatResponses = new LinkedList<>();
+    	List<Date> dates = calcTimelineRange(fromTime, toTime, timelineType);
+    	int groupNum = 0;
+    	int i = 0;
+    	AppStatTotal appStatTotal = new AppStatTotal();
+    	while (i < appStats.size()) {
+    		AppStatTotal appStat = appStats.get(i);
+    		Date statDate = new Date(appStat.getStatTime());
+    		statDate.setHours(0);
+    		statDate.setMinutes(0);
+    		statDate.setSeconds(0);
+    		boolean createGroup = false;
+    		if ( groupNum + 1 >= dates.size() || statDate.getTime() <= dates.get(groupNum + 1).getTime()) {
+    			appStatTotal.add(appStat);
+    			i++;
+    			createGroup = i >= appStats.size();
+    		} else {
+    			createGroup = true;
+    		}
+    		if (createGroup) {
+    			AppStatResponse appStatResponse = new AppStatResponse(appStatTotal, "", "", timelineType, dates.get(groupNum));
+    			appStatResponses.add(appStatResponse);
+    			appStatTotal = new AppStatTotal();
+    			groupNum ++;
+    		} //statistisc statistics 
+    	}
+    	for (i = groupNum; i < dates.size(); i++) {
+    		AppStatResponse appStatResponse = new AppStatResponse(new AppStatTotal(), "", "", timelineType, dates.get(i));
+    		appStatResponses.add(appStatResponse);
+    	}
+    	appStatGroup.setStats(appStatResponses);
+    	return appStatGroup;
+    }
+    
+    public void updateStat() {
+    	try {
+    		logger.info("Update app stat");
+    		
+	    	Calendar yesterday = Calendar.getInstance();
+	    	yesterday.add(Calendar.DAY_OF_YEAR, -1);
+	    	yesterday.set(Calendar.HOUR_OF_DAY, 0);
+	    	yesterday.set(Calendar.MINUTE, 0);
+	    	yesterday.set(Calendar.SECOND, 0);
+	    	List<AppStatTotal> currentStats = appStatRepo.getDairyStat(yesterday.getTime(), yesterday.getTime());
+	    	if (!CollectionUtils.isEmpty(currentStats)) {
+	    		//already update
+	    		logger.info("already updated");
+	    		return; 
+	    	}
+	    	long totalEvent = eventRepo.totalAll("", true);
+	    	long totalFinish = eventRepo.totalAll(Arrays.asList(EventStatus.FINISHED.getValue()), true);
+	    	long totalOngoing = eventRepo.totalAll(Arrays.asList(EventStatus.ONGOING.getValue()), true);
+	    	long totalUpcoming = eventRepo.totalAll(Arrays.asList(EventStatus.UPCOMMING.getValue()), true);
+	    	
+	    	long totalBooth = boothRepo.totalAllByType(0, "", IndoorLocationType.BOOTH.getValue(), true);
+	    	long totalProduct = productRepo.totalAll(0, 0, "", true);
+	    	
+	    	AppStatTotal tempStat = appStatRepo.getTempStat();
+	    	if (tempStat == null) {
+	    		tempStat = new AppStatTotal();
+	    		tempStat.setTemp(true);
+	    		appStatRepo.save(tempStat);
+	    	}
+	    	
+	    	AppStatTotal globalStat = appStatRepo.getAppStat();
+	    	if (globalStat == null) {
+	    		globalStat = new AppStatTotal();
+	    		globalStat.setGlobal(true);
+	    	}
+	    	globalStat.setTotalEvent(totalEvent);
+	    	globalStat.setTotalFinishEvent(totalFinish);
+	    	globalStat.setTotalOngoingEvent(totalOngoing);
+	    	globalStat.setTotalUpcomingEvent(totalUpcoming);
+	    	globalStat.setTotalBooth(totalBooth);
+	    	globalStat.setTotalProduct(totalProduct);
+	    	globalStat.add(tempStat);
+	    	appStatRepo.save(globalStat);
+	    	
+	    	tempStat.setStatTime(yesterday.getTime().getTime());
+	    	tempStat.setTemp(false);
+	    	appStatRepo.save(tempStat);
+	    	
+	    	tempStat.reset();
+	    	tempStat.setTemp(true);
+	    	appStatRepo.save(tempStat);
+    	} catch (Exception e) {
+    		logger.info("Update app stat fail: " + e.getMessage());
+    	}
+    	
+    }
+    
+}

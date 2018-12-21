@@ -1,0 +1,25 @@
+package com.mit.stat.entities;
+
+/**
+ * Created by Lap Pham on 4/19/17.
+ */
+public class RegionTimelineStatId extends TimelineStatId {
+    private String regionId;
+    private int regionType;
+
+    public String getRegionId() {
+        return regionId;
+    }
+
+    public void setRegionId(String regionId) {
+        this.regionId = regionId;
+    }
+
+    public int getRegionType() {
+        return regionType;
+    }
+
+    public void setRegionType(int regionType) {
+        this.regionType = regionType;
+    }
+}

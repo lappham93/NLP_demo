@@ -1,0 +1,24 @@
+package com.mit.social.entities;
+
+import java.util.List;
+
+import com.mit.social.enums.FeedContentType;
+
+public class PhotoFeed extends Feed {
+	public static final int TYPE = FeedContentType.PHOTO.getValue();
+
+	private List<Long> photos;
+
+	public PhotoFeed() {
+		super(TYPE);
+	}
+
+	public List<Long> getPhotos() {
+		return photos;
+	}
+
+	public void setPhotos(List<Long> photos) {
+		this.photos = photos;
+	}
+
+}

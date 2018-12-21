@@ -1,0 +1,51 @@
+package com.mit.notification.entities;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import com.mit.notification.enums.NewsType;
+
+public class AdvertisementNews extends News {
+	public static final int TYPE = NewsType.ADVERTISEMENT.getValue();
+
+	private long advertisementId;
+	private String msg;
+	private long thumb;
+
+	public AdvertisementNews() {
+		super(TYPE);
+	}
+
+	public long getAdvertisementId() {
+		return advertisementId;
+	}
+
+
+	public void setAdvertisementId(long advertisementId) {
+		this.advertisementId = advertisementId;
+	}
+
+	@Override
+	public String getMsg() {
+		return msg;
+	}
+
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+
+	public long getThumb() {
+		return thumb;
+	}
+
+	public void setThumb(long thumb) {
+		this.thumb = thumb;
+	}
+
+	@Override
+	public Map<String, String> getData() {
+		Map<String, String> data = new HashMap<>();
+		data.put("advertisementId", advertisementId + "");
+		return data;
+	}
+}

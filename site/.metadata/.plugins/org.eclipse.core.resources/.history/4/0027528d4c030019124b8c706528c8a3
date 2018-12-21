@@ -1,0 +1,79 @@
+package com.mit.map.entities;
+
+import com.mit.utils.JsonUtils;
+
+public class Coordinate {
+	private double lon;
+	private double lat;
+
+	public Coordinate() {
+		super();
+	}
+
+	public Coordinate(double lon, double lat) {
+		super();
+		this.lon = lon;
+		this.lat = lat;
+	}
+
+	public Coordinate(org.springframework.data.geo.Point point) {
+		this.lon = point.getX();
+		this.lat = point.getY();
+	}
+	
+	public Point worldCoordinatePxl(int xPxl, int yPxl) {
+		double siny = Math.sin(lat * Math.PI / 180);
+        siny = Math.min(Math.max(siny, -0.999999999), 0.999999999);
+        Point point = new Point();
+        point.setX(xPxl * (0.5 + lon/360));
+        point.setY(yPxl * (0.5 - Math.log((1 + siny) / (1 - siny)) / (4 * Math.PI)));
+        return point;
+	}
+	
+	public Point worldCoordinate() {
+		double siny = Math.sin(lat * Math.PI / 180);
+        siny = Math.min(Math.max(siny, -0.999999999), 0.999999999);
+        Point point = new Point();
+        point.setX(0.5 + lon/360);
+        point.setY(0.5 - Math.log((1 + siny) / (1 - siny)) / (4 * Math.PI));
+        return point;
+	}
+	
+	public Point pixelCoordinate(int xPxl, int yPxl, int level) {
+		Point worldCoor = worldCoordinatePxl(xPxl, yPxl);
+		int scale = 1 << level;
+		return new Point(Math.floor(worldCoor.getX() * scale), Math.floor(worldCoor.getY() * scale));
+	}
+	
+	public Point tileCoordinate(int xPxl, int yPxl, int level) {
+		Point worldCoor = worldCoordinatePxl(xPxl, yPxl);
+		int scale = 1 << level;
+		return new Point(Math.floor(worldCoor.getX() * scale / xPxl), Math.floor(worldCoor.getY() * scale / yPxl));
+	}
+	
+	public static void main(String[] args) {
+		Coordinate coor = new Coordinate(-87.650, 41.850);
+		int xPxl = 256; int yPxl = 256;
+		int level = 3;
+		System.out.println("world: " + JsonUtils.Instance.toJson(coor.worldCoordinatePxl(xPxl, yPxl)));
+		System.out.println("pixel: " + JsonUtils.Instance.toJson(coor.pixelCoordinate(xPxl, yPxl, level)));
+		System.out.println("tile: " + JsonUtils.Instance.toJson(coor.tileCoordinate(xPxl, yPxl, level)));
+	}
+
+	public double getLon() {
+		return lon;
+	}
+
+	public void setLon(double lon) {
+		this.lon = lon;
+	}
+
+	public double getLat() {
+		return lat;
+	}
+
+	public void setLat(double lat) {
+		this.lat = lat;
+	}
+
+}

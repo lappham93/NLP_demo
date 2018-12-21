@@ -1,0 +1,44 @@
+package com.mit.event.repositories;
+
+import java.util.List;
+
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
+
+import com.mit.common.repositories.ActiveTimeDocRepo;
+import com.mit.event.entities.EventCategory;
+
+@Repository
+public class EventCategoryRepo extends ActiveTimeDocRepo<EventCategory> {
+	
+//	public EventCategory getById(long id) {
+//		return mongoOps.findById(id, EventCategory.class);
+//	}
+//
+//	public List<EventCategory> getList(boolean onlyActive) {
+//		Criteria criteria = Criteria.where("isDeleted").is(false);
+//		if (onlyActive) {
+//			criteria.and("isActive").is(true);
+//		}
+//		Sort sort = new Sort(new Order(Direction.ASC, "name"));
+//		return mongoOps.find(new Query(criteria).with(sort), EventCategory.class);
+//	}
+//
+//	public void delete(long id) {
+//		Update update = new Update().set("isDeleted", true);
+//		Query query = new Query(Criteria.where("id").is(id));
+//		mongoOps.updateFirst(query, update, EventCategory.class);
+//	}
+	
+	public List<EventCategory> getDiscovery(int count) {
+		Criteria criteria = initCriteria();
+		Sort sort = new Sort(Direction.DESC, "top");
+		if (count > 0) {
+			return mongoOps.find(new Query(criteria).limit(count).with(sort), entityClass);
+		}
+		return mongoOps.find(new Query(criteria).with(sort), entityClass);
+	}
+}

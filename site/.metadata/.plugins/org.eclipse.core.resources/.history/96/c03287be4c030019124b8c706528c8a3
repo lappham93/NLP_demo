@@ -1,0 +1,110 @@
+package com.mit.asset.entities;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import com.mit.utils.JsonUtils;
+
+public class TopList<T> {
+	private int size;
+	private List<T> top;
+	Map<T, Integer> reference;
+	
+	public TopList(int size) {
+		this.size = size;
+		this.top = new LinkedList<>();
+		this.reference = new HashMap<>();
+	}
+	
+	public void mergeKey(TopList<T> merged) {
+		if (merged != null && merged.getReference() != null) {
+			for (T key : merged.getReference().keySet()) {
+				insertKey(key, merged.getReference().get(key));
+			}
+		}
+	}
+	
+	public void insertKey(T key) {
+		int count = reference.getOrDefault(key, 0) + 1;
+		reference.put(key, count);
+		insert(key, count);
+	}
+	
+	public void insertKey(T key, int count) {
+		count = reference.getOrDefault(key, 0) + count;
+		reference.put(key, count);
+		insert(key, count);
+	}
+	
+	public TopList<T> clone() {
+		TopList<T> dupObject = new TopList<>(this.size);
+		dupObject.getTop().addAll(this.top);
+		dupObject.getReference().putAll(this.reference);
+		return dupObject;
+	}
+
+	private void insert(T object, int count) {
+		int idx = 0;
+		while (idx < top.size() && reference.get(top.get(idx)) > count) {
+			idx ++;
+		}
+		if (top.contains(object)) {
+			top.remove(object);
+		}
+		if (idx < size) {
+			top.add(idx, object);
+		}
+		if (top.size() > size) {
+			top = top.subList(0, size);
+		}
+	}
+
+	public int getSize() {
+		return size;
+	}
+
+	public void setSize(int size) {
+		this.size = size;
+	}
+
+	public List<T> getTop() {
+		return top;
+	}
+
+	public void setTop(List<T> top) {
+		this.top = top;
+	}
+
+	public Map<T, Integer> getReference() {
+		return reference;
+	}
+
+	public void setReference(Map<T, Integer> reference) {
+		this.reference = reference;
+	}
+
+	public static void main(String[] args) {
+		TopList<String> topKey = new TopList<>(3);
+		topKey.insertKey("1");
+		System.out.println(JsonUtils.Instance.toJson(topKey));
+		topKey.insertKey("2");
+		System.out.println(JsonUtils.Instance.toJson(topKey));
+		topKey.insertKey("3");
+		System.out.println(JsonUtils.Instance.toJson(topKey));
+		topKey.insertKey("4");
+		System.out.println(JsonUtils.Instance.toJson(topKey));
+		topKey.insertKey("4");
+		System.out.println(JsonUtils.Instance.toJson(topKey));
+		topKey.insertKey("1");
+		System.out.println(JsonUtils.Instance.toJson(topKey));
+		topKey.insertKey("4");
+		System.out.println(JsonUtils.Instance.toJson(topKey));
+		
+		TopList<String> topKey2 = topKey.clone();
+		topKey2.insertKey("1");
+		System.out.println(JsonUtils.Instance.toJson(topKey));
+		System.out.println(JsonUtils.Instance.toJson(topKey2));
+	}
+}

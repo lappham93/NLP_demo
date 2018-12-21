@@ -1,0 +1,30 @@
+package com.mit.social.responses;
+
+import java.util.List;
+
+import com.mit.react.entities.ReactStat;
+import com.mit.react.entities.UserStat;
+import com.mit.social.entities.PhotoFeed;
+import com.mit.user.responses.ProfileShortResponse;
+import com.mit.utils.LinkBuilder;
+
+public class SubFeedResponse extends FeedResponse {
+
+	private FeedPhotoResponse photo;
+
+	public SubFeedResponse(PhotoFeed feed, long viewUserId, ProfileShortResponse profile, List<ReactStat> reactStats,
+			FeedPhotoResponse photo, UserStat userStat) {
+		super(feed, viewUserId, profile, reactStats, userStat);
+		this.setRealtimeCommentLink(LinkBuilder.buildCommentSocketLink(photo.getId(), true));
+		this.photo = photo;
+	}
+
+	public FeedPhotoResponse getPhoto() {
+		return photo;
+	}
+
+	public void setPhoto(FeedPhotoResponse photo) {
+		this.photo = photo;
+	}
+
+}

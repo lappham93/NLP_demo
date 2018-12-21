@@ -1,0 +1,72 @@
+package com.mit.atlas.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.common.entities.ActiveTimeDoc;
+
+@Document(collection = "atlas_apikey")
+public class AtlasAPIKey extends ActiveTimeDoc<Long> {
+	@Id
+	private long id;
+	private long appId;
+	private long userId;
+	private String name;
+	private String apiKey;
+	private String secretKey;
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public long getAppId() {
+		return appId;
+	}
+
+	public void setAppId(long appId) {
+		this.appId = appId;
+	}
+
+	public String getApiKey() {
+		return apiKey;
+	}
+
+	public void setApiKey(String apiKey) {
+		this.apiKey = apiKey;
+	}
+
+	public String getSecretKey() {
+		return secretKey;
+	}
+
+	public void setSecretKey(String secretKey) {
+		this.secretKey = secretKey;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	@Override
+	public Long getId() {
+		return id;
+	}
+
+	@Override
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+}

@@ -1,0 +1,82 @@
+package com.mit.controllers;
+
+import com.mit.address.entities.City;
+import com.mit.address.entities.State;
+import com.mit.address.entities.ZipCode;
+import com.mit.address.repositories.CityRepo;
+import com.mit.address.repositories.StateRepo;
+import com.mit.address.repositories.ZipCodeRepo;
+import com.mit.http.ApiResponse;
+import com.mit.utils.ControllerUtils;
+import io.swagger.annotations.ApiOperation;
+import org.apache.commons.lang.BooleanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping(value = "/zipcode")
+public class ZipCodeController {
+	@Autowired
+	private StateRepo stateRepo;
+	@Autowired
+	private CityRepo cityRepo;
+	@Autowired
+	private ZipCodeRepo zipCodeRepo;
+	
+	@ApiOperation(value = "get zipcodes")
+	@RequestMapping(value = "", method = RequestMethod.GET) 
+	public Map<String, List<ZipCode>> getZipCodeList(HttpServletRequest request) {
+		if (request.getCookies() != null) {
+			for (Cookie cookie : request.getCookies()) {
+				if (cookie.getName().equalsIgnoreCase("hasZipCode") && BooleanUtils.toBoolean(cookie.getValue())) {
+					return null;
+				}
+			}
+		}
+		List<State> states = stateRepo.getListActive("US");
+		Map<Long, String> stateMap = new HashMap<>();
+		for (State state: states) {
+			stateMap.put(state.getId(), state.getCode());
+		}
+		Map<String, List<ZipCode>> zipcodeMap = new HashMap<>();
+		List<ZipCode> zipcodeLst = ControllerUtils.getZipCodeLst(request);
+		if (zipcodeLst != null) {
+			for (ZipCode zipcode: zipcodeLst) {
+				String stateCode = stateMap.get(zipcode.getStateId());
+				if (zipcodeMap.get(stateCode) == null) {
+					zipcodeMap.put(stateCode, new LinkedList<>());
+				}
+				zipcodeMap.get(stateCode).add(zipcode);
+			}
+		}
+		return zipcodeMap;
+	}
+
+	@ApiOperation(value = "get cities")
+	@RequestMapping(value = "/state/{stateId}/city", method = RequestMethod.GET)
+	public List<City> getCityList(HttpServletRequest request,
+												  @PathVariable(value = "stateId") long stateId) {
+		List<City> cities = cityRepo.getActiveByStateId(stateId);
+		return cities;
+	}
+
+	@ApiOperation(value = "get cities")
+	@RequestMapping(value = "/city/{cityId}/zipcode", method = RequestMethod.GET)
+	public List<ZipCode> getZipCodeListByCity(HttpServletRequest request,
+										   @PathVariable(value = "cityId") long cityId) {
+		List<ZipCode> zipCodes = zipCodeRepo.getListByCity(cityId);
+		return zipCodes;
+	}
+	
+	@RequestMapping(value = "/search", method = RequestMethod.GET)
+	public ApiResponse<List<ZipCode>> searchZipCode(HttpServletRequest request, @RequestParam(value = "key", required = true) String key) {
+		return new ApiResponse<List<ZipCode>>(zipCodeRepo.search(key));
+	}
+}

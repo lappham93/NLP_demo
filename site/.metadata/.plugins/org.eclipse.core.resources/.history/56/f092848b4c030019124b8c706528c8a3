@@ -1,0 +1,117 @@
+package com.mit.stat.responses;
+
+import java.util.Date;
+
+import com.mit.stat.entities.AppStatTotal;
+import com.mit.stat.enums.TimelineType;
+import com.mit.utils.ZonedDateTimeUtils;
+
+/**
+ * Created by Lap Pham on 6/6/17.
+ */
+public class AppStatResponse {
+    private String statTime;
+    private int timelineType;
+    private String regionId;
+    private int regionType;
+    private String regionName;
+    private long objId;
+    private int objType;
+    private String objName;
+    private AppStatTotal appStatTotal;
+
+    public AppStatResponse(AppStatTotal appStat, String regionName, String objName, int timelineType, Date startTime) {
+        this.timelineType = timelineType;
+        if (timelineType == TimelineType.MINUTE.getValue()) {
+            statTime = ZonedDateTimeUtils.fromDate(startTime).format(ZonedDateTimeUtils.DATE_TIME_MINUTE_FORMAT);
+        } else if (timelineType == TimelineType.HOUR.getValue()) {
+            statTime = ZonedDateTimeUtils.fromDate(startTime).format(ZonedDateTimeUtils.DATE_TIME_HOUR_FORMAT);
+        } else if (timelineType == TimelineType.DAY.getValue()) {
+            statTime = ZonedDateTimeUtils.fromDate(startTime).format(ZonedDateTimeUtils.DATE_FORMAT);
+        } else if (timelineType == TimelineType.WEEK.getValue()) {
+            statTime = ZonedDateTimeUtils.fromDate(startTime).format(ZonedDateTimeUtils.DATE_FORMAT);
+        } else if (timelineType == TimelineType.MONTH.getValue()) {
+            statTime = ZonedDateTimeUtils.fromDate(startTime).format(ZonedDateTimeUtils.MONTH_FORMAT);
+        } else if (timelineType == TimelineType.YEAR.getValue()) {
+            statTime = ZonedDateTimeUtils.fromDate(startTime).format(ZonedDateTimeUtils.YEAR_FORMAT);
+        }
+
+        this.regionName = regionName;
+        this.objName = objName;
+
+        appStatTotal = appStat;
+    }
+
+	public String getStatTime() {
+		return statTime;
+	}
+
+	public void setStatTime(String statTime) {
+		this.statTime = statTime;
+	}
+
+	public int getTimelineType() {
+		return timelineType;
+	}
+
+	public void setTimelineType(int timelineType) {
+		this.timelineType = timelineType;
+	}
+
+	public String getRegionId() {
+		return regionId;
+	}
+
+	public void setRegionId(String regionId) {
+		this.regionId = regionId;
+	}
+
+	public int getRegionType() {
+		return regionType;
+	}
+
+	public void setRegionType(int regionType) {
+		this.regionType = regionType;
+	}
+
+	public String getRegionName() {
+		return regionName;
+	}
+
+	public void setRegionName(String regionName) {
+		this.regionName = regionName;
+	}
+
+	public long getObjId() {
+		return objId;
+	}
+
+	public void setObjId(long objId) {
+		this.objId = objId;
+	}
+
+	public int getObjType() {
+		return objType;
+	}
+
+	public void setObjType(int objType) {
+		this.objType = objType;
+	}
+
+	public String getObjName() {
+		return objName;
+	}
+
+	public void setObjName(String objName) {
+		this.objName = objName;
+	}
+
+	public AppStatTotal getAppStatTotal() {
+		return appStatTotal;
+	}
+
+	public void setAppStatTotal(AppStatTotal appStatTotal) {
+		this.appStatTotal = appStatTotal;
+	}
+
+}

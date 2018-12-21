@@ -1,0 +1,15 @@
+package com.mit.comment.services;
+
+import org.springframework.stereotype.Service;
+
+import com.mit.ai.responses.SentimentPredictResponse;
+import com.mit.comment.bodies.CommentBody;
+
+@Service
+public class SentimentService {
+	
+	public SentimentPredictResponse predict(CommentBody comment) {
+		//TODO
+		return null;
+	}
+}

@@ -1,0 +1,59 @@
+package com.mit.react.responses;
+
+public class ConnectResponse {
+	private boolean isConnected;
+	private int totalConnect;
+	private boolean isRequested;
+	private int totalRequest;
+	private int totalMyConnect;
+
+	public ConnectResponse(boolean isConnected, int totalConnect, boolean isRequested, int totalRequest, int totalMyConnect) {
+		super();
+		this.isConnected = isConnected;
+		this.totalConnect = totalConnect;
+		this.isRequested = isRequested;
+		this.totalRequest = totalRequest;
+		this.totalMyConnect = totalMyConnect;
+	}
+
+	public boolean isConnected() {
+		return isConnected;
+	}
+
+	public void setConnected(boolean isConnected) {
+		this.isConnected = isConnected;
+	}
+
+	public int getTotalConnect() {
+		return totalConnect;
+	}
+
+	public void setTotalConnect(int totalConnect) {
+		this.totalConnect = totalConnect;
+	}
+
+	public boolean isRequested() {
+		return isRequested;
+	}
+
+	public void setRequested(boolean isRequested) {
+		this.isRequested = isRequested;
+	}
+
+	public int getTotalRequest() {
+		return totalRequest;
+	}
+
+	public void setTotalRequest(int totalRequest) {
+		this.totalRequest = totalRequest;
+	}
+
+	public int getTotalMyConnect() {
+		return totalMyConnect;
+	}
+
+	public void setTotalMyConnect(int totalMyConnect) {
+		this.totalMyConnect = totalMyConnect;
+	}
+
+}

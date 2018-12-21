@@ -1,0 +1,17 @@
+package com.mit.navigation.entities;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.navigation.enums.IndoorLocationType;
+
+public class WCLocation extends IndoorLocation {
+	public static final int TYPE = IndoorLocationType.WC.getValue();
+	
+	public WCLocation() {
+		super(TYPE);
+	}
+
+	@Override
+	public int getObjectType() {
+		return ObjectType.WC.getValue();
+	}
+}

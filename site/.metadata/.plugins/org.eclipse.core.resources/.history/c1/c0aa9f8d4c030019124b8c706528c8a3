@@ -1,0 +1,63 @@
+package com.mit.banner.repositories;
+
+import com.mit.banner.entities.Banner;
+import com.mit.common.entities.ObjectRef;
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.http.exception.SequenceException;
+import com.mit.seq.repositories.SeqIdRepo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+/**
+ * Created by Lap Pham on 2/21/17.
+ */
+
+@Repository
+public class BannerRepo extends TimeDocRepo<Banner>{
+    @Autowired
+    MongoOperations mongoOps;
+
+    @Autowired
+    SeqIdRepo seqIdRepo;
+    
+    public Banner getById(long id) {
+    	return mongoOps.findById(id, Banner.class);
+    }
+    
+    public List<Banner> getList() {
+    	Query query = new Query(Criteria.where("isDeleted").is(false));
+		Sort sort = new Sort(new Order(Direction.DESC, "displayOrder"), new Order(Direction.DESC, "updatedDate"));
+		List<Banner> cates = mongoOps.find(query.with(sort), Banner.class);
+		return cates;
+    }
+    
+    public List<Banner> getListActive() {
+    	Query query = new Query(Criteria.where("isDeleted").is(false).and("isActive").is(true));
+    	Sort sort = new Sort(new Order(Direction.DESC, "displayOrder"), new Order(Direction.DESC, "updatedDate"));
+		List<Banner> cates = mongoOps.find(query.with(sort), Banner.class);
+		return cates;
+    }
+
+	public List<Banner> getListActiveByObjectRef(ObjectRef objectRef) {
+		Query query = new Query(Criteria.where("objectRef.type").is(objectRef.getType()).and("objectRef.id").is(objectRef.getId()).and("isDeleted").is(false).and("isActive").is(true));
+		Sort sort = new Sort(new Order(Direction.DESC, "displayOrder"), new Order(Direction.DESC, "updatedDate"));
+		List<Banner> cates = mongoOps.find(query.with(sort), Banner.class);
+		return cates;
+	}
+
+    public void delete(long id) throws SequenceException {
+		Query query = new Query(Criteria.where("_id").is(id));
+		Update update = new Update();
+		update.set("isDeleted", true);
+		mongoOps.findAndModify(query, update, Banner.class);
+	}
+}

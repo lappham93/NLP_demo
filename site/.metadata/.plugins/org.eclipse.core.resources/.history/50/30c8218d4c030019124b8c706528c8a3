@@ -1,0 +1,106 @@
+package com.mit.navigation.entities;
+
+import com.mit.map.entities.Coordinate;
+import com.mit.map.entities.Point;
+import com.mit.map.entities.PointLonLatConversion;
+import com.mit.utils.MathUtils;
+
+public class Mapbox implements PointLonLatConversion{
+	private String geojson;
+	private String geojsonFull;
+	private double rotate;
+	private double scale;
+	private double offset;
+	private Coordinate center;
+	private double zoom;
+	private double padding_left;
+	private double padding_top;
+
+	public String getGeojson() {
+		return geojson;
+	}
+
+	public void setGeojson(String geojson) {
+		this.geojson = geojson;
+	}
+
+	public String getGeojsonFull() {
+		return geojsonFull;
+	}
+
+	public void setGeojsonFull(String geojsonFull) {
+		this.geojsonFull = geojsonFull;
+	}
+
+	public double getRotate() {
+		return rotate;
+	}
+
+	public void setRotate(double rotate) {
+		this.rotate = rotate;
+	}
+
+	public double getScale() {
+		return scale;
+	}
+
+	public void setScale(double scale) {
+		this.scale = scale;
+	}
+
+	public double getOffset() {
+		return offset;
+	}
+
+	public void setOffset(double offset) {
+		this.offset = offset;
+	}
+
+	public Coordinate getCenter() {
+		return center;
+	}
+
+	public void setCenter(Coordinate center) {
+		this.center = center;
+	}
+
+	public double getZoom() {
+		return zoom;
+	}
+
+	public void setZoom(double zoom) {
+		this.zoom = zoom;
+	}
+
+	public double getPadding_left() {
+		return padding_left;
+	}
+
+	public void setPadding_left(double padding_left) {
+		this.padding_left = padding_left;
+	}
+
+	public double getPadding_top() {
+		return padding_top;
+	}
+
+	public void setPadding_top(double padding_top) {
+		this.padding_top = padding_top;
+	}
+
+	@Override
+	public Point lonLat2Point(Coordinate coordinate) {
+		Point worldPoint = coordinate.worldCoordinate();
+		Point centerPoint = center.worldCoordinate();
+		double[] tmp = new double[]{worldPoint.getX(), worldPoint.getY()};
+		tmp = MathUtils.translate2D(new double[]{centerPoint.getX(), centerPoint.getY()}, tmp);
+		return null;
+	}
+
+	@Override
+	public Coordinate point2LonLat(Point point) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

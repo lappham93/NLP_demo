@@ -1,0 +1,43 @@
+package com.mit.data.insert;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.mit.user.entities.Admin;
+import com.mit.user.entities.AdminProfile;
+import com.mit.user.enums.AdminType;
+import com.mit.user.repositories.AdminProfileRepo;
+import com.mit.user.repositories.AdminRepo;
+import com.mit.utils.AuthenticateUtils;
+
+@Service
+public class AdminUserImport {
+	@Autowired
+	private AdminRepo adminRepo;
+	@Autowired
+	private AdminProfileRepo adminProfileRepo;
+	
+	public void insertSystemAdminAccount() {
+		try {
+			AdminProfile ap = new AdminProfile(AdminType.SYSTEM_ADMIN.getValue());
+			ap.setStatus(1);
+			ap.setFirstName("Spabee");
+			ap.setLastName("Admin");
+			adminProfileRepo.save(ap);
+			
+			Admin admin = new Admin();
+			admin.setUserName("spabeeAdmin");
+			admin.setProfileId(ap.getId());
+			String salt = RandomStringUtils.random(10);
+			String password = "spabeeAdmin";
+			admin.setSalt(salt);
+			admin.setPassword(AuthenticateUtils.hashPassword(password, salt));
+			admin.setStatus(1);
+			adminRepo.save(admin);
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+	}
+
+}

@@ -1,0 +1,19 @@
+package com.mit.social.responses;
+
+import com.mit.asset.entities.PhotoInfo;
+import com.mit.asset.responses.PhotoResponse;
+
+public class FeedPhotoResponse extends PhotoResponse {
+
+	private long feedItemId;
+
+	public FeedPhotoResponse(PhotoInfo photo) {
+		super(photo);
+		feedItemId = photo.getId();
+	}
+
+	public long getFeedItemId() {
+		return feedItemId;
+	}
+
+}

@@ -1,0 +1,32 @@
+package com.mit.banner.responses;
+
+import com.mit.asset.entities.PhotoInfo;
+import com.mit.banner.entities.BoothBanner;
+
+public class BoothBannerResponse extends BannerResponse{
+	private long eventId;
+	private long boothId;
+	
+	public BoothBannerResponse(BoothBanner banner, PhotoInfo photo) {
+		super(banner, photo);
+		this.eventId = banner.getEventId();
+		this.boothId = banner.getBoothId();
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+	public long getBoothId() {
+		return boothId;
+	}
+
+	public void setBoothId(long boothId) {
+		this.boothId = boothId;
+	}
+
+}

@@ -1,0 +1,65 @@
+package com.mit.navigation.entities;
+
+import com.mit.common.entities.ActiveTimeDoc;
+import com.mit.map.entities.Point;
+
+/**
+ * Created by Hung on 8/25/2017.
+ */
+public class WayPoint extends ActiveTimeDoc<Long> {
+    private long id;
+    private long localId;
+    private long eventId;
+    private long floorId;
+    private Point point;
+    private Point pxPoint;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public long getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(long eventId) {
+        this.eventId = eventId;
+    }
+
+    public long getFloorId() {
+        return floorId;
+    }
+
+    public void setFloorId(long floorId) {
+        this.floorId = floorId;
+    }
+
+    public Point getPoint() {
+        return point;
+    }
+
+    public void setPoint(Point point) {
+        this.point = point;
+    }
+
+    public Point getPxPoint() {
+        return pxPoint;
+    }
+
+    public void setPxPoint(Point pxPoint) {
+        this.pxPoint = pxPoint;
+    }
+
+	public long getLocalId() {
+		return localId;
+	}
+
+	public void setLocalId(long localId) {
+		this.localId = localId;
+	}
+    
+}

@@ -1,0 +1,25 @@
+package com.mit.social.responses;
+
+import java.util.List;
+
+public class NewFeedListResponse {
+	private boolean isAppended;
+	private List<FeedResponse> feeds;
+
+	public boolean isAppended() {
+		return isAppended;
+	}
+
+	public void setAppended(boolean isAppended) {
+		this.isAppended = isAppended;
+	}
+
+	public List<FeedResponse> getFeeds() {
+		return feeds;
+	}
+
+	public void setFeeds(List<FeedResponse> feeds) {
+		this.feeds = feeds;
+	}
+
+}

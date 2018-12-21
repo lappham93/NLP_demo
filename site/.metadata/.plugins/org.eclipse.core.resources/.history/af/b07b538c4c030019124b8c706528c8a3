@@ -1,0 +1,32 @@
+package com.mit.react.enums;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.mit.react.entities.Comment;
+
+public enum CommentType {
+	UNKNOW(0), MESSAGE(1), PHOTO(2), STICKER(3);
+
+	private int value;
+
+	private CommentType(int value) {
+		this.value = value;
+	}
+
+	public int getValue() {
+		return this.value;
+	}
+	
+	public static CommentType getCommentType(Comment comment) {
+		if (comment == null) {
+			return UNKNOW;
+		}
+		if (!StringUtils.isEmpty(comment.getSticker())) {
+			return STICKER;
+		}
+		if (comment.getPhotoCmtId() > 0) {
+			return PHOTO;
+		}
+		return MESSAGE;
+	}
+}

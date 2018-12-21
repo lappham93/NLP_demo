@@ -1,0 +1,13 @@
+package com.mit.sensor.repositories;
+
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.sensor.entities.UserRouteMemory;
+import org.springframework.stereotype.Repository;
+
+/**
+ * Created by Hung on 12/11/2017.
+ */
+
+@Repository
+public class UserRouteMemoryRepo extends TimeDocRepo<UserRouteMemory> {
+}

@@ -1,0 +1,41 @@
+package com.mit.react.bodies;
+
+import com.mit.common.entities.ObjectRef;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel
+public class GoingBody {
+	private long userId;
+	private ObjectRef objectRef;
+	private int type;
+
+	@ApiModelProperty(hidden = true)
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	@ApiModelProperty(required = true, value = "type: EVENT(4)")
+	public ObjectRef getObjectRef() {
+		return objectRef;
+	}
+
+	public void setObjectRef(ObjectRef objectRef) {
+		this.objectRef = objectRef;
+	}
+
+	@ApiModelProperty(required = true, value = "GOING(1), CANCEL(2)")
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+}

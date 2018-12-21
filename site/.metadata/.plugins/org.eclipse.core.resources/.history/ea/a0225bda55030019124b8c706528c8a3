@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+    layout:decorator="location_layout">
+<head>
+</head>
+<body>
+<div layout:fragment="content" th:with="hasLocation = ${locations != null and #lists.size(locations) > 0}">
+	<div th:if="${not(hasLocation)}">
+		<div class="panel panel-flat">
+			<div class="panel-body flow">
+				<div th:replace="fragments/fragments :: map-flow"></div>
+			</div>
+		</div>
+	</div>
+	<div class="panel panel-flat" th:if="${hasLocation}">
+		<div class="panel-body flow">
+			<div class="col-md-12 location-list-item" th:each="location:${locations}" th:onclick="'window.location.replace(\'' + ${locations_item_url} + '/' + ${location.idRef} + '\')'">
+				<div class="col-md-8 location-list-name">
+					<h4 style="margin: 0px;"><strong th:text="${location.name}"></strong></h4>
+				</div>
+				<div class="pull-right location-list-id">
+					<span th:text="${location.idRef}"></span>
+				</div>
+				<div class="col-md-12 location-list-address">
+					<span th:text="${location.address}"></span>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,151 @@
+package com.mit.navigation.responses;
+
+import com.mit.event.responses.EventShortResponse;
+import com.mit.navigation.entities.BoothProduct;
+import com.mit.react.entities.Rating;
+import com.mit.react.entities.ReactStat;
+import com.mit.react.enums.ReactType;
+import com.mit.react.responses.ProductCommentResponse;
+import com.mit.utils.MathUtils;
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
+
+/**
+ * Created by Lap Pham on 6/13/17.
+ */
+
+public class BoothProductResponse extends BoothProductShortResponse {
+    private int totalLike;
+    private boolean isLiked;
+    private int totalView;
+    private boolean isViewed;
+    private int totalComment;
+    private ProductCommentResponse lastComment;
+    private int totalRating;
+    private double ratingPoint;
+    private boolean isRated;
+    private double myRatingPoint;
+    private EventShortResponse event;
+
+    public BoothProductResponse() {
+    }
+
+    public BoothProductResponse(BoothProduct boothProduct, BoothShortResponse boothShortResponse, List<ReactStat> reactStats, long userId,
+                                ProductCommentResponse lastComment, Rating rating, EventShortResponse event) {
+        super(boothProduct, boothShortResponse);
+
+        if (!CollectionUtils.isEmpty(reactStats)) {
+            for (ReactStat stat : reactStats) {
+                int reactType = stat.getReactType();
+                if (reactType == ReactType.LIKE.getValue()) {
+                    this.totalLike = stat.getTotal();
+                    this.isLiked = stat.getUserIds() != null && stat.getUserIds().contains(userId);
+                } else if (reactType == ReactType.VIEW.getValue()) {
+                    this.totalView = stat.getTotal();
+                    this.isViewed = stat.getUserIds() != null && stat.getUserIds().contains(userId);
+                } else if (reactType == ReactType.COMMENT.getValue()) {
+                    this.totalComment = stat.getTotal();
+                } else if (reactType == ReactType.RATING.getValue()) {
+                    this.totalRating = stat.getTotal();
+                    this.ratingPoint = MathUtils.round((double) stat.getTotalRatingPoint() / totalRating, 1);
+                }
+            }
+        }
+        this.lastComment = lastComment;
+        if (rating != null) {
+            this.isRated = true;
+            this.myRatingPoint = rating.getPoint();
+        }
+        this.event = event;
+    }
+
+    public int getTotalLike() {
+        return totalLike;
+    }
+
+    public void setTotalLike(int totalLike) {
+        this.totalLike = totalLike;
+    }
+
+    public boolean isLiked() {
+        return isLiked;
+    }
+
+    public void setLiked(boolean liked) {
+        isLiked = liked;
+    }
+
+    public int getTotalView() {
+        return totalView;
+    }
+
+    public void setTotalView(int totalView) {
+        this.totalView = totalView;
+    }
+
+    public boolean isViewed() {
+        return isViewed;
+    }
+
+    public void setViewed(boolean viewed) {
+        isViewed = viewed;
+    }
+
+    public int getTotalComment() {
+        return totalComment;
+    }
+
+    public void setTotalComment(int totalComment) {
+        this.totalComment = totalComment;
+    }
+
+    public ProductCommentResponse getLastComment() {
+        return lastComment;
+    }
+
+    public void setLastComment(ProductCommentResponse lastComment) {
+        this.lastComment = lastComment;
+    }
+
+    public int getTotalRating() {
+        return totalRating;
+    }
+
+    public void setTotalRating(int totalRating) {
+        this.totalRating = totalRating;
+    }
+
+    public double getRatingPoint() {
+        return ratingPoint;
+    }
+
+    public void setRatingPoint(double ratingPoint) {
+        this.ratingPoint = ratingPoint;
+    }
+
+    public boolean isRated() {
+        return isRated;
+    }
+
+    public void setRated(boolean rated) {
+        isRated = rated;
+    }
+
+    public double getMyRatingPoint() {
+        return myRatingPoint;
+    }
+
+    public void setMyRatingPoint(double myRatingPoint) {
+        this.myRatingPoint = myRatingPoint;
+    }
+
+	public EventShortResponse getEvent() {
+		return event;
+	}
+
+	public void setEvent(EventShortResponse event) {
+		this.event = event;
+	}
+    
+}

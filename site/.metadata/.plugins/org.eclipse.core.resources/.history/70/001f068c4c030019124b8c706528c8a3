@@ -1,0 +1,34 @@
+package com.mit.sensor.bodies;
+
+/**
+ * Created by Hung on 12/3/2017.
+ */
+public class RFBody {
+    private double elapsedTime;
+    private String bssid;
+    private int rssi;
+
+    public double getElapsedTime() {
+        return elapsedTime;
+    }
+
+    public void setElapsedTime(double elapsedTime) {
+        this.elapsedTime = elapsedTime;
+    }
+
+    public String getBssid() {
+        return bssid;
+    }
+
+    public void setBssid(String bssid) {
+        this.bssid = bssid;
+    }
+
+    public int getRssi() {
+        return rssi;
+    }
+
+    public void setRssi(int rssi) {
+        this.rssi = rssi;
+    }
+}

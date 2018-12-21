@@ -1,0 +1,34 @@
+package com.mit.map.entities;
+
+import java.util.Set;
+
+public class CandidateLocation {
+	private Point location;
+	private boolean enable;
+	private Set<String> collisionTracks;
+
+	public Point getLocation() {
+		return location;
+	}
+
+	public void setLocation(Point location) {
+		this.location = location;
+	}
+
+	public boolean isEnable() {
+		return enable;
+	}
+
+	public void setEnable(boolean enable) {
+		this.enable = enable;
+	}
+
+	public Set<String> getCollisionTracks() {
+		return collisionTracks;
+	}
+
+	public void setCollisionTracks(Set<String> collisionTracks) {
+		this.collisionTracks = collisionTracks;
+	}
+
+}

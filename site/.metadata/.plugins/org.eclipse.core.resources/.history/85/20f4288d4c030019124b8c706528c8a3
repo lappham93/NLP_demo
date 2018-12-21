@@ -1,0 +1,36 @@
+package com.mit.navigation.bodies;
+
+import com.mit.map.entities.Point;
+import com.mit.navigation.entities.WayPoint;
+
+/**
+ * Created by Hung on 8/28/2017.
+ */
+public class WayPointBody {
+    private long floorId;
+    private Point point;
+
+    public long getFloorId() {
+        return floorId;
+    }
+
+    public void setFloorId(long floorId) {
+        this.floorId = floorId;
+    }
+
+    public Point getPoint() {
+        return point;
+    }
+
+    public void setPoint(Point point) {
+        this.point = point;
+    }
+
+    public WayPoint toWayPoint() {
+        WayPoint wayPoint = new WayPoint();
+        wayPoint.setFloorId(getFloorId());
+        wayPoint.setPoint(getPoint());
+
+        return wayPoint;
+    }
+}

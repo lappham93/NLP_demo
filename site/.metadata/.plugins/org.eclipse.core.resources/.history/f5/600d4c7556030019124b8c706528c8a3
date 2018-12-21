@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+	layout:decorator="layout">
+<head>
+	<script type="text/javascript" th:src="${resources_path} + '/js/app/mapbox.js?201810081700'"></script>
+	<script type="text/javascript" th:src="${resources_path} + '/js/app/home.js?201804131000'"></script>
+</head>
+<body>
+	<div layout:fragment="content">
+		<div class="col-sm-12">
+			<div id='mapId'></div>
+			<div id='formId' class="panel panel-flat">
+				<div class="panel-heading" style="padding-bottom: 0px;">
+					<span class="form-header"><a onclick="selectTab(1)" id="tab1Select">Your location</a></span>
+					<span class="form-header"><a onclick="selectTab(2)" id="tab2Select">Draw border</a></span>
+				</div>
+				<form id="tab1" class="form-horizontal form-body">
+					<!-- <div class="form-note">
+						This is the building or other venue where you place your floor plans. Don't create copies of the same location! You can place multiple floor plans into one location.
+					</div>
+					<div th:replace="fragments/fragments :: form_error_2"></div>
+					<div th:replace="fragments/fragments :: form_success_2"></div>
+					<div th:replace="fragments/fragments :: loader"></div>
+					<div class="form-group">
+						<label class="col-lg-3 control-label">Name: <span class="text-danger">(*)</span></label>
+						<div class="col-lg-9">
+							<input type="text" id="nameAddIptId" class="form-control" placeholder="Name" />
+							<div class="input-hint">
+								Be as descriptive and accurate as possible, e.g. My Company Inc. / ABC Shopping Mall
+							</div>
+						</div>
+					</div> -->
+					
+					<div class="form-group">
+						<label class="col-lg-3 control-label">Address: </label>
+						<div class="col-lg-9">
+							<input type="text" id="addressAddIptId" class="form-control" placeholder="Address"/>
+							<div class="input-hint">
+								You can drag the marker on the map to choose the address or use the text field for searching.
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-lg-offset-3 col-lg-9 suggest-list" id="suggest-location" style="display: none">
+							<ul>
+							</ul>
+						</div>
+					</div>
+					
+					<!-- <div class="form-group">
+						<label class="col-lg-3 control-label">Description: </label>
+						<div class="col-lg-9">
+							<input type="text" id="descAddIptId" class="form-control" placeholder="Description" />
+						</div>
+					</div> -->
+					
+					<div class="form-group">
+						<label class="col-lg-3 control-label">Latitude: </label>
+						<div class="col-lg-9">
+							<input type="number" min="-90" max="90" step="any" id="latAddIptId"  class="form-control" placeholder="latitude"/>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label class="col-lg-3 control-label">Longitude: </label>
+						<div class="col-lg-9">
+							<input type="number" min="-180" max="180" step="any" id="lonAddIptId"  class="form-control" placeholder="longitude"/>
+						</div>
+					</div>
+					
+					<!-- <div class="form-separator"></div>
+					<div class="text-left" style="float:left">
+						<button class="btn btn-default btn-rounded btn-submit" id="cancelBtnId" th:onclick="'window.location.replace(\'' + ${locations_url} + '\'); return false'"> Cancel</button>
+					</div>
+					<div class="text-right">
+						<button class="btn btn-primary btn-rounded btn-submit" id="addLocationBtnId" disabled="disabled"> Create location</button>
+					</div> -->
+				</form>
+				<form id="tab2" class="form-horizontal form-body">
+					<div class="form-group">
+						<label class="col-lg-3 control-label">Border: </label>
+						<div class="col-lg-9">
+							<textarea rows="5" class="form-control" required="required" id="borderDataId" placeholder='data'></textarea>
+							<div class="input-hint">
+								Import border data. Example: [[lat, long], [lat, long], [lat, long]]
+							</div>
+						</div>
+						
+					</div>
+					<div class="form-separator"></div>
+					<div class="text-center">
+						<button class="btn btn-primary btn-rounded btn-submit" >Draw</button>
+					</div> 
+				</form>
+				<div class="text-center">
+					<a onclick="hideForm()">Hide</a>
+				</div>
+			</div>
+			<div id='hideFormId' class="panel panel-flat text-center">
+				<a onclick="showForm()">Show</a>
+			</div>
+			
+			<div class="col-sm-offset-2 col-sm-12" id="actionBtnId">
+				<select id="mapStyleOptionId" data-placeholder="Select style" style="background: #fff">
+					<option selected="selected" value="satelite">Mapbox Sat.</option>
+					<!-- <option value="streets">Mapbox</option> -->
+				</select>
+				<button id="yourLocationBtnId" data-toggle="modal" data-popup="tooltip" title="Go to my location"><i class="icon-googleplus5"></i></button>
+			</div>
+		</div>
+		
+	</div>
+</body>
+</html>

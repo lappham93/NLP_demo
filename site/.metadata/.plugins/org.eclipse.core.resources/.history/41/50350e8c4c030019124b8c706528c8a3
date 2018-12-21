@@ -1,0 +1,96 @@
+package com.mit.schedule.task;
+
+import java.util.Calendar;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import com.mit.http.context.ApplicationContextProvider;
+import com.mit.stat.services.StatService;
+
+public class UpdateAppStat {
+	private int fixedType; //calendar type
+	private int fixedValue;
+	private Calendar currTime;
+	
+	public UpdateAppStat(int fixedType, int fixedValue) {
+		this.fixedType = fixedType;
+		this.fixedValue = fixedValue;
+		Calendar now = Calendar.getInstance();
+		now.set(fixedType, fixedValue);
+		if (fixedType < Calendar.SECOND) {
+			now.set(Calendar.SECOND, 0);
+		}
+		if (fixedType < Calendar.MINUTE) {
+			now.set(Calendar.MINUTE, 0);
+		}
+		if (fixedType < Calendar.HOUR_OF_DAY) {
+			now.set(Calendar.HOUR_OF_DAY, 10);
+		}
+		if (fixedType < Calendar.DATE) {
+			now.set(Calendar.DATE, 1);
+		}
+		if (fixedType < Calendar.MONTH) {
+			now.set(Calendar.MONTH, 1);
+		}
+		currTime = now;
+	}
+	
+	public UpdateAppStat(int fixedType, int fixedSec, Calendar currTime) {
+		this.fixedType = fixedType;
+		this.fixedValue = fixedSec;
+		this.currTime = currTime;
+	}
+	
+	public void start() {
+		Timer timer = new Timer();
+		timer.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				onProcess();
+				currTime.add(outerType(), 1);
+				new UpdateAppStat(fixedType, fixedValue, currTime).start();
+			}
+		}, currTime.getTime());
+	}
+	
+	public int outerType() {
+		if (fixedType == Calendar.SECOND) {
+			return Calendar.MINUTE;
+		}
+		if (fixedType == Calendar.MINUTE) {
+			return Calendar.HOUR_OF_DAY;
+		}
+		if (fixedType == Calendar.HOUR_OF_DAY) {
+			return Calendar.DATE;
+		}
+		if (fixedType == Calendar.DATE) {
+			return Calendar.MONTH;
+		}
+		if (fixedType == Calendar.MONTH) {
+			return Calendar.YEAR;
+		}
+		return 0;
+	}
+	
+	public void onProcess() {
+		StatService statService = ApplicationContextProvider.getApplicationContext().getBean(StatService.class);
+		statService.updateStat();
+	}
+
+	public int getFixedDay() {
+		return fixedValue;
+	}
+
+	public void setFixedDay(int fixedDay) {
+		this.fixedValue = fixedDay;
+	}
+	
+	public int getFixedType() {
+		return fixedType;
+	}
+
+	public void setFixedType(int fixedType) {
+		this.fixedType = fixedType;
+	}
+
+}

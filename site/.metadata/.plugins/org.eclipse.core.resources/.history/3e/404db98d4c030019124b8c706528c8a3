@@ -1,0 +1,27 @@
+package com.mit.atlas.repositories;
+
+import java.util.List;
+
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import com.mit.atlas.entities.AtlasLocation;
+import com.mit.common.repositories.ActiveTimeDocRepo;
+
+@Repository
+public class AtlasLocationRepo extends ActiveTimeDocRepo<AtlasLocation> {
+	
+	public AtlasLocation getByIdRef(String idRef, long userId) {
+		return mongoOps.findOne(new Query(initCriteria().and("idRef").is(idRef).and("userId").is(userId)), entityClass);
+	}
+	
+	public List<AtlasLocation> getListByUser(long userId) {
+		return mongoOps.find(new Query(initCriteria().and("userId").is(userId)), entityClass);
+	}
+	
+	public void deleteLocation(long userId, String locationId) {
+		mongoOps.findAndModify(new Query(Criteria.where("userId").is(userId).and("idRef").is(locationId)), new Update().set("isActive", false).set("isDeleted", true), entityClass);
+	}
+}

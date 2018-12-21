@@ -1,0 +1,25 @@
+package com.mit.navigation.enums;
+
+
+public enum SortOption {
+	DEFAULT(0), AZ(1), ZA(2), ONLINE(3), DISTANCE(4), TIME(5);
+	
+	private int value;
+	
+	private SortOption(int value) {
+		this.value = value;
+	}
+
+	public int getValue() {
+		return value;
+	}
+	
+	public static SortOption get(int value) {
+		for (SortOption skuSortOption: values()) {
+			if (skuSortOption.getValue() == value) {
+				return skuSortOption;
+			}
+		}
+		return DEFAULT;
+	}
+}

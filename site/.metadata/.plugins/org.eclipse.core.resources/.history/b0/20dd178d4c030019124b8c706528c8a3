@@ -1,0 +1,15 @@
+package com.mit.navigation.enums;
+
+public enum PathDirection {
+	STRAIGHT(0), LEFT(1), RIGHT(2), SLIGHT_LEFT(3), SLIGHT_RIGHT(4);
+	
+	int value;
+	
+	private PathDirection(int value) {
+		this.value = value;
+	}
+
+	public int getValue() {
+		return value;
+	}
+}

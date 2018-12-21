@@ -1,0 +1,106 @@
+package com.mit.sensor.entities;
+
+import com.mit.common.entities.ActiveTimeDoc;
+import com.mit.map.entities.Point;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.List;
+
+/**
+ * Created by Hung on 8/25/2017.
+ */
+
+@Document(collection = "route")
+public class Route extends ActiveTimeDoc<Long> {
+    private long id;
+    private long floorId;
+    private Point startPoint;
+    private Point endPoint;
+    private double startTime;
+    private double endTime;
+    private List<CheckedWayPoint> checkedWayPoints;
+    private List<Long> files;
+    private long accCalibFile;
+    private long magCalibFile;
+
+    @Override
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public long getFloorId() {
+        return floorId;
+    }
+
+    public void setFloorId(long floorId) {
+        this.floorId = floorId;
+    }
+
+    public Point getStartPoint() {
+        return startPoint;
+    }
+
+    public void setStartPoint(Point startPoint) {
+        this.startPoint = startPoint;
+    }
+
+    public Point getEndPoint() {
+        return endPoint;
+    }
+
+    public void setEndPoint(Point endPoint) {
+        this.endPoint = endPoint;
+    }
+
+    public double getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(double startTime) {
+        this.startTime = startTime;
+    }
+
+    public double getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(double endTime) {
+        this.endTime = endTime;
+    }
+
+    public List<CheckedWayPoint> getCheckedWayPoints() {
+        return checkedWayPoints;
+    }
+
+    public void setCheckedWayPoints(List<CheckedWayPoint> checkedWayPoints) {
+        this.checkedWayPoints = checkedWayPoints;
+    }
+
+    public List<Long> getFiles() {
+        return files;
+    }
+
+    public void setFiles(List<Long> files) {
+        this.files = files;
+    }
+
+    public long getMagCalibFile() {
+        return magCalibFile;
+    }
+
+    public void setMagCalibFile(long magCalibFile) {
+        this.magCalibFile = magCalibFile;
+    }
+
+    public long getAccCalibFile() {
+        return accCalibFile;
+    }
+
+    public void setAccCalibFile(long accCalibFile) {
+        this.accCalibFile = accCalibFile;
+    }
+}

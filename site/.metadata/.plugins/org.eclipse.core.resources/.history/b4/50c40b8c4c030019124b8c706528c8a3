@@ -1,0 +1,43 @@
+package com.mit.sdk.bodies;
+
+import com.mit.map.entities.Point;
+
+public class RouteBody {
+	private Object fromFloorId;
+	private Point fromPoint;
+	private Object toFloorId;
+	private Point toPoint;
+
+	public Object getFromFloorId() {
+		return fromFloorId;
+	}
+
+	public void setFromFloorId(Object fromFloorId) {
+		this.fromFloorId = fromFloorId;
+	}
+
+	public Point getFromPoint() {
+		return fromPoint;
+	}
+
+	public void setFromPoint(Point fromPoint) {
+		this.fromPoint = fromPoint;
+	}
+
+	public Object getToFloorId() {
+		return toFloorId;
+	}
+
+	public void setToFloorId(Object toFloorId) {
+		this.toFloorId = toFloorId;
+	}
+
+	public Point getToPoint() {
+		return toPoint;
+	}
+
+	public void setToPoint(Point toPoint) {
+		this.toPoint = toPoint;
+	}
+
+}

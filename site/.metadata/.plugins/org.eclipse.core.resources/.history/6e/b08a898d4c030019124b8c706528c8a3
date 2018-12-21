@@ -1,0 +1,177 @@
+package com.mit.blog.responses;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+
+import org.springframework.util.CollectionUtils;
+
+import com.mit.blog.entities.Blog;
+import com.mit.common.enums.ObjectType;
+import com.mit.utils.LinkBuilder;
+import com.mit.utils.MIdNoise;
+
+public class BlogResponse {
+	private String id;
+	private String categoryId;
+	private BlogCategoryResponse category;
+	private String author;
+	private String title;
+	private String description;
+	private String content;
+	private String thumb;
+	private List<String> otherPhotos;
+	private String createdTime;
+	private String updatedTime;
+	private String day;
+	private String month;
+	private int views;
+	private boolean isActive;
+	
+	public BlogResponse(Blog blog, BlogCategoryResponse category) {
+		this.id = MIdNoise.enNoiseLId(blog.getId());
+		this.categoryId = MIdNoise.enNoiseLId(blog.getCategoryId());
+		this.category = category;
+		this.author = blog.getAuthor();
+		this.description = blog.getDescription();
+		this.title = blog.getTitle();
+		this.content = blog.getContent();
+		this.thumb = LinkBuilder.buildPhotoLink(blog.getThumb(), ObjectType.BANNER.getLowerName());
+		if (!CollectionUtils.isEmpty(blog.getOtherPhotos())) {
+			this.otherPhotos = new LinkedList<>();
+			blog.getOtherPhotos().forEach(t -> this.otherPhotos.add(LinkBuilder.buildPhotoLink(t, ObjectType.BANNER.getLowerName())));
+		}
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(blog.getCreatedDate());
+		this.day = calendar.get(Calendar.DAY_OF_MONTH) + "";
+		this.month = calendar.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault());
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+		this.createdTime = sdf.format(blog.getCreatedDate());
+		this.updatedTime = sdf.format(blog.getUpdatedDate());
+		this.views = blog.getViews();
+		this.isActive = blog.isActive();
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getCategoryId() {
+		return categoryId;
+	}
+
+	public void setCategoryId(String categoryId) {
+		this.categoryId = categoryId;
+	}
+
+	public BlogCategoryResponse getCategory() {
+		return category;
+	}
+
+	public void setCategory(BlogCategoryResponse category) {
+		this.category = category;
+	}
+
+	public String getAuthor() {
+		return author;
+	}
+
+	public void setAuthor(String author) {
+		this.author = author;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getContent() {
+		return content;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+
+	public String getThumb() {
+		return thumb;
+	}
+
+	public void setThumb(String thumb) {
+		this.thumb = thumb;
+	}
+
+	public List<String> getOtherPhotos() {
+		return otherPhotos;
+	}
+
+	public void setOtherPhotos(List<String> otherPhotos) {
+		this.otherPhotos = otherPhotos;
+	}
+
+	public String getCreatedTime() {
+		return createdTime;
+	}
+
+	public void setCreatedTime(String createdTime) {
+		this.createdTime = createdTime;
+	}
+
+	public String getUpdatedTime() {
+		return updatedTime;
+	}
+
+	public void setUpdatedTime(String updatedTime) {
+		this.updatedTime = updatedTime;
+	}
+
+	public String getDay() {
+		return day;
+	}
+
+	public void setDay(String day) {
+		this.day = day;
+	}
+
+	public String getMonth() {
+		return month;
+	}
+
+	public void setMonth(String month) {
+		this.month = month;
+	}
+
+	public int getViews() {
+		return views;
+	}
+
+	public void setViews(int views) {
+		this.views = views;
+	}
+
+	public boolean isActive() {
+		return isActive;
+	}
+
+	public void setActive(boolean isActive) {
+		this.isActive = isActive;
+	}
+
+}

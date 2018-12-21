@@ -1,0 +1,34 @@
+App.formObject.formEles = {
+		name: ["#nameAddIptId", App.formEleType.INPUT],
+		desc: ["#descAddIptId", App.formEleType.INPUT],
+}
+App.formObject.formId = '#addAppFrmId';
+App.formObject.submitId = '#addAppBtnId';
+App.formObject.checkData = function(data) {
+	if (!data) {
+		data = App.getFormData();
+	}
+	return data.name;
+}
+
+
+$(function(){
+	$(App.formObject.formId).submit(function(e) {
+		App.showLoader("Processing", App.formObject.formId);
+		App.initAjaxRequest(App.formObject.formId);
+		
+		var data = App.getFormData();
+		if (App.formObject.checkData(data)) {
+			var url = App.getFullUri(App.uris.appAdd);
+			App.ajaxRequest('POST', url, data, function(resp) {
+				var successUrl = resp.code >= 0 ? App.uris.appItem.replace('{0}', resp.data.idRef) : "";
+				App.callbackAjaxRequest2($(App.formObject.formId), resp, null, successUrl, "", "");
+			})
+		} else {
+			App.hideLoader();
+		}
+		
+		
+		return false;
+	})
+});

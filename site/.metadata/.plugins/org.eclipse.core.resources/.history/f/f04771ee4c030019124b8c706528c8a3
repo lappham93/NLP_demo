@@ -1,0 +1,35 @@
+//package com.mit.data.insert;
+//
+//import java.util.ArrayList;
+//import java.util.List;
+//
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.stereotype.Service;
+//
+//import com.mit.address.entities.State;
+//import com.mit.address.repositories.StateRepo;
+//import com.mit.http.exception.SequenceException;
+//
+//@Service
+//public class StateImport {
+//	@Autowired
+//	private StateRepo stateRepo;
+//
+//	public void importState() {
+//		List<State> lstState = new ArrayList<State>();
+//		String[][] stateData = CSVParser.readState();
+//		for (int idx = 0; idx < stateData.length; idx++) {
+//			State state = new State(stateData[idx][0], stateData[idx][2], stateData[idx][1]);
+//			lstState.add(state);
+//		}
+//		try {
+//			stateRepo.insertBatch(lstState);
+//		} catch (SequenceException e) {
+//		}
+//
+//		System.out.println("Done");
+//		System.out.println(stateRepo.getList("US").size());
+//		System.out.println(stateRepo.getList("GB").size());
+//	}
+//
+//}

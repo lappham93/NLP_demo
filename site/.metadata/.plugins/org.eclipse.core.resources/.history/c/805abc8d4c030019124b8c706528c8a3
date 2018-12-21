@@ -1,0 +1,9 @@
+package com.mit.atlas.entities;
+
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.user.entities.User;
+
+@Document(collection = "atlas_user")
+public class AtlasUser extends User{
+}

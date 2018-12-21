@@ -1,0 +1,44 @@
+package com.mit.user.responses;
+
+import org.springframework.util.CollectionUtils;
+
+import com.mit.react.entities.UserStat;
+
+public class ProfileSettingResponse {
+	private double eventDistanceFilter;
+	private boolean isSetFilter;
+	private boolean isSetInterestedEventCategory;
+	
+	public ProfileSettingResponse(UserStat userStat) {
+		if (userStat != null) {
+			this.eventDistanceFilter = userStat.getEventDistanceFilter();
+			this.isSetFilter = !CollectionUtils.isEmpty(userStat.getEventCategoryFilter());
+			this.isSetInterestedEventCategory = !CollectionUtils.isEmpty(userStat.getEventCategoryIds());
+		}
+	}
+	
+	public double getEventDistanceFilter() {
+		return eventDistanceFilter;
+	}
+
+	public void setEventDistanceFilter(double eventDistanceFilter) {
+		this.eventDistanceFilter = eventDistanceFilter;
+	}
+
+	public boolean isSetFilter() {
+		return isSetFilter;
+	}
+
+	public void setSetFilter(boolean isSetFilter) {
+		this.isSetFilter = isSetFilter;
+	}
+
+	public boolean isSetInterestedEventCategory() {
+		return isSetInterestedEventCategory;
+	}
+
+	public void setSetInterestedEventCategory(boolean isSetInterestedEventCategory) {
+		this.isSetInterestedEventCategory = isSetInterestedEventCategory;
+	}
+
+}

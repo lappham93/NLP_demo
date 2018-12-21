@@ -1,0 +1,168 @@
+package com.mit.navigation.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.common.entities.ActiveTimeDoc;
+
+@Document(collection = "floor")
+public class Floor extends ActiveTimeDoc<Long> {
+	@Id
+	private long id;
+	private String atlasId;
+	private long eventId;
+	private int number;
+	private String name;
+	private long photo;
+	private int numLevel;
+	private double actualWidth;
+	private double actualHeight;
+	private double pxWidth;
+	private double pxHeight;
+	private double rotate;
+	private Mapbox mapbox;
+	private long maxNumPoint;
+	private long maxNumWayPoint;
+	private int status;
+
+	public String buildName() {
+		if (number > 0) {
+			return "F" + number;
+		}
+		if (number < 0) {
+			return "B" + number;
+		}
+		return "G";
+	}
+	
+	@Override
+	public Long getId() {
+		return id;
+	}
+
+	@Override
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getAtlasId() {
+		return atlasId;
+	}
+
+	public void setAtlasId(String atlasId) {
+		this.atlasId = atlasId;
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+	public int getNumber() {
+		return number;
+	}
+
+	public void setNumber(int number) {
+		this.number = number;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public long getPhoto() {
+		return photo;
+	}
+
+	public void setPhoto(long photo) {
+		this.photo = photo;
+	}
+
+	public int getNumLevel() {
+		return numLevel;
+	}
+
+	public void setNumLevel(int numLevel) {
+		this.numLevel = numLevel;
+	}
+
+	public double getActualWidth() {
+		return actualWidth;
+	}
+
+	public void setActualWidth(double actualWidth) {
+		this.actualWidth = actualWidth;
+	}
+
+	public double getActualHeight() {
+		return actualHeight;
+	}
+
+	public void setActualHeight(double actualHeight) {
+		this.actualHeight = actualHeight;
+	}
+
+	public double getPxWidth() {
+		return pxWidth;
+	}
+
+	public void setPxWidth(double pxWidth) {
+		this.pxWidth = pxWidth;
+	}
+
+	public double getPxHeight() {
+		return pxHeight;
+	}
+
+	public void setPxHeight(double pxHeight) {
+		this.pxHeight = pxHeight;
+	}
+
+	public double getRotate() {
+		return rotate;
+	}
+
+	public void setRotate(double rotate) {
+		this.rotate = rotate;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	public Mapbox getMapbox() {
+		return mapbox;
+	}
+
+	public void setMapbox(Mapbox mapbox) {
+		this.mapbox = mapbox;
+	}
+
+	public long getMaxNumPoint() {
+		return maxNumPoint;
+	}
+
+	public void setMaxNumPoint(long maxNumPoint) {
+		this.maxNumPoint = maxNumPoint;
+	}
+
+	public long getMaxNumWayPoint() {
+		return maxNumWayPoint;
+	}
+
+	public void setMaxNumWayPoint(long maxNumWayPoint) {
+		this.maxNumWayPoint = maxNumWayPoint;
+	}
+
+}

@@ -1,0 +1,204 @@
+package com.mit.controllers;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.mit.atlas.entities.AtlasAPIKey;
+import com.mit.atlas.entities.AtlasApp;
+import com.mit.atlas.repositories.AtlasAPIKeyRepo;
+import com.mit.atlas.repositories.AtlasAppRepo;
+import com.mit.bodies.AtlasApiKeyBody;
+import com.mit.bodies.AtlasAppBody;
+import com.mit.define.ApiError;
+import com.mit.http.ApiResponse;
+import com.mit.responses.AtlasAppResponse;
+import com.mit.services.AtlasAppService;
+import com.mit.session.entities.UserSession;
+import com.mit.sessions.AtlasSession;
+import com.mit.utils.ControllerUtils;
+
+@RestController
+@RequestMapping(value = "/apps")
+public class AppController {
+	public static final Logger logger = LoggerFactory.getLogger(AppController.class);
+
+	@Autowired
+	AtlasAppService appService;
+	@Autowired
+	AtlasAPIKeyRepo apiKeyRepo;
+	@Autowired
+	AtlasAppRepo appRepo;
+
+	@RequestMapping(value = "", method = RequestMethod.GET)
+	@ModelAttribute
+	public ModelAndView render(HttpServletRequest req, Model model) {
+		UserSession userSession = (UserSession) req.getAttribute("session");
+		ModelAndView rs = ControllerUtils.initPage("myapp", "My Apps", null, "isAppTab");
+		rs.addObject("apps", appService.getListAppByUser(userSession.getUserId()));
+		return rs;
+	}
+	
+	@RequestMapping(value = "/add", method = RequestMethod.GET)
+	@ModelAttribute
+	public ModelAndView renderAdd(HttpServletRequest req, Model model) {
+		ModelAndView rs = ControllerUtils.initPage("myapp_add", "My Apps", null, "isAppTab");
+		return rs;
+	}
+
+	@RequestMapping(value = "/add", method = RequestMethod.POST)
+	public ApiResponse<AtlasAppResponse> addApp(HttpServletRequest req, @RequestBody AtlasAppBody body) {
+		try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	body.setUserId(userSession.getUserId());
+	    	AtlasApp app = body.toApp();
+	    	appRepo.save(app);
+	    	return new ApiResponse<>(appService.buildAppResponse(app));
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ApiResponse<>(ApiError.SERVER_ERROR);
+	}
+	
+	@RequestMapping(value = "/item/{id}", method = RequestMethod.GET)
+	@ModelAttribute
+	public ModelAndView renderAppDetail(HttpServletRequest req, Model model,
+			@PathVariable(value = "id") String appId) {
+		try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasApp app = appRepo.getByIdRef(appId, userSession.getUserId());
+	    	if (app == null) {
+	    		return new ModelAndView("redirect:" + (String)model.asMap().get("admin_prefix") + "/apps");
+	    	}
+	    	ModelAndView mav = ControllerUtils.initPage("myapp_detail", "My Apps", null, "isAppTab");
+	    	mav.addObject("app", appService.buildAppResponse(app));
+	    	mav.addObject("apps", appService.getListAppByUser(userSession.getUserId()));
+	    	return mav;
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ModelAndView("redirect:" + (String)model.asMap().get("admin_prefix") + "/apps");
+	}
+	
+	@RequestMapping(value = "/item/{id}/edit", method = RequestMethod.GET)
+	@ModelAttribute
+	public ModelAndView renderAppEdit(HttpServletRequest req, Model model,
+			@PathVariable(value = "id") String appId) {
+		try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasApp app = appRepo.getByIdRef(appId, userSession.getUserId());
+	    	ModelAndView mav = ControllerUtils.initPage("myapp_edit", "My Apps", null, "isAppTab");
+	    	mav.addObject("app", appService.buildAppResponse(app));
+	    	mav.addObject("apps", appService.getListAppByUser(userSession.getUserId()));
+	    	return mav;
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ModelAndView("redirect:" + (String)model.asMap().get("admin_prefix") + "/apps");
+	}
+	
+	@RequestMapping(value = "/item/{id}", method = RequestMethod.PUT)
+	public ApiResponse<AtlasAppResponse> editApp(HttpServletRequest req, 
+			@PathVariable(value = "id") String appId,
+			@RequestBody AtlasAppBody body) {
+		try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasApp app = appRepo.getByIdRef(appId, userSession.getUserId());
+	    	body.updateApp(app);
+	    	appRepo.save(app);
+	    	return new ApiResponse<>(appService.buildAppResponse(app));
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ApiResponse<>(ApiError.SERVER_ERROR);
+	}
+	
+	@RequestMapping(value = "/item/{id}", method = RequestMethod.DELETE)
+	public ApiResponse<Object> deleteApp(HttpServletRequest req, 
+			@PathVariable(value = "id") String appId) {
+		try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	appRepo.deleteApp(userSession.getUserId(), appId);
+	    	return new ApiResponse<>();
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ApiResponse<>(ApiError.SERVER_ERROR);
+	}
+
+	@RequestMapping(value = "/item/{id}/apikey/add", method = RequestMethod.GET)
+	@ModelAttribute
+	public ModelAndView renderAddApiKey(HttpServletRequest req, Model model,
+			@PathVariable(value = "id") String appId) {
+		try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasApp app = appRepo.getByIdRef(appId, userSession.getUserId());
+	    	ModelAndView mav = ControllerUtils.initPage("apikey_add", "My Apps", null, "isAppTab");
+	    	mav.addObject("app", appService.buildAppResponse(app));
+	    	mav.addObject("apps", appService.getListAppByUser(userSession.getUserId()));
+	    	return mav;
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ModelAndView("redirect:" + (String)model.asMap().get("admin_prefix") + "/apps");
+	}
+	
+	@RequestMapping(value = "/item/{id}/apikey/add", method = RequestMethod.POST)
+	public ApiResponse<AtlasAppResponse> addAPIKey(HttpServletRequest req, 
+			@PathVariable(value = "id") String appId,
+			@RequestBody AtlasApiKeyBody body) {
+		try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasApp app = appRepo.getByIdRef(appId, userSession.getUserId());
+	    	body.setUserId(userSession.getUserId());
+	    	body.setAppId(app.getId());
+	    	AtlasAPIKey apiKey = body.toApiKey();
+	    	apiKeyRepo.save(apiKey);
+	    	return new ApiResponse<>(appService.buildAppResponse(app));
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ApiResponse<>(ApiError.SERVER_ERROR);
+	}
+	
+	@RequestMapping(value = "/item/{id}/apikey/item/{apikey}/secret", method = RequestMethod.PUT)
+	public ApiResponse<AtlasAppResponse> addAPIKey(HttpServletRequest req, 
+			@PathVariable(value = "id") String appId,
+			@PathVariable(value = "apikey") String apikey,
+			@RequestBody AtlasApiKeyBody body) {
+		try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasAPIKey key = apiKeyRepo.getByKey(apikey, userSession.getUserId());
+	    	key.setActive(body.isActive());
+	    	apiKeyRepo.save(key);
+	    	return new ApiResponse<>(appService.buildAppResponse(appRepo.getByIdRef(appId, userSession.getUserId())));
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ApiResponse<>(ApiError.SERVER_ERROR);
+	}
+	
+	@RequestMapping(value = "/item/{id}/apikey/item/{apikey}/secret", method = RequestMethod.GET)
+	public ApiResponse<String> getSecretKey(HttpServletRequest req, 
+			@PathVariable(value = "id") String appId,
+			@PathVariable(value = "apikey") String apikey) {
+		try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasAPIKey key = apiKeyRepo.getByKey(apikey, userSession.getUserId());
+	    	return new ApiResponse<>(key.getSecretKey());
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ApiResponse<>(ApiError.SERVER_ERROR);
+	}
+}

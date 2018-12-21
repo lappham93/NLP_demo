@@ -1,0 +1,18 @@
+package com.mit.message.bodies;
+
+import java.util.List;
+
+/**
+ * Created by Hung on 6/24/2017.
+ */
+public class GetListMessageStatusBody {
+    private List<Long> messageIds;
+
+    public List<Long> getMessageIds() {
+        return messageIds;
+    }
+
+    public void setMessageIds(List<Long> messageIds) {
+        this.messageIds = messageIds;
+    }
+}

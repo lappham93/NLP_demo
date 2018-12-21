@@ -1,0 +1,62 @@
+package com.mit.react.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.map.entities.Coordinate;
+import com.mit.map.entities.Point;
+
+/**
+ * Created by Hung on 6/19/2017.
+ */
+@Document(collection = "live_tracking")
+public class LiveTracking extends React<Long> {
+	@Id
+    private long id;
+    private long userId;
+    private long floorId;
+    private Point location;
+    private Coordinate coordinate;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
+
+    public long getFloorId() {
+        return floorId;
+    }
+
+    public void setFloorId(long floorId) {
+        this.floorId = floorId;
+    }
+
+    public Point getLocation() {
+        return location;
+    }
+
+    public void setLocation(Point location) {
+        this.location = location;
+    }
+
+	public Coordinate getCoordinate() {
+		return coordinate;
+	}
+
+	public void setCoordinate(Coordinate coordinate) {
+		this.coordinate = coordinate;
+	}
+
+
+}

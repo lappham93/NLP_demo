@@ -1,0 +1,16 @@
+package com.mit.navigation.entities;
+
+public class Counter {
+	private long value;
+
+	public Counter() {
+	}
+
+	public Counter(long value) {
+		this.value = value;
+	}
+
+	public long getNext() {
+		return value--;
+	}
+}

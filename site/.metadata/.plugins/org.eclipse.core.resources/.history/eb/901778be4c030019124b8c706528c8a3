@@ -1,0 +1,19 @@
+package com.mit.asset.services;
+
+public class MapPhotoClient extends PhotoClient {
+
+	public static final String nameConfig = "saocoo_mapphoto";
+
+	private static MapPhotoClient _instance; 
+	
+	public static MapPhotoClient getInstance() {
+		if (_instance == null) {
+			_instance = new MapPhotoClient();
+		}
+		return _instance;
+	}
+	
+	private MapPhotoClient() {
+		super(nameConfig);
+	}
+}

@@ -1,0 +1,52 @@
+package com.mit.navigation.repositories;
+
+import java.util.List;
+
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.navigation.entities.MapTile;
+
+@Repository
+public class MapTileRepo extends TimeDocRepo<MapTile> {
+
+	public int totalAll(List<Long> levelIds) {
+		Criteria criteria = Criteria.where("levelId").in(levelIds).and("isDeleted").is(false);
+		return (int) mongoOps.count(new Query(criteria), MapTile.class);
+	}
+
+	public MapTile getById(long id) {
+		return mongoOps.findById(id, MapTile.class);
+	}
+	
+	public List<MapTile> getListByLevelId(long levelId) {
+		Criteria criteria = Criteria.where("levelId").is(levelId).and("isDeleted").is(false);
+		return mongoOps.find(new Query(criteria), MapTile.class);
+	}
+	
+	public MapTile getByLevelIdAndQuadKey(long levelId, String quadKey) {
+		Criteria criteria = Criteria.where("levelId").is(levelId).and("quadkey").is(quadKey).and("isDeleted").is(false);
+		return mongoOps.findOne(new Query(criteria), MapTile.class);
+	}
+
+	public List<MapTile> getSlice(List<Long> levelIds, boolean onlyActive, int from, int count) {
+		Criteria criteria = Criteria.where("levelId").in(levelIds).and("isDeleted").is(false);
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		Sort sort = new Sort(new Order(Direction.DESC, "levelId"), new Order(Direction.DESC, "updatedDate"));
+		return mongoOps.find(new Query(criteria).with(sort), MapTile.class);
+	}
+
+	public void delete(long id) {
+		Update update = new Update().set("isDeleted", true);
+		Query query = new Query(Criteria.where("id").is(id));
+		mongoOps.updateFirst(query, update, MapTile.class);
+	}
+}

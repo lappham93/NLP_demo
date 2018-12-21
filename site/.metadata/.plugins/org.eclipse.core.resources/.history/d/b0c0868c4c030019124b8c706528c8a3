@@ -1,0 +1,46 @@
+package com.mit.notification.responses;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.notification.entities.EventNews;
+import com.mit.utils.LinkBuilder;
+
+/**
+ * Created by Lap Pham on 4/4/17.
+ */
+public class EventNewsResponse extends NewsResponse {
+	private long eventId;
+	private String msg;
+	private String thumb;
+
+	public EventNewsResponse(EventNews eventNews) {
+		super(eventNews);
+		this.eventId = eventNews.getEventId();
+		this.msg = eventNews.getMsg();
+		this.thumb = LinkBuilder.buildPhotoLink(eventNews.getThumb(), ObjectType.EVENT.getLowerName());
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+	public String getMsg() {
+		return msg;
+	}
+
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+
+	public String getThumb() {
+		return thumb;
+	}
+
+	public void setThumb(String thumb) {
+		this.thumb = thumb;
+	}
+
+}

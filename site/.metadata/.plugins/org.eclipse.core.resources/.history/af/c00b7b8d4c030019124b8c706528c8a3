@@ -1,0 +1,42 @@
+package com.mit.event.responses;
+
+import com.mit.event.entities.Event;
+
+public class EventSimpleResponse {
+	private long id;
+	private String name;
+	private long startTime;
+
+	public EventSimpleResponse() {
+	}
+
+	public EventSimpleResponse(Event event) {
+		this.id = event.getId();
+		this.name = event.getName();
+		this.startTime = event.getStartTime();
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public long getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(long startTime) {
+		this.startTime = startTime;
+	}
+}

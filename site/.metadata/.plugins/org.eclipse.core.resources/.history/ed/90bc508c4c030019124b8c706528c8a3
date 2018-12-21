@@ -1,0 +1,132 @@
+package com.mit.react.repositories;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.map.entities.Point;
+import com.mit.react.entities.Live;
+import com.mit.user.entities.UserLocation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
+/**
+ * Created by Hung on 6/19/2017.
+ */
+
+@Repository
+public class LiveRepo extends TimeDocRepo<Live> {
+
+    @Autowired
+    protected MongoOperations mongoOps;
+
+    public int getTotalEventLive(long eventId) {
+        Calendar now = Calendar.getInstance();
+        now.set(Calendar.HOUR, now.get(Calendar.HOUR) - 1);
+        Criteria criteria = Criteria.where("objectRef.type").is(ObjectType.EVENT.getValue()).and("objectRef.id").is(eventId).and("updatedDate").gte(now.getTime());
+        return (int) mongoOps.count(new Query(criteria), Live.class);
+    }
+
+    public int getTotalBoothLive(long eventId, long floorId, double floorWidth, double floorHeight, Point boothLoc) {
+        int count = 0;
+        Calendar now = Calendar.getInstance();
+        now.set(Calendar.MINUTE, now.get(Calendar.MINUTE) - 5);
+        Criteria criteria = Criteria.where("objectRef.type").is(ObjectType.EVENT.getValue())
+                .and("objectRef.id").is(eventId)
+                .and("floorId").is(floorId)
+                .and("updatedDate").gte(now.getTime());
+
+        List<Live> lives = mongoOps.find(new Query(criteria), Live.class);
+        for (Live live: lives) {
+            double distance = Math.pow(Math.pow(floorWidth * (live.getLocation().getX() - boothLoc.getX()), 2) + Math.pow(floorHeight * (live.getLocation().getY() - boothLoc.getY()), 2), 0.5);
+            if (distance <= 10) {
+                count ++;
+            }
+        }
+
+        return count;
+    }
+
+    public List<UserLocation> getUserNearby(long userId, long eventId, long floorId, double floorWidth, double floorHeight, Point loc, double maxDistance) {
+        Calendar now = Calendar.getInstance();
+        now.set(Calendar.MINUTE, now.get(Calendar.MINUTE) - 5);
+        Criteria criteria = Criteria.where("objectRef.type").is(ObjectType.EVENT.getValue())
+        		.and("userId").ne(userId)
+                .and("objectRef.id").is(eventId)
+                .and("floorId").is(floorId)
+                .and("updatedDate").gte(now.getTime())
+                .and("location.x").gte(loc.getX() - maxDistance / floorWidth).lte(loc.getX() + maxDistance / floorWidth)
+                .and("location.y").gte(loc.getY() - maxDistance / floorHeight).lte(loc.getY() + maxDistance / floorHeight);
+
+        List<Live> lives = mongoOps.find(new Query(criteria), Live.class);
+        List<UserLocation> userLocations = new ArrayList<>(lives.size());
+
+        for (Live live: lives) {
+            double distance = Math.pow(Math.pow(floorWidth * (live.getLocation().getX() - loc.getX()), 2) + Math.pow(floorHeight * (live.getLocation().getY() - loc.getY()), 2), 0.5);
+            if (distance <= maxDistance) {
+                UserLocation userLocation = new UserLocation(live.getUserId(), live.getLocation().getX(), live.getLocation().getY(), live.getCoordinate().getLat(), live.getCoordinate().getLon(), distance);
+                userLocations.add(userLocation);
+            }
+        }
+
+        return userLocations;
+    }
+
+    public boolean beingEventOnline(long userId, long eventId) {
+        Calendar now = Calendar.getInstance();
+        now.set(Calendar.HOUR, now.get(Calendar.HOUR) - 1);
+        Criteria criteria = Criteria.where("userId").is(userId).and("objectRef.type").is(ObjectType.EVENT.getValue()).and("objectRef.id").is(eventId).and("updatedDate").gte(now.getTime());
+        return mongoOps.count(new Query(criteria), Live.class) > 0;
+    }
+
+    public boolean beingBoothOnline(long userId, long eventId, long floorId, double floorWidth, double floorHeight, Point boothLoc) {
+        boolean rs = false;
+        Calendar now = Calendar.getInstance();
+        now.set(Calendar.HOUR, now.get(Calendar.HOUR) - 1);
+        Criteria criteria = Criteria.where("userId").is(userId)
+                .and("objectRef.type").is(ObjectType.EVENT.getValue())
+                .and("objectRef.id").is(eventId)
+                .and("floorId").is(floorId)
+                .and("updatedDate").gte(now.getTime());
+        Live live = mongoOps.findOne(new Query(criteria), Live.class);
+        if (live != null) {
+            double distance = Math.pow(Math.pow(floorWidth * (live.getLocation().getX() - boothLoc.getX()), 2) + Math.pow(floorHeight * (live.getLocation().getY() - boothLoc.getY()), 2), 0.5);
+            rs = distance <= 10;
+        }
+
+        return rs;
+    }
+
+    public Live getLiveUser(long eventId, long userId) {
+        Criteria criteria = Criteria.where("userId").is(userId)
+                .and("objectRef.type").is(ObjectType.EVENT.getValue())
+                .and("objectRef.id").is(eventId);
+        return mongoOps.findOne(new Query(criteria), Live.class);
+    }
+    
+    public List<Live> getListInFloor(long floorId) {
+        Criteria criteria = Criteria.where("floorId").is(floorId);
+        return mongoOps.find(new Query(criteria), Live.class);
+    }
+    
+    public List<Live> getListInEvent(long eventId) {
+        Criteria criteria = Criteria.where("objectRef.type").is(ObjectType.EVENT.getValue())
+        		.and("objectRef.id").is(eventId);
+        return mongoOps.find(new Query(criteria), Live.class);
+    }
+    
+    public void removeAllUser(long userId) {
+    	Criteria criteria = new Criteria("userId").is(userId);
+    	mongoOps.remove(new Query(criteria), Live.class);
+    }
+    
+    public Live getLiveUser(long userId) {
+        Criteria criteria = Criteria.where("userId").is(userId);
+        return mongoOps.findOne(new Query(criteria), Live.class);
+    }
+}

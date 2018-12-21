@@ -1,0 +1,135 @@
+package com.mit.react.repositories;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import com.mit.common.entities.ObjectRef;
+import com.mit.react.entities.ReactStat;
+import com.mit.seq.repositories.SeqIdRepo;
+
+@Repository
+public class ReactStatRepo {
+    @Autowired
+    MongoOperations mongoOps;
+
+    @Autowired
+    SeqIdRepo seqIdRepo;
+    
+    public ReactStat getById(long id) {
+        return mongoOps.findById(id, ReactStat.class);
+    }
+    
+    public ReactStat getByObjectAndType(ObjectRef objectRef, int reactType) {
+        ReactStat comments = mongoOps.findOne(new Query(Criteria.where("objectRef.type").is(objectRef.getType()).and("objectRef.id").is(objectRef.getId())
+        		.and("reactType").is(reactType)), ReactStat.class);
+        return comments;
+    }
+
+    public List<ReactStat> getListByObjectAndType(int objectType, List<Long> objectIds) {
+        List<ReactStat> comments = mongoOps.find(new Query(Criteria.where("objectRef.type").is(objectType).and("objectRef.id").in(objectIds)), ReactStat.class);
+        return comments;
+    }
+
+    public List<ReactStat> getListByObjectAndType(int objectType, List<Long> objectIds, int reactType) {
+        List<ReactStat> comments = mongoOps.find(new Query(Criteria.where("objectRef.type").is(objectType).and("objectRef.id").in(objectIds)
+                .and("reactType").is(reactType)), ReactStat.class);
+        return comments;
+    }
+    
+    public Map<Long, List<ReactStat>> getMapByObjectAndType(int objectType, List<Long> objectIds) {
+        Map<Long, List<ReactStat>> reactStatMap = new HashMap<>();
+        List<ReactStat> comments = getListByObjectAndType(objectType, objectIds);
+        for (ReactStat comment: comments) {
+            List<ReactStat> reactStats = reactStatMap.get(comment.getObjectRef().getId());
+            if (reactStats == null) {
+                reactStats = new LinkedList<>();
+                reactStatMap.put(comment.getObjectRef().getId(), reactStats);
+            }
+            reactStats.add(comment);
+        }
+        return reactStatMap;
+    }
+
+    public Map<Long, ReactStat> getMapByObjectAndType(int objectType, List<Long> objectIds, int reactType) {
+        List<ReactStat> comments = getListByObjectAndType(objectType, objectIds, reactType);
+        Map<Long, ReactStat> reactStatMap = new HashMap<>();
+        for (ReactStat comment: comments) {
+            reactStatMap.put(comment.getObjectRef().getId(), comment);
+        }
+        return reactStatMap;
+    }
+    
+    public List<ReactStat> getByIds(List<Long> commentIds) {
+        List<ReactStat> comments = mongoOps.find(new Query(Criteria.where("id").in(commentIds)), ReactStat.class);
+        return comments;
+    }
+    
+    public List<ReactStat> getSlice(int count, int from, String fieldSort, boolean sortAcs, boolean isActiveStatus) { 
+    	Criteria criteria = new Criteria();
+    	if (isActiveStatus) {
+    		criteria = Criteria.where("status").gt(0);
+    	}
+    	Sort sort = new Sort(new Order(sortAcs ? Direction.ASC : Direction.DESC, fieldSort));
+        List<ReactStat> profiles = mongoOps.find(new Query(criteria).with(sort).skip(from).limit(count), ReactStat.class);
+        return profiles;
+    }
+    
+    public List<ReactStat> getByObject(ObjectRef objectRef) {
+        List<ReactStat> comments = mongoOps.find(new Query(Criteria.where("objectRef.type").is(objectRef.getType()).and("objectRef.id").is(objectRef.getId())), ReactStat.class);
+        return comments;
+    }
+    
+    public void addUser(ObjectRef objectRef, int reactType, Object[] userIds) {
+    	Criteria criteria = Criteria.where("objectRef.type").is(objectRef.getType()).and("objectRef.id").is(objectRef.getId())
+        		.and("reactType").is(reactType);
+    	Update update = new Update().pushAll("userIds", userIds);
+    	mongoOps.upsert(new Query(criteria), update, ReactStat.class);
+    }
+    
+    public void addUserUnique(ObjectRef objectRef, int reactType, Object[] userIds) {
+		Criteria criteria = Criteria.where("objectRef.type").is(objectRef.getType()).and("objectRef.id").is(objectRef.getId())
+        		.and("reactType").is(reactType);
+    	Update update = new Update().addToSet("userIds").each(userIds);
+    	mongoOps.upsert(new Query(criteria), update, ReactStat.class);
+    }
+    
+    /*
+     * remove all user
+     */
+    public void removeUser(ObjectRef objectRef, int reactType, Object[] userIds) {
+    	Criteria criteria = Criteria.where("objectRef.type").is(objectRef.getType()).and("objectRef.id").is(objectRef.getId())
+                .and("reactType").is(reactType);
+    	Update update = new Update().pullAll("userIds", userIds);
+    	mongoOps.updateFirst(new Query(criteria), update, ReactStat.class);
+    }
+    
+    /*
+     * remove only one user (first exist)
+     */
+    public void removeUserUnique(ObjectRef objectRef, int reactType, Object[] userIds) {
+    	ReactStat reactStat = getByObjectAndType(objectRef, reactType);
+    	if (reactStat != null && reactStat.getUserIds() != null && userIds != null && userIds.length > 0) {
+    		for (Object userId: userIds) {
+    			reactStat.getUserIds().remove(userId);
+    		}
+			save(reactStat);
+    	}
+    }
+    
+    public void save(ReactStat reactStat) {
+    	mongoOps.save(reactStat);
+    }
+    
+}

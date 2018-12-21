@@ -1,0 +1,82 @@
+package com.mit.services;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.asset.entities.PhotoInfo;
+import com.mit.asset.repositories.PhotoInfoRepo;
+import com.mit.asset.responses.PhotoResponse;
+import com.mit.atlas.entities.AtlasFloor;
+import com.mit.atlas.entities.AtlasLocation;
+import com.mit.atlas.repositories.AtlasFloorRepo;
+import com.mit.atlas.repositories.AtlasLocationRepo;
+import com.mit.common.enums.ObjectType;
+import com.mit.responses.AtlasFloorResponse;
+import com.mit.responses.AtlasLocationResponse;
+
+@Service
+public class AtlasLocationService {
+
+	@Autowired
+	AtlasLocationRepo locationRepo;
+	@Autowired
+	PhotoInfoRepo photoRepo;
+	@Autowired
+	AtlasFloorRepo floorRepo;
+
+	public List<AtlasLocationResponse> getListByUser(long userId) {
+		List<AtlasLocation> locations = locationRepo.getListByUser(userId);
+		return buildLocationListResponse(locations);
+	}
+	
+	public AtlasLocationResponse buildLocationResponse(AtlasLocation location) {
+		if (location == null) {
+			return null;
+		}
+		List<AtlasFloorResponse> floorResponses = buildFloorListResponse(floorRepo.getListByLocation(location.getIdRef()));
+		return new AtlasLocationResponse(location, floorResponses);
+	}
+
+	public List<AtlasLocationResponse> buildLocationListResponse(List<AtlasLocation> locations) {
+		if (CollectionUtils.isEmpty(locations)) {
+			return null;
+		}
+		List<AtlasLocationResponse> locationResponses = new LinkedList<>();
+		for (AtlasLocation location: locations) {
+			AtlasLocationResponse locationResponse = buildLocationResponse(location);
+			if (locationResponse != null) {
+				locationResponses.add(locationResponse);
+			}
+		}
+		return locationResponses;
+	}
+	
+	public AtlasFloorResponse buildFloorResponse(AtlasFloor floor) {
+		if (floor == null) {
+			return null;
+		}
+		PhotoInfo photo = photoRepo.getByPhotoAndType(floor.getPhoto(), ObjectType.ATLAS.getValue());
+		if (photo == null) {
+			return null;
+		}
+		return new AtlasFloorResponse(floor, new PhotoResponse(photo));
+	}
+	
+	public List<AtlasFloorResponse> buildFloorListResponse(List<AtlasFloor> floors) {
+		if (CollectionUtils.isEmpty(floors)) {
+			return null;
+		}
+		List<AtlasFloorResponse> floorResponses = new LinkedList<>();
+		for (AtlasFloor floor: floors) {
+			AtlasFloorResponse floorResponse = buildFloorResponse(floor);
+			if (floorResponse != null) {
+				floorResponses.add(floorResponse);
+			}
+		}
+		return floorResponses;
+	}
+}

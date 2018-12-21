@@ -1,0 +1,24 @@
+package com.mit.ai.responses;
+
+public class SentimentPredictResponse {
+	private int label;
+
+	private double proba;
+
+	public boolean isPositive() {
+		return positive;
+	}
+
+	public void setPositive(boolean positive) {
+		this.positive = positive;
+	}
+
+	public double getProba() {
+		return proba;
+	}
+
+	public void setProba(double proba) {
+		this.proba = proba;
+	}
+
+}

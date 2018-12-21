@@ -1,0 +1,112 @@
+package com.mit.app;
+
+import javax.servlet.DispatcherType;
+import javax.servlet.Filter;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
+import org.springframework.data.mongodb.config.EnableMongoAuditing;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.web.multipart.MultipartResolver;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
+
+import com.mit.caches.Cache;
+import com.mit.caches.RedisCache;
+import com.mit.http.context.ApplicationContextProvider;
+import com.mit.http.filter.LoggingFilter;
+
+/**
+ * 
+ * @author TinnyLe
+ *
+ */
+
+@SpringBootApplication
+@EnableMongoAuditing
+@Lazy
+@ComponentScan(basePackages = { "com.mit.app", "com.mit.controllers",})
+public class Application {
+	public static Environment EnvConfig;
+	public static ApplicationContext AppCtx;
+	
+	public static void main(String[] args) {
+		ConfigurableApplicationContext ctx = SpringApplication.run(Application.class, args);
+		EnvConfig = ctx.getEnvironment();
+		AppCtx = ctx;
+		ApplicationContextProvider appCtx = new ApplicationContextProvider();
+        appCtx.setApplicationContext(ctx);
+		System.out.println("Start server");
+	}
+	
+	@Bean
+	public MultipartResolver multiPartResolver() {
+		return new CommonsMultipartResolver();
+	}
+	
+//	@Bean
+//	public SessionManager sessionGenerator() {
+//		SessionManager sessionGenerator = new SessionManagerImpl();
+//		return sessionGenerator;
+//	}
+	
+	@Bean
+    public StringRedisSerializer stringRedisSerializer() {
+        StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
+        return stringRedisSerializer;
+    }
+
+    @Bean
+    public GenericJackson2JsonRedisSerializer genericJackson2JsonRedisJsonSerializer() {
+        GenericJackson2JsonRedisSerializer genericJackson2JsonRedisJsonSerializer =
+                new GenericJackson2JsonRedisSerializer();
+        return genericJackson2JsonRedisJsonSerializer;
+    }
+	
+	@Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory,
+                                                       StringRedisSerializer stringRedisSerializer,
+                                                       GenericJackson2JsonRedisSerializer genericJackson2JsonRedisJsonSerializer) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(connectionFactory);
+        redisTemplate.setExposeConnection(true);
+        redisTemplate.setKeySerializer(stringRedisSerializer);
+        redisTemplate.setValueSerializer(genericJackson2JsonRedisJsonSerializer);
+        redisTemplate.afterPropertiesSet();
+        return redisTemplate;
+    }
+
+	@Bean
+	public Cache cache(RedisTemplate<String, Object> redisTemplate) {
+		Cache cache = new RedisCache(redisTemplate);
+		return cache;
+	}
+	
+	@Bean
+	public FilterRegistrationBean registrationLogging() {
+		Filter filter = new LoggingFilter();
+		FilterRegistrationBean registration = new FilterRegistrationBean(filter);
+		registration.addUrlPatterns("/*");
+		registration.setDispatcherTypes(DispatcherType.REQUEST);
+		return registration;
+	}
+	
+	@Bean
+	public FilterRegistrationBean swaggerFilter() {
+		FilterRegistrationBean registration = new FilterRegistrationBean(new MyUrlRewriteFilter());
+		registration.addUrlPatterns("/swagger/*");
+		registration.addUrlPatterns(sitePrefix + "/*");
+		registration.setDispatcherTypes(DispatcherType.REQUEST);
+		registration.setOrder(2);
+		return registration;
+	}
+}

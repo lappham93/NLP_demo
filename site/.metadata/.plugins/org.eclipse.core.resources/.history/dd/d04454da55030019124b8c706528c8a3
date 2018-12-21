@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+    layout:decorator="myapp_layout">
+<head>
+</head>
+<body>
+<div layout:fragment="content"  th:with="hasApi=${app.apiKeys != null and #lists.size(app.apiKeys) > 0}">
+	<div class="col-md-7">
+		<div class="panel panel-flat" style="padding-left: 0px">
+			<div class="panel-body flow floor_list">
+				<div class="col-md-12 floor-list-item">
+					<div class="row floor-list-name">
+						<div class="col-xs-8" style="padding: 0px;">
+							<h4 th:text="${app.name}"></h4>
+						</div>
+						<div class="col-xs-4 floor-list-actions">
+							<ul class="list list-inline">
+								<li class="dropdown">
+									<a href="#" class="dropdown-toggle"
+										data-toggle="dropdown"> <i class="icon-more2" style="font-size: 20px;"></i>
+									</a>
+	
+									<ul class="dropdown-menu dropdown-menu-right">
+										<li><a th:href="${#strings.replace(apps_edit_url, '{0}', app.idRef)}" data-toggle="modal">Edit application</a></li>
+										<li><a href="#" data-toggle="modal" th:onclick="'showDeleteApp(\'' + ${app.name} + '\',\'' + ${app.idRef} + '\'' + ')'">Delete application</a></li>
+									</ul>
+								</li>
+							</ul>
+						</div>
+					</div>
+					<div class="floor-list-suggest">
+						<span th:text="${app.desc}"></span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-5">
+		<div class="location-detail">
+			<div class="col-xs-12 apikey-header">
+				<div class="col-xs-6" style="padding: 0px;">
+					<h2 class="apikey-header-name" style="float: left;">API keys</h2>
+				</div>
+				<div class="col-xs-6 apikey-header-control">
+					<button class="btn btn-default btn-rounded" th:onclick="'window.location.replace(\'' + ${#strings.replace(apikey_add_url, '{0}', app.idRef)} + '\'); return false'">Add new Api key</button>
+				</div>
+			</div>
+			<div class="apikey-note" th:if="${not(hasApi)}">
+				No API keys.
+			</div>
+			<div class="col-xs-12 api-detail-feature" th:if="${hasApi}" th:each="api: ${app.apiKeys}">
+				<div class="col-xs-12 api-detail-name">
+					<div class="col-xs-8" style="padding: 0px;">
+						<span th:text="${api.name}"></span>
+					</div>
+					<div class="col-xs-4 floor-list-actions">
+						<ul class="list list-inline">
+							<li class="dropdown">
+								<a href="#" class="dropdown-toggle"
+									data-toggle="dropdown"> <i class="icon-more2" style="font-size: 20px; color: #737373"></i>
+								</a>
+
+								<ul class="dropdown-menu dropdown-menu-right">
+									<li th:if="${api.active}"><a data-toggle="modal" th:onclick="'disableApikey(\'' + ${app.idRef} + '\',\'' + ${api.apiKey} + '\')'">Disable API key</a></li>
+									<li th:if="${not(api.active)}"><a data-toggle="modal" th:onclick="'enableApikey(\'' + ${app.idRef} + '\',\'' + ${api.apiKey} + '\')'">Enable API key</a></li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="api-detail-disable" th:if="${not(api.active)}">
+					<span>Disabled</span>
+				</div>
+				
+				<div class="api-detail-feature-name">
+					<span>API key id</span>
+				</div>
+				<div class="api-detail-feature-text">
+					<p th:text="${api.apiKey}"></p>
+				</div>
+				
+				<div class="api-detail-feature-name">
+					<span>API secret key</span> <a th:onclick="'showSecretKey(\'show-secretkey-' + ${api.apiKey} + '\', \'secretkey-' + ${api.apiKey} + '\',\'' + ${api.apiKey} + '\')'" th:id="${'show-secretkey-' + api.apiKey}">Show</a>
+				</div>
+				
+				<div class="api-detail-feature-text">
+					<p th:id="${'secretkey-' + api.apiKey}" style="display: none"></p>
+					<p th:id="${'secretkey-' + api.apiKey + '-default'}">............................................................................</p>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div id="deleteAppMdlId" class="modal fade" role="dialog">
+		<div class="modal-dialog modal-lg static-model">
+			<div class="modal-content">
+				<div th:replace="fragments/fragments :: form_error_2"></div>
+				<div th:replace="fragments/fragments :: form_success_2"></div>
+				<div th:replace="fragments/fragments :: loader"></div>
+				<div class="modal-body col-md-12">
+					<h2 class="action-model-header">Delete application</h2>
+					<p class="action-model-confirm">Are you sure you want to permanently delete <span th:text="${app.name}"></span>? This action cannot be reverted.</p>
+				</div>
+				<div class="text-right action-model-actions">
+					<button class="btn btn-primary btn-rounded" data-dismiss="modal">Cancel</button>
+					<button class="btn btn-primary btn-rounded" th:onclick="'deleteApp(\'' + ${app.idRef} + '\')'">Delete application</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,29 @@
+package com.mit.react.entities;
+
+import java.io.Serializable;
+
+import com.mit.common.entities.ObjectRef;
+import com.mit.common.entities.TimeDoc;
+
+public abstract class React<T extends Serializable> extends TimeDoc<T> {
+
+	private ObjectRef objectRef;
+
+	public React() {
+		super();
+	}
+	
+	public React(int type, long id) {
+		super();
+		objectRef = new ObjectRef(type, id);
+	}
+	
+	public ObjectRef getObjectRef() {
+		return objectRef;
+	}
+
+	public void setObjectRef(ObjectRef objectRef) {
+		this.objectRef = objectRef;
+	}
+
+}

@@ -1,0 +1,28 @@
+package com.mit.ai.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.common.entities.TimeDoc;
+
+@Document(collection = "comment_labeling")
+public class CommentLabeling extends TimeDoc<Long>{
+	@Id
+	private long id;
+	private String comment;
+	private int label;
+	private int predict;
+
+	@Override
+	public Long getId() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setId(Long id) {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

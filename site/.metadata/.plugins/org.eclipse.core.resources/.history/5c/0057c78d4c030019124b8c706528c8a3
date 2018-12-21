@@ -1,0 +1,122 @@
+package com.mit.atlas.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.common.entities.ActiveTimeDoc;
+import com.mit.map.entities.Coordinate;
+
+@Document(collection = "atlas_floor")
+public class AtlasFloor extends ActiveTimeDoc<Long> {
+
+	@Id
+	private long id;
+	private String idRef;
+	private String locationId;
+	private long userId;
+	private String name;
+	private int number;
+	private long photo;
+	private Coordinate coordinate;
+	private double altitude;
+	private double planRotation;
+	private double planScaleX;
+	private double planScaleY;
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getIdRef() {
+		return idRef;
+	}
+
+	public void setIdRef(String idRef) {
+		this.idRef = idRef;
+	}
+
+	public String getLocationId() {
+		return locationId;
+	}
+
+	public void setLocationId(String locationId) {
+		this.locationId = locationId;
+	}
+
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	public long getPhoto() {
+		return photo;
+	}
+
+	public void setPhoto(long photo) {
+		this.photo = photo;
+	}
+
+	public Coordinate getCoordinate() {
+		return coordinate;
+	}
+
+	public void setCoordinate(Coordinate coordinate) {
+		this.coordinate = coordinate;
+	}
+
+	public double getPlanRotation() {
+		return planRotation;
+	}
+
+	public void setPlanRotation(double planRotation) {
+		this.planRotation = planRotation;
+	}
+
+	public double getPlanScaleX() {
+		return planScaleX;
+	}
+
+	public void setPlanScaleX(double planScaleX) {
+		this.planScaleX = planScaleX;
+	}
+
+	public double getPlanScaleY() {
+		return planScaleY;
+	}
+
+	public void setPlanScaleY(double planScaleY) {
+		this.planScaleY = planScaleY;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public int getNumber() {
+		return number;
+	}
+
+	public void setNumber(int number) {
+		this.number = number;
+	}
+
+	public double getAltitude() {
+		return altitude;
+	}
+
+	public void setAltitude(double altitude) {
+		this.altitude = altitude;
+	}
+
+}

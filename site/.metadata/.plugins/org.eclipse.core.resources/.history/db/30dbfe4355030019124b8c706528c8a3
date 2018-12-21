@@ -1,0 +1,132 @@
+package com.mit.responses;
+
+import com.mit.asset.responses.PhotoResponse;
+import com.mit.atlas.entities.AtlasFloor;
+import com.mit.map.entities.Coordinate;
+
+public class AtlasFloorResponse {
+	private long id;
+	private String idRef;
+	private String locationId;
+	private String name;
+	private int number;
+	private PhotoResponse photo;
+	private Coordinate coordinate;
+	private double altitude;
+	private double planRotation;
+	private double planScaleX;
+	private double planScaleY;
+	private long createdDate;
+
+	public AtlasFloorResponse(AtlasFloor floor, PhotoResponse photo) {
+		this.id = floor.getId();
+		this.idRef = floor.getIdRef();
+		this.locationId = floor.getLocationId();
+		this.name = floor.getName();
+		this.number = floor.getNumber();
+		this.photo = photo;
+		this.altitude = floor.getAltitude();
+		this.planRotation = floor.getPlanRotation();
+		this.planScaleX = floor.getPlanScaleX();
+		this.planScaleY = floor.getPlanScaleY();
+		this.coordinate = floor.getCoordinate();
+		this.createdDate = floor.getCreatedDate().getTime();
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public String getLocationId() {
+		return locationId;
+	}
+
+	public void setLocationId(String locationId) {
+		this.locationId = locationId;
+	}
+
+	public String getIdRef() {
+		return idRef;
+	}
+
+	public void setIdRef(String idRef) {
+		this.idRef = idRef;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public double getAltitude() {
+		return altitude;
+	}
+
+	public void setAltitude(double altitude) {
+		this.altitude = altitude;
+	}
+
+	public Coordinate getCoordinate() {
+		return coordinate;
+	}
+
+	public void setCoordinate(Coordinate coordinate) {
+		this.coordinate = coordinate;
+	}
+
+	public long getCreatedDate() {
+		return createdDate;
+	}
+
+	public void setCreatedDate(long createdDate) {
+		this.createdDate = createdDate;
+	}
+
+	public int getNumber() {
+		return number;
+	}
+
+	public void setNumber(int number) {
+		this.number = number;
+	}
+
+	public PhotoResponse getPhoto() {
+		return photo;
+	}
+
+	public void setPhoto(PhotoResponse photo) {
+		this.photo = photo;
+	}
+
+	public double getPlanRotation() {
+		return planRotation;
+	}
+
+	public void setPlanRotation(double planRotation) {
+		this.planRotation = planRotation;
+	}
+
+	public double getPlanScaleX() {
+		return planScaleX;
+	}
+
+	public void setPlanScaleX(double planScaleX) {
+		this.planScaleX = planScaleX;
+	}
+
+	public double getPlanScaleY() {
+		return planScaleY;
+	}
+
+	public void setPlanScaleY(double planScaleY) {
+		this.planScaleY = planScaleY;
+	}
+
+}

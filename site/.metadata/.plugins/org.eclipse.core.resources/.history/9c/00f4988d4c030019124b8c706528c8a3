@@ -1,0 +1,122 @@
+package com.mit.beacon.entities;
+
+import com.mit.common.entities.ActiveTimeDoc;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+/**
+ * Created by Lap Pham on 6/15/17.
+ */
+
+@Document(collection = "beacon_tp")
+public class BeaconTP extends ActiveTimeDoc<Long> {
+    @Id
+    private long id;
+    private long eventId;
+    private long floorId;
+    private double x;
+    private double y;
+    private double pxX;
+    private double pxY;
+    private String uId;
+    private String major;
+    private String minor;
+    private String code;
+    private int index;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public long getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(long eventId) {
+        this.eventId = eventId;
+    }
+
+    public long getFloorId() {
+        return floorId;
+    }
+
+    public void setFloorId(long floorId) {
+        this.floorId = floorId;
+    }
+
+    public double getX() {
+        return x;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setY(double y) {
+        this.y = y;
+    }
+
+    public double getPxX() {
+        return pxX;
+    }
+
+    public void setPxX(double pxX) {
+        this.pxX = pxX;
+    }
+
+    public double getPxY() {
+        return pxY;
+    }
+
+    public void setPxY(double pxY) {
+        this.pxY = pxY;
+    }
+
+    public String getuId() {
+        return uId;
+    }
+
+    public void setuId(String uId) {
+        this.uId = uId;
+    }
+
+    public String getMajor() {
+        return major;
+    }
+
+    public void setMajor(String major) {
+        this.major = major;
+    }
+
+    public String getMinor() {
+        return minor;
+    }
+
+    public void setMinor(String minor) {
+        this.minor = minor;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+}

@@ -1,0 +1,25 @@
+package com.mit.sensor.bodies;
+
+/**
+ * Created by Hung on 1/19/2018.
+ */
+public class StepCounterBody {
+    private double elapsedTime;
+    private int value;
+
+    public double getElapsedTime() {
+        return elapsedTime;
+    }
+
+    public void setElapsedTime(double elapsedTime) {
+        this.elapsedTime = elapsedTime;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public void setValue(int value) {
+        this.value = value;
+    }
+}

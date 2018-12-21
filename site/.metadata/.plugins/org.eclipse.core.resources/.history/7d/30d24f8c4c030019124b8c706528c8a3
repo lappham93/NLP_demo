@@ -1,0 +1,75 @@
+package com.mit.react.repositories;
+
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
+
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.react.entities.LiveTracking;
+
+/**
+ * Created by Hung on 6/19/2017.
+ */
+
+@Repository
+public class LiveTrackingRepo extends TimeDocRepo<LiveTracking> {
+
+	@Autowired
+	protected MongoOperations mongoOps;
+
+	public List<LiveTracking> getTracking(long userId, long eventId, long floorId, Date from, Date to) {
+		Criteria criteria = new Criteria();
+		if (from != null && to != null) {
+			criteria.andOperator(Criteria.where("createdDate").gte(from), Criteria.where("createdDate").lte(to));
+		}
+		if (userId > 0) {
+			criteria.and("userId").is(userId);
+		}
+		if (floorId > 0) {
+			criteria.and("floorId").is(floorId);
+		}
+		if (eventId > 0) {
+			criteria.and("objectRef._id").is(eventId);
+		}
+		return mongoOps.find(new Query(criteria), entityClass);
+	}
+	
+	public List<LiveTracking> getTrackingSlice(long userId, long eventId, long floorId, Date fromTime, Date toTime, int from, int count) {
+		Criteria criteria = new Criteria();
+		if (fromTime != null && toTime != null) {
+			criteria.andOperator(Criteria.where("createdDate").gte(fromTime), Criteria.where("createdDate").lte(toTime));
+		}
+		if (userId > 0) {
+			criteria.and("userId").is(userId);
+		}
+		if (floorId > 0) {
+			criteria.and("floorId").is(floorId);
+		}
+		if (eventId > 0) {
+			criteria.and("objectRef._id").is(eventId);
+		}
+		Sort sort = new Sort(Direction.ASC, "updatedDate");
+		return mongoOps.find(new Query(criteria).skip(from).limit(count).with(sort), entityClass);
+	}
+	
+	public long countTrackingPoint(long userId, long eventId, long floorId) {
+		Criteria criteria = new Criteria();
+		if (userId > 0) {
+			criteria.and("userId").is(userId);
+		}
+		if (floorId > 0) {
+			criteria.and("floorId").is(floorId);
+		}
+		if (eventId > 0) {
+			criteria.and("objectRef._id").is(eventId);
+		}
+		return mongoOps.count(new Query(criteria), entityClass);
+	}
+}

@@ -1,0 +1,23 @@
+package com.mit.address.repositories;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.stereotype.Repository;
+
+import com.mit.address.entities.BillingAddress;
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.seq.repositories.SeqIdRepo;
+
+@Repository
+public class BillingAddressRepo extends TimeDocRepo<BillingAddress>{
+	@Autowired
+	MongoOperations mongoOps;
+
+	@Autowired
+	SeqIdRepo seqIdRepo;
+
+	public BillingAddress getById(long id) {
+		return mongoOps.findById(id, BillingAddress.class);
+	}
+
+}

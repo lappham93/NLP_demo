@@ -1,0 +1,66 @@
+package com.mit.react.bodies;
+
+import com.mit.common.entities.ObjectRef;
+import com.mit.react.entities.Rating;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel
+public class RatingBody {
+	private long userId;
+	private ObjectRef objectRef;
+	private double point;
+	private String comment;
+
+	public Rating toRating() {
+		Rating rating = new Rating();
+		rating.setUserId(userId);
+		rating.setObjectRef(objectRef);
+		rating.setStatus(1);
+		toRating(rating);
+		
+		return rating;
+	}
+	
+	public void toRating(Rating rating) {
+		rating.setPoint(point);
+	}
+	
+	@ApiModelProperty(required = false, hidden = true)
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	@ApiModelProperty(required = true, value = "type: LANDSCAPING(9)")
+	public ObjectRef getObjectRef() {
+		return objectRef;
+	}
+
+	public void setObjectRef(ObjectRef objectRef) {
+		this.objectRef = objectRef;
+	}
+
+	@ApiModelProperty(required = true)
+	public double getPoint() {
+		return point;
+	}
+
+	public void setPoint(double point) {
+		this.point = point;
+	}
+
+	@ApiModelProperty(required = false, notes="use for landscaping, support text comment only.")
+	public String getComment() {
+		return comment;
+	}
+
+	public void setComment(String comment) {
+		this.comment = comment;
+	}
+
+}

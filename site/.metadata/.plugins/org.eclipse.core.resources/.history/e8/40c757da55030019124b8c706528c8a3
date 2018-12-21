@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+    layout:decorator="myapp_layout">
+<head>
+	<script type="text/javascript" th:src="${resources_path} + '/js/app/myapp.js'"></script>
+</head>
+<body>
+<div layout:fragment="content" th:with="hasApp = ${apps != null and #lists.size(apps) > 0}">
+	<div class="col-md-7">
+		<div class="panel panel-flat" style="padding-left: 0px" th:if="${not(hasApp)}">
+			<div class="panel-body flow">
+				<div class="col-md-12">
+					<div class="app-warning">
+						<p>You don't have any applications yet!</p>
+					</div>
+					<button class="btn btn-primary btn-rounded" th:onclick="'window.location.replace(\'' + ${apps_add_url} + '\')'">
+						Create new application
+					</button>
+				</div>
+			</div>
+		</div>
+		<div class="panel panel-flat" style="padding-left: 0px" th:if="${hasApp}" th:each="app:${apps}">
+			<div class="panel-body flow floor_list">
+				<div class="col-md-12 floor-list-item">
+					<div class="row floor-list-name">
+						<div class="col-xs-8" style="padding: 0px;">
+							<h4><a th:text="${app.name}" th:href="${#strings.replace(apps_item_url, '{0}', app.idRef)}"></a></h4>
+						</div>
+						<div class="col-xs-4 floor-list-actions">
+							<ul class="list list-inline">
+								<li class="dropdown">
+									<a href="#" class="dropdown-toggle"
+										data-toggle="dropdown"> <i class="icon-more2" style="font-size: 20px;"></i>
+									</a>
+	
+									<ul class="dropdown-menu dropdown-menu-right">
+										<li><a th:href="${#strings.replace(apps_item_url, '{0}', app.idRef)}" data-toggle="modal">View application detail</a></li>
+										<li><a th:href="${#strings.replace(apps_edit_url, '{0}', app.idRef)}" data-toggle="modal">Edit application</a></li>
+									</ul>
+								</li>
+							</ul>
+						</div>
+					</div>
+					<div class="floor-list-suggest" th:if="${app.desc != null and app.desc != ''}">
+						<span th:text="${app.desc}"></span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-5">
+		<div class="location-detail">
+			<div>
+				<h2 class="location-detail-header">Development resources</h2>
+			</div>
+			<div class="location-detail-feature">
+				<div class="location-detail-feature-name">
+					<span>Android SDK</span>
+				</div>
+				<div class="location-detail-feature-text">
+					<p>IndoorInnkom SDK offers a familiar, Location Services -alike API for any native Android application for use indoors.</p>
+				</div>
+			</div>
+			<div class="location-detail-feature">
+				<div class="location-detail-feature-name">
+					<span>iOS SDK</span>
+				</div>
+				<div class="location-detail-feature-text">
+					<p>IndoorInnkom SDK offers a familiar, Core Location Framework -alike API for any native iOS application for use indoors.</p>
+				</div>
+			</div>
+			<div class="location-detail-feature">
+				<div class="location-detail-feature-name">
+					<span>Core features</span>
+				</div>
+				<div class="location-detail-feature-text">
+					<p>IndoorInnkom SDK and cloud services enable your iOS and Android apps to acquire accurate end user position inside buildings and underground. No hardware installations or maintenance required, IndoorInnkom is powered entirely by software and the sensors of common smartphones.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>

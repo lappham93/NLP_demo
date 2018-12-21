@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+    layout:decorator="profile_layout">
+<head>
+	<script type="text/javascript" th:src="${resources_path} + '/js/app/profile_update.js'"></script>
+</head>
+<body>
+<div layout:fragment="content">
+	<div id="formId" class="panel panel-flat">
+		<div class="panel-heading">
+			<h5 class="panel-title">Profile</h5>
+			<div class="heading-elements">
+			</div>
+		</div>
+		<form id="updateProfileFrmId" class="form-horizontal">
+			<div th:replace="fragments/fragments :: form_error_2"></div>
+			<div th:replace="fragments/fragments :: form_success_2"></div>
+			<div th:replace="fragments/fragments :: loader"></div>
+			<div class="panel-body">
+				<div class="form-group">
+					<label class="col-lg-3 control-label">Username: <span class="text-danger">(*)</span></label>
+					<div class="col-lg-9">
+						<input type="text" id="nameAddIptId" class="form-control" placeholder="Username" th:value="${profile.userName}"/>
+					</div>
+				</div>
+				
+				<div class="form-group">
+					<label class="col-lg-3 control-label">Email: <span class="text-danger">(*)</span></label>
+					<div class="col-lg-9">
+						<input type="email" id="emailAddIptId" class="form-control" placeholder="Email" th:value="${profile.email}"/>
+					</div>
+				</div>
+				
+				<div class="form-group">
+					<label class="col-lg-3 control-label">First name: </label>
+					<div class="col-lg-9">
+						<input type="text" id="firstNameAddIptId" class="form-control" placeholder="First name" th:value="${profile.firstName}"/>
+					</div>
+				</div>
+				
+				<div class="form-group">
+					<label class="col-lg-3 control-label">Last name: </label>
+					<div class="col-lg-9">
+						<input type="text" id="lastNameAddIptId" class="form-control" placeholder="Last name" th:value="${profile.lastName}"/>
+					</div>
+				</div>
+				
+				<div class="form-group">
+					<label class="col-lg-3 control-label">Company: </label>
+					<div class="col-lg-9">
+						<input type="text" id="companyAddIptId" class="form-control" placeholder="Company" th:value="${profile.company}"/>
+					</div>
+				</div>
+				
+				<div class="text-right">
+					<button class="btn btn-primary btn-rounded" id="updateProfileBtnId">Submit</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+</body>
+</html>

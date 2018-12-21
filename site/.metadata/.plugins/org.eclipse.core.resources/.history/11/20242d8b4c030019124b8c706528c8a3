@@ -1,0 +1,136 @@
+package com.mit.user.services;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.event.entities.EventCategory;
+import com.mit.event.repositories.EventCategoryRepo;
+import com.mit.event.responses.EventCategoryResponse;
+import com.mit.event.responses.EventShortResponse;
+import com.mit.event.responses.MyCalendarResponse;
+import com.mit.event.services.EventService;
+import com.mit.react.entities.UserStat;
+import com.mit.react.repositories.UserStatRepo;
+import com.mit.user.entities.Profile;
+import com.mit.user.entities.UserLocation;
+import com.mit.user.enums.UserStatus;
+import com.mit.user.repositories.ProfileRepo;
+import com.mit.user.responses.ProfileResponse;
+import com.mit.user.responses.ProfileSettingResponse;
+import com.mit.user.responses.ProfileShortResponse;
+import com.mit.user.responses.UserLocationResponse;
+
+@Service
+public class UserService {
+	
+	@Autowired
+	ProfileRepo profileRepo;
+	@Autowired
+	UserStatRepo userStatRepo;
+	@Autowired
+	EventService eventService;
+	@Autowired
+	EventCategoryRepo eventCategoryRepo;
+	
+	public ProfileShortResponse buildProfileShortResponse(long userId, long viewUserId) {
+		Profile profile = profileRepo.getById(userId);
+		return buildProfileShortResponse(profile, viewUserId);
+	}
+	
+	public ProfileShortResponse buildProfileShortResponse(Profile profile, long viewUserId) {
+		if (profile == null) {
+			return null;
+		}
+		UserStat userStat = userStatRepo.getByUserId(profile.getId(), true);
+		Map<String, Object> calendarMap = eventService.getMyCalendar(profile.getId(), 0, 0, 3);
+		List<EventCategoryResponse> interestCategories = null;
+		if (userStat.getEventCategoryIds() != null) {
+			List<EventCategory> categories = eventCategoryRepo.getListByIds(new LinkedList<>(userStat.getEventCategoryIds()));
+			interestCategories = eventService.buildListEventCategoryResponse(categories);
+		}
+		return new ProfileShortResponse(profile, userStat, null, viewUserId, (MyCalendarResponse)calendarMap.get("calendar"), interestCategories);
+	}
+	
+	public ProfileResponse buildProfileResponse(Profile profile, long viewUserId) {
+		Map<String, Object> calendarMap = eventService.getMyCalendar(profile.getId(), 0, 0, 3);
+		ProfileResponse profileResponse = new ProfileResponse(profile, (MyCalendarResponse)calendarMap.get("calendar"));
+		profileResponse.setInterestedCategories(eventService.getEventCategory(profile.getId(), true));
+		profileResponse.setProfileSetting(new ProfileSettingResponse(userStatRepo.getByUserId(profile.getId(), false)));
+		return profileResponse;
+	}
+	
+	public List<ProfileShortResponse> buildProfileShortResponseList(List<Long> userIds, long viewUserId) {
+		if (CollectionUtils.isEmpty(userIds)) {
+			return null;
+		}
+		List<ProfileShortResponse> profiles = new LinkedList<>();
+		Map<Long, Profile> profileMap = profileRepo.getMapByIds(userIds);
+		Map<Long, UserStat> userStatMap = userStatRepo.getMapByIds(userIds);
+		Map<Long, EventShortResponse> upEventMap = eventService.getUpCommingEvent();
+		for (long userId: userIds) {
+			if (profileMap.containsKey(userId)) {
+				Map<String, Object> calendarMap = eventService.getMyCalendar(userId, 0, 0, 3, upEventMap);
+				ProfileShortResponse profile = new ProfileShortResponse(profileMap.get(userId), userStatMap.get(userId), null, viewUserId, (MyCalendarResponse)calendarMap.get("calendar"));
+				profile.setInterestedCategories(eventService.getEventCategory(userId, true));
+				profiles.add(profile);
+			}
+		}
+		return profiles;
+	}
+	
+	public List<UserLocationResponse> buildUserLocationResponseList(List<UserLocation> userLocations, long viewUserId) {
+		if (CollectionUtils.isEmpty(userLocations)) {
+			return null;
+		}
+		List<Long> userIds = new ArrayList<>(userLocations.size());
+        userLocations.forEach(t -> userIds.add(t.getId()));
+		List<UserLocationResponse> profiles = new LinkedList<>();
+		Map<Long, Profile> profileMap = profileRepo.getMapByIds(userIds);
+		Map<Long, UserStat> userStatMap = userStatRepo.getMapByIds(userIds);
+		Map<Long, EventShortResponse> upEventMap = eventService.getUpCommingEvent();
+		for (UserLocation userLocation: userLocations) {
+			long userId = userLocation.getId();
+			if (profileMap.containsKey(userId)) {
+				Map<String, Object> calendarMap = eventService.getMyCalendar(userId, 0, 0, 3, upEventMap);
+				UserLocationResponse profile = new UserLocationResponse(userLocation, profileMap.get(userId), userStatMap.get(userId), null, viewUserId, (MyCalendarResponse)calendarMap.get("calendar"));
+				profiles.add(profile);
+			}
+		}
+		return profiles;
+	}
+	
+	public List<ProfileShortResponse> buildSimpleUserResponse(List<Long> userIds) {
+		if (CollectionUtils.isEmpty(userIds)) {
+			return null;
+		}
+		List<Profile> profiles = profileRepo.getListByIds(userIds);
+		if (CollectionUtils.isEmpty(profiles)) {
+			return null;
+		}
+		List<ProfileShortResponse> profileResponses = new LinkedList<>();
+		profiles.forEach(t -> profileResponses.add(new ProfileShortResponse(t)));
+		
+		return profileResponses;
+	}
+	
+	public void removeInactiveUser(List<ProfileShortResponse> profiles) {
+		if (CollectionUtils.isEmpty(profiles)) {
+			return;
+		}
+		Iterator<ProfileShortResponse> itrs = profiles.iterator();
+		while(itrs.hasNext()) {
+			ProfileShortResponse profile = itrs.next();
+			if (profile.getStatus() == UserStatus.INACTIVE.getValue() || profile.getStatus() == UserStatus.BAN.getValue()) {
+				itrs.remove();
+			}
+		}
+	}
+	
+}

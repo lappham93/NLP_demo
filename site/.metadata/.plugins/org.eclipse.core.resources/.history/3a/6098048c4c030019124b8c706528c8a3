@@ -1,0 +1,88 @@
+package com.mit.sensor.bodies;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+/**
+ * Created by Hung on 12/3/2017.
+ */
+public class IntLocationBody {
+    @JsonProperty("elapsed_time")
+    private double elapsedTime;
+    private double lat;
+    private double lon;
+    private double alt;
+    private double acc;
+    @JsonProperty("v_acc")
+    private double vAcc;
+    @JsonProperty("h_acc")
+    private double hAcc;
+
+    public IntLocationBody() {
+    }
+
+    public IntLocationBody(LocationBody body) {
+        this.elapsedTime = body.getElapsedTime();
+        this.lat = body.getLat();
+        this.lon = body.getLon();
+        this.alt = body.getAlt();
+        this.acc = body.getAcc();
+        this.vAcc = body.getvAcc();
+        this.hAcc = body.gethAcc();
+    }
+
+    public double getElapsedTime() {
+        return elapsedTime;
+    }
+
+    public void setElapsedTime(double elapsedTime) {
+        this.elapsedTime = elapsedTime;
+    }
+
+    public double getLat() {
+        return lat;
+    }
+
+    public void setLat(double lat) {
+        this.lat = lat;
+    }
+
+    public double getLon() {
+        return lon;
+    }
+
+    public void setLon(double lon) {
+        this.lon = lon;
+    }
+
+    public double getAlt() {
+        return alt;
+    }
+
+    public void setAlt(double alt) {
+        this.alt = alt;
+    }
+
+    public double getAcc() {
+        return acc;
+    }
+
+    public void setAcc(double acc) {
+        this.acc = acc;
+    }
+
+    public double getvAcc() {
+        return vAcc;
+    }
+
+    public void setvAcc(double vAcc) {
+        this.vAcc = vAcc;
+    }
+
+    public double gethAcc() {
+        return hAcc;
+    }
+
+    public void sethAcc(double hAcc) {
+        this.hAcc = hAcc;
+    }
+}

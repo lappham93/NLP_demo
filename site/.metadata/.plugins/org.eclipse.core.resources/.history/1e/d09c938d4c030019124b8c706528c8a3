@@ -1,0 +1,52 @@
+package com.mit.blog.bodies;
+
+import com.mit.blog.entities.BlogCategory;
+
+import io.swagger.annotations.ApiModel;
+
+@ApiModel
+public class BlogCategoryBody {
+	private String name;
+	private String description;
+	private boolean isActive;
+	
+	public BlogCategory toCategory() {
+		BlogCategory cate = new BlogCategory();
+		updateCategory(cate);
+		return cate;
+	}
+	
+	public void updateCategory(BlogCategory cate) {
+		if (cate == null) {
+			return;
+		}
+		cate.setName(name);
+		cate.setDescription(description);
+		cate.setActive(isActive);
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public boolean isActive() {
+		return isActive;
+	}
+
+	public void setActive(boolean isActive) {
+		this.isActive = isActive;
+	}
+
+}

@@ -1,0 +1,25 @@
+package com.mit.ai.services;
+
+import org.apache.commons.lang3.RandomUtils;
+import org.springframework.stereotype.Service;
+
+import com.mit.ai.bodies.CommentBody;
+import com.mit.ai.bodies.CommentLabelingBody;
+import com.mit.ai.responses.SentimentPredictResponse;
+
+@Service
+public class SentimentService {
+	
+	public SentimentPredictResponse predict(CommentBody comment) {
+		SentimentPredictResponse	response = new SentimentPredictResponse();
+		response.setPositive(RandomUtils.nextBoolean());
+		response.setProba(RandomUtils.nextDouble(0, 1));
+		return response;
+	}
+	
+	public boolean labeling(CommentLabelingBody body) {
+		
+		
+		return true;
+	}
+}

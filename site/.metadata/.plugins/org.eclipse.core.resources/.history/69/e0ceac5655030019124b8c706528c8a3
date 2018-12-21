@@ -1,0 +1,68 @@
+package com.mit.controllers;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.mit.atlas.repositories.AtlasFloorRepo;
+import com.mit.atlas.repositories.AtlasLocationRepo;
+import com.mit.event.repositories.EventRepo;
+import com.mit.http.ApiResponse;
+import com.mit.navigation.repositories.FloorRepo;
+import com.mit.navigation.services.NavigationService;
+import com.mit.react.repositories.LiveTrackingRepo;
+import com.mit.react.repositories.ReactStatRepo;
+import com.mit.services.AtlasLocationService;
+import com.mit.user.services.UserService;
+import com.mit.utils.ControllerUtils;
+
+@RestController
+@RequestMapping(value = "")
+public class HomeController {
+	public static final Logger _logger = LoggerFactory.getLogger(HomeController.class);
+
+	@Autowired
+	AtlasLocationService locationService;
+	@Autowired
+	LiveTrackingRepo liveTrackingRepo;
+	@Autowired
+	EventRepo eventRepo;
+	@Autowired
+	NavigationService navigationService;
+	@Autowired
+	FloorRepo floorRepo;
+	@Autowired
+	AtlasFloorRepo atlasFloorRepo;
+	@Autowired
+	AtlasLocationRepo locationRepo;
+	@Autowired
+	UserService userService;
+	@Autowired
+	ReactStatRepo reactStatRepo;
+	
+
+	@RequestMapping(value = { "/", "/home" }, method = RequestMethod.GET)
+	@ModelAttribute
+	public ModelAndView render(HttpServletRequest req, Model model,
+		@RequestParam(value = "location", required = false, defaultValue = "") String locationId,
+		@RequestParam(value = "floor", required = false, defaultValue = "") String floorId,
+		@RequestParam(value = "userId", required = false, defaultValue = "0") long userId) {
+		long eventId = 12, eventFloorId = 15;
+		
+		ModelAndView rs = ControllerUtils.initPage("home", "Dashboard", null, "isDashboardTab");
+		return rs;
+	}
+	
+}

@@ -1,0 +1,33 @@
+package com.mit.event.responses;
+
+/**
+ * Created by Lap Pham on 6/19/17.
+ */
+public class EventOnlineResponse {
+    private EventShortResponse event;
+    private boolean beingOnline;
+
+    public EventOnlineResponse() {
+    }
+
+    public EventOnlineResponse(EventShortResponse event, boolean beingOnline) {
+        this.event = event;
+        this.beingOnline = beingOnline;
+    }
+
+    public EventShortResponse getEvent() {
+        return event;
+    }
+
+    public void setEvent(EventShortResponse event) {
+        this.event = event;
+    }
+
+    public boolean isBeingOnline() {
+        return beingOnline;
+    }
+
+    public void setBeingOnline(boolean beingOnline) {
+        this.beingOnline = beingOnline;
+    }
+}

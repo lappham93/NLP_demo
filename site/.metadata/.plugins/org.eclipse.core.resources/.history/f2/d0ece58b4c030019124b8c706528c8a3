@@ -1,0 +1,345 @@
+package com.mit.sensor.services;
+
+import com.mit.event.entities.Event;
+import com.mit.event.repositories.EventRepo;
+import com.mit.event.responses.EventSimpleResponse;
+import com.mit.map.entities.Point;
+import com.mit.navigation.bodies.WayPointBody;
+import com.mit.navigation.entities.Floor;
+import com.mit.navigation.entities.WayPoint;
+import com.mit.navigation.repositories.FloorRepo;
+import com.mit.navigation.repositories.WayPointRepo;
+import com.mit.navigation.responses.CurrentLocationResponse;
+import com.mit.navigation.responses.IntCurrentLocationResponse;
+import com.mit.navigation.responses.WayPointResponse;
+import com.mit.navigation.services.NavigationService;
+import com.mit.sensor.bodies.*;
+import com.mit.sensor.entities.Route;
+import com.mit.sensor.entities.UserRouteMemory;
+import com.mit.sensor.repositories.RouteRepo;
+import com.mit.sensor.repositories.SensorLogRepo;
+import com.mit.sensor.repositories.UserRouteMemoryRepo;
+import com.mit.utils.JsonUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.*;
+
+/**
+ * Created by Hung on 8/25/2017.
+ */
+
+@Service
+public class SensorService {
+    @Value("${internalApi.url:http://iapi.innkom.com/ik/location}")
+    private String internalApiUrl;
+
+    private final Logger logger = LoggerFactory.getLogger(SensorService.class);
+
+    @Autowired
+    private EventRepo eventRepo;
+    @Autowired
+    private FloorRepo floorRepo;
+    @Autowired
+    private WayPointRepo wayPointRepo;
+    @Autowired
+    private RouteRepo routeRepo;
+    @Autowired
+    private SensorLogRepo sensorLogRepo;
+    @Autowired
+    private NavigationService navigationService;
+    @Autowired
+    private UserRouteMemoryRepo userRouteMemoryRepo;
+
+    public Map<String, Object> getListEvent(int from, int size) {
+        Map<String, Object> rs = new HashMap<>();
+        boolean hasMore = false;
+        List<EventSimpleResponse> eventResponses = new ArrayList<>();
+        List<Event> events = eventRepo.getSlice(null, true, from, size + 1, "id", false);
+        if (events != null && !events.isEmpty()) {
+            if (events.size() > size) {
+                events = events.subList(0, size);
+                hasMore = true;
+            }
+            for (Event event : events) {
+                eventResponses.add(new EventSimpleResponse(event));
+            }
+        }
+        rs.put("hasMore", hasMore);
+        rs.put("events", eventResponses);
+        return rs;
+    }
+
+    public Map<String, Object> getListFloor(long eventId) {
+        Map<String, Object> rs = new HashMap<>();
+//        List<FloorSimpleResponse> floorSums = new ArrayList<>();
+//        List<Floor> floors = floorRepo.getListByEvent(eventId);
+//        if (floors != null && !floors.isEmpty()) {
+//            for (Floor floor : floors) {
+//                floorSums.add(new FloorSimpleResponse(floor));
+//            }
+//        }
+        rs.put("floors", navigationService.getListFloor(eventId));
+        return rs;
+    }
+
+    public WayPointResponse addWayPoint(WayPointBody body) throws Exception {
+        WayPoint wayPoint = body.toWayPoint();
+        Floor floor = floorRepo.getById(wayPoint.getFloorId());
+        wayPoint.setEventId(floor.getEventId());
+        wayPoint.setPxPoint(new Point(wayPoint.getPoint().getX() * floor.getPxWidth(), wayPoint.getPoint().getY() * floor.getPxHeight()));
+        wayPointRepo.save(wayPoint);
+        WayPointResponse wayPointResponse = new WayPointResponse(wayPoint);
+        return wayPointResponse;
+    }
+
+    public void removeWayPoint(long id) {
+        wayPointRepo.delete(id);
+    }
+
+    public Map<String, Object> getListWayPoint(long floorId) {
+        Map<String, Object> rs = new HashMap<>();
+        List<WayPoint> wayPoints = wayPointRepo.getListByFloor(floorId);
+        List<WayPointResponse> wayPointResponses = new LinkedList<>();
+//        Floor floor = floorRepo.getById(floorId);
+        if (wayPoints != null) {
+            for (WayPoint wayPoint: wayPoints) {
+                wayPointResponses.add(new WayPointResponse(wayPoint));
+            }
+        }
+        rs.put("wayPoints", wayPointResponses);
+        return rs;
+    }
+
+    public void addRoute(RouteBody body) throws Exception {
+        Route route = body.toRoute();
+        routeRepo.save(route);
+
+//        List<SensorLog> sensorLogs = body.toSensorLogs(route.getId());
+//        sensorLogRepo.insertBatch(sensorLogs);
+    }
+
+    public CurrentLocationResponse getCurrentIndoorLocation(long userId, IndrLocationBody body) throws Exception {
+        if (userId == 97) {
+            logger.info("User97 body" + JsonUtils.Instance.toJson(body));
+        }
+
+        UserRouteMemory memory = userRouteMemoryRepo.getById(userId);
+        double lastSampling = 0;
+        List<List<List<Float>>> hx = null;
+        if (memory != null) {
+            lastSampling = memory.getLastSampling();
+            hx = memory.getHx();
+
+//            double lastDt = body.getMag().get(body.getMag().size() - 1).getElapsedTime() + body.getStartTime() - lastSampling;
+//            if (lastDt > 10) {
+//                hx = null;
+//                memory = new UserRouteMemory();
+//            } else if (lastDt > 3) {
+////                memory.setBluetooth(Collections.emptyList());
+////                memory.setWifi(Collections.emptyList());
+//            }
+        }
+
+        double stepDistance = 0;
+        double memoryStepDistance = 0;
+        if (memory != null) {
+            memoryStepDistance = memory.getStepDistance();
+        }
+
+        if (!CollectionUtils.isEmpty(body.getStepDist())) {
+            stepDistance = body.getStepDist().get(body.getStepDist().size() - 1).getDistance();
+            if (memoryStepDistance == 0 && body.getStepDist().size() > 0) {
+                memoryStepDistance = body.getStepDist().get(0).getDistance();
+                body.getStepDist().remove(0);
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(body.getStepDist())) {
+            double preStepDistance = memoryStepDistance;
+            double tmpStepDistance;
+            for (StepDistanceBody stepDistanceBody: body.getStepDist()) {
+                tmpStepDistance = stepDistanceBody.getDistance();
+                stepDistanceBody.setDistance(stepDistanceBody.getDistance() - preStepDistance);
+                preStepDistance = tmpStepDistance;
+            }
+        }
+
+        if (CollectionUtils.isEmpty(body.getRotation()) && memory != null && memory.getRotation() != null) {
+            if (body.getRotation() == null) {
+                body.setRotation(new ArrayList<>());
+            }
+            SensorBody rotation = new SensorBody();
+            rotation.setElapsedTime(memory.getLastSampling());
+            rotation.setValues(memory.getRotation());
+            body.getRotation().add(rotation);
+        }
+
+        List<Float> lastRotation = null;
+        if (!CollectionUtils.isEmpty(body.getRotation())) {
+            lastRotation = body.getRotation().get(body.getRotation().size() - 1).getValues();
+        }
+
+        IntIndrLocationBody internalBody = new IntIndrLocationBody(body, lastSampling, hx);
+        internalBody.setUserId(userId);
+
+        if (!CollectionUtils.isEmpty(internalBody.getGps())) {
+            for (IntLocationBody gps: internalBody.getGps()) {
+                gps.setElapsedTime(internalBody.getStartTime() + gps.getElapsedTime());
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(internalBody.getBluetooth())) {
+            for (IntRFBody bt: internalBody.getBluetooth()) {
+                bt.setElapsedTime(internalBody.getStartTime() + bt.getElapsedTime());
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(internalBody.getWifi())) {
+            for (IntRFBody wifi: internalBody.getWifi()) {
+                wifi.setElapsedTime(internalBody.getStartTime() + wifi.getElapsedTime());
+            }
+        }
+
+        if (memory != null) {
+            internalBody.setPoints(memory.getPoints());
+            internalBody.setPointIdx((memory.getStep() + 2) % 3);
+            internalBody.setFloorId(memory.getFloorId());
+            internalBody.setMagMean(memory.getMagMean());
+            internalBody.setMagStd(memory.getMagStd());
+
+            if (CollectionUtils.isEmpty(body.getGps()) && memory.getGps() != null) {
+                internalBody.setGps(Arrays.asList(memory.getGps()));
+            }
+
+            if (CollectionUtils.isEmpty(body.getBluetooth()) && !CollectionUtils.isEmpty(memory.getBluetooth())) {
+                internalBody.setBluetooth(memory.getBluetooth());
+            }
+
+            if (CollectionUtils.isEmpty(body.getWifi()) && !CollectionUtils.isEmpty(memory.getWifi())) {
+                internalBody.setWifi(memory.getWifi());
+            }
+        }
+
+        IntCurrentLocationResponse resp = null;
+        if (!CollectionUtils.isEmpty(body.getStepDist()) || memory == null) {
+            resp = postForEntity(internalApiUrl, internalBody, IntCurrentLocationResponse.class);
+
+            if (memory == null) {
+                memory = new UserRouteMemory();
+            }
+            memory.setLastSampling(resp.getLastSampling());
+            memory.setHx(resp.getHx());
+            memory.setX(resp.getX());
+            memory.setY(resp.getY());
+            memory.setFloorId(resp.getFloorId());
+            if (memory.getPoints() == null) {
+                memory.setPoints(new ArrayList<>());
+            }
+            Point point = new Point(resp.getRawX(), resp.getRawY());
+            if (memory.getPoints().size() < 3) {
+                memory.getPoints().add(point);
+                memory.setStep((memory.getStep() + 1) % 3);
+            } else {
+                memory.getPoints().set(memory.getStep(), point);
+                memory.setStep((memory.getStep() + 1) % 3);
+            }
+            memory.setFloorId(resp.getFloorId());
+
+            if (!CollectionUtils.isEmpty(resp.getMag()) && (memory.getMag() == null || memory.getMag().size() < 1000)) {
+                if (memory.getMag() == null) {
+                    memory.setMag(new ArrayList<>());
+                }
+
+                memory.getMag().addAll(resp.getMag());
+
+                if (memory.getMag().size() > 100) {
+                    List<Double> magMean = new ArrayList<>(3);
+                    magMean.add(0.0);
+                    magMean.add(0.0);
+                    magMean.add(0.0);
+                    int magSize = memory.getMag().size();
+                    for (int i = 0; i < magSize; i++) {
+                        magMean.set(0, magMean.get(0) + (double)memory.getMag().get(i).get(0) / magSize);
+                        magMean.set(1, magMean.get(1) + (double)memory.getMag().get(i).get(1) / magSize);
+                        magMean.set(2, magMean.get(2) + (double)memory.getMag().get(i).get(2) / magSize);
+                    }
+                    List<Double> magStd = new ArrayList<>(3);
+                    magStd.add(0.0);
+                    magStd.add(0.0);
+                    magStd.add(0.0);
+                    for (int i = 0; i < magSize; i++) {
+                        magStd.set(0, magStd.get(0) + (memory.getMag().get(i).get(0) - magMean.get(0)) * (memory.getMag().get(i).get(0) - magMean.get(0)) / magSize);
+                        magStd.set(1, magStd.get(1) + (memory.getMag().get(i).get(1) - magMean.get(1)) * (memory.getMag().get(i).get(1) - magMean.get(1)) / magSize);
+                        magStd.set(2, magStd.get(2) + (memory.getMag().get(i).get(2) - magMean.get(2)) * (memory.getMag().get(i).get(2) - magMean.get(2)) / magSize);
+                    }
+                    magStd.set(0, Math.sqrt(magStd.get(0)));
+                    magStd.set(1, Math.sqrt(magStd.get(1)));
+                    magStd.set(2, Math.sqrt(magStd.get(2)));
+
+                    memory.setMagMean(magMean);
+                    memory.setMagStd(magStd);
+                }
+            }
+        }
+
+        memory.setId(userId);
+        if (stepDistance > 0) {
+            memory.setStepDistance(stepDistance);
+        }
+        memory.setRotation(lastRotation);
+        if (!CollectionUtils.isEmpty(body.getGps())) {
+            memory.setGps(internalBody.getGps().get(internalBody.getGps().size() - 1));
+        }
+        if (!CollectionUtils.isEmpty(body.getBluetooth())) {
+            memory.setBluetooth(internalBody.getBluetooth());
+        }
+        if (!CollectionUtils.isEmpty(body.getWifi())) {
+            memory.setWifi(internalBody.getWifi());
+        }
+
+        userRouteMemoryRepo.save(memory);
+
+        if (resp != null) {
+            return resp.toCurrentLocationResponse();
+        } else {
+            return new CurrentLocationResponse(memory.getX(), memory.getY(), memory.getFloorId());
+        }
+
+//        CurrentLocationResponse resp = new CurrentLocationResponse(memory.getX(), memory.getY(), memory.getFloorId());
+//        return resp;
+    }
+
+    public <T> T postForEntity(String url, Object body, Class<T> responseType) {
+        RestTemplate restApi = new RestTemplate();
+
+//        restApi.getInterceptors().add(new BasicAuthorizationInterceptor(checkrApiKey, ""));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String jsonBody = JsonUtils.Instance.toJson(body);
+        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+
+        try {
+            ResponseEntity<T> response = restApi.postForEntity(url, entity, responseType);
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return response.getBody();
+            }
+        } catch (HttpStatusCodeException exception) {
+
+        }
+
+        return null;
+    }
+}

@@ -1,0 +1,204 @@
+package com.mit.services;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.mit.app.enums.AppType;
+import com.mit.atlas.entities.AtlasProfile;
+import com.mit.atlas.entities.AtlasUser;
+import com.mit.atlas.repositories.AtlasProfileRepo;
+import com.mit.atlas.repositories.AtlasUserRepo;
+import com.mit.bodies.AtlasEmailSignin;
+import com.mit.bodies.AtlasEmailSignup;
+import com.mit.bodies.AtlasNewPassword;
+import com.mit.bodies.AtlasProfileUpdate;
+import com.mit.errcode.UserErrCode;
+import com.mit.http.exception.SequenceException;
+import com.mit.responses.AtlasProfileResponse;
+import com.mit.user.entities.User;
+import com.mit.user.enums.ProfileType;
+import com.mit.user.enums.UserStatus;
+import com.mit.user.responses.LoginToken;
+import com.mit.user.responses.ProfileResponse;
+import com.mit.user.responses.RefreshTokenResponse;
+import com.mit.user.services.LoginService;
+import com.mit.utils.AuthenticateUtils;
+import com.mit.utils.LinkBuilder;
+
+@Service
+public class AtlasUserService {
+	@Autowired
+	AtlasUserRepo userRepo;
+	@Autowired
+	AtlasProfileRepo profileRepo;
+	@Autowired
+	LoginService loginService;
+
+	public Map<String, Object> changePassword(AtlasNewPassword body) throws SequenceException {
+		Map<String, Object> rs = new HashMap<>();
+		int err = UserErrCode.SUCCESS;
+		if (body.getNewPassword().equals(body.getConfirmNewPassword())) {
+			AtlasUser user = userRepo.getById(body.getUserId());
+			if (user != null) {
+				String hashPassword = AuthenticateUtils.hashPassword(body.getPassword(), user.getSalt());
+				if (hashPassword.equals(user.getPassword())) {
+					String salt = RandomStringUtils.randomAlphanumeric(10);
+					String newHashPassword = AuthenticateUtils.hashPassword(body.getNewPassword(), salt);
+					user.setSalt(salt);
+					user.setPassword(newHashPassword);
+					userRepo.save(user);
+				} else {
+					err = UserErrCode.ERR_PASSWORD;
+				}
+			} else {
+				err = UserErrCode.SERVER_ERR;
+			}
+		} else {
+			err = UserErrCode.CONFIRM_NEW_PASSWORD_NOT_MATCH;
+		}
+		rs.put("err", err);
+		return rs;
+	}
+	
+	public Map<String, Object> updateProfile(AtlasProfileUpdate body) throws SequenceException {
+		Map<String, Object> rs = new HashMap<>();
+		int err = checkUpdate(body);
+		if (err == UserErrCode.SUCCESS) {
+			AtlasProfile profile = profileRepo.getById(body.getUserId());
+			AtlasUser user = userRepo.getById(body.getUserId());
+			if (profile != null && user != null) {
+				body.updateProfile(profile, user);
+				profileRepo.save(profile);
+				userRepo.save(user);
+				rs.put("profile", new AtlasProfileResponse(profile, user));
+			} else {
+				err = UserErrCode.SERVER_ERR;
+			}
+		}
+		rs.put("err", err);
+		return rs;
+	}
+	
+	public AtlasProfileResponse getProfile(long userId) {
+		AtlasProfile profile = profileRepo.getById(userId);
+		AtlasUser user = userRepo.getById(userId);
+		return new AtlasProfileResponse(profile, user);
+	}
+	
+	public Map<String, Object> emailRegister(AtlasEmailSignup emailSignup) throws Exception {
+		Map<String, Object> rs = new HashMap<>();
+		int err = checkRegister(emailSignup);
+		if (err == UserErrCode.SUCCESS) {
+			String salt = RandomStringUtils.randomAlphanumeric(10);
+			String hashPassword = AuthenticateUtils.hashPassword(emailSignup.getPassword(), salt);
+			AtlasUser user = new AtlasUser();
+			user.setUserName(emailSignup.getUserName());
+			user.setSalt(salt);
+			user.setPassword(hashPassword);
+			userRepo.save(user);
+
+			AtlasProfile profile = emailSignup.toProfile();
+			profile.setId(user.getId());
+			profile.setProfileType(ProfileType.CLIENT.getValue());
+			profile.setStatus(UserStatus.ACTIVE.getValue());
+			profile.setNewed(true);
+			profileRepo.save(profile);
+
+			LoginToken loginToken = new LoginToken();
+			loginToken.setProfile(new ProfileResponse(profile));
+			RefreshTokenResponse refreshTokenResponse = loginService.generateTokens(profile, AppType.CLIENT.getValue());
+			if (refreshTokenResponse == null) {
+				err = UserErrCode.SERVER_ERR;
+			} else {
+				loginToken.setSessionKey(refreshTokenResponse.getSessionKey());
+				loginToken.setRefreshToken(refreshTokenResponse.getRefreshToken());
+				loginToken.setApiSocket(LinkBuilder.buildApiSocketLink());
+				rs.put("loginToken", loginToken);
+			}
+		}
+
+		rs.put("err", err);
+		return rs;
+	}
+
+	public Map<String, Object> emailLogin(AtlasEmailSignin emailLogin) throws Exception {
+		Map<String, Object> rs = new HashMap<>();
+		Map<String, Object> checkLoginMap = checkLogin(emailLogin);
+		int err = (int) checkLoginMap.get("err");
+		if (err == UserErrCode.SUCCESS) {
+			AtlasUser user = (AtlasUser) checkLoginMap.get("user");
+			AtlasProfile profile = profileRepo.getById(user.getId());
+			if (loginService.banClient(profile)) {
+				err = UserErrCode.BAN;
+			} else {
+				LoginToken loginToken = new LoginToken();
+				loginToken.setProfile(new ProfileResponse(profile));
+				RefreshTokenResponse refreshTokenResponse = loginService.generateTokens(profile,
+						AppType.CLIENT.getValue());
+				if (refreshTokenResponse == null) {
+					err = UserErrCode.SERVER_ERR;
+				} else {
+					loginToken.setSessionKey(refreshTokenResponse.getSessionKey());
+					loginToken.setRefreshToken(refreshTokenResponse.getRefreshToken());
+					loginToken.setApiSocket(LinkBuilder.buildApiSocketLink());
+					loginToken.setUploadSocket(LinkBuilder.buildUploadSocketLink());
+					rs.put("loginToken", loginToken);
+				}
+			}
+		}
+		rs.put("err", err);
+		return rs;
+	}
+
+	public int checkRegister(AtlasEmailSignup emailSignup) {
+		if (StringUtils.isEmpty(emailSignup.getEmail()) || StringUtils.isEmpty(emailSignup.getUserName())) {
+			return UserErrCode.MISSING_PARAMS;
+		}
+		if (!com.mit.utils.StringUtils.validateEmail(emailSignup.getEmail())) {
+			return UserErrCode.EMAIL_INVALID;
+		}
+		User user = userRepo.getUserByUserName(emailSignup.getUserName());
+		if (user != null) {
+			return UserErrCode.DUPLICATE_USERNAME;
+		}
+
+		return UserErrCode.SUCCESS;
+	}
+	
+	public int checkUpdate(AtlasProfileUpdate emailSignup) {
+		if (StringUtils.isEmpty(emailSignup.getEmail()) || StringUtils.isEmpty(emailSignup.getUserName())) {
+			return UserErrCode.MISSING_PARAMS;
+		}
+		if (!com.mit.utils.StringUtils.validateEmail(emailSignup.getEmail())) {
+			return UserErrCode.EMAIL_INVALID;
+		}
+		User user = userRepo.getUserByUserName(emailSignup.getUserName());
+		if (user != null && user.getId() != emailSignup.getUserId()) {
+			return UserErrCode.DUPLICATE_USERNAME;
+		}
+
+		return UserErrCode.SUCCESS;
+	}
+
+	public Map<String, Object> checkLogin(AtlasEmailSignin emailLogin) {
+		Map<String, Object> rs = new HashMap<>();
+		int err = UserErrCode.SUCCESS;
+		AtlasUser user = userRepo.getUserByUserName(emailLogin.getUserName());
+		if (user == null) {
+			err = UserErrCode.ERR_USERNAME;
+		} else {
+			String hashPassword = AuthenticateUtils.hashPassword(emailLogin.getPassword(), user.getSalt());
+			if (!hashPassword.equals(user.getPassword())) {
+				err = UserErrCode.ERR_PASSWORD;
+			}
+		}
+		rs.put("err", err);
+		rs.put("user", user);
+		return rs;
+	}
+}

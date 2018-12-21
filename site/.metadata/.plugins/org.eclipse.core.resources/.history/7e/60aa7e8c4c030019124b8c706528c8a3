@@ -1,0 +1,56 @@
+package com.mit.notification.responses;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.notification.entities.ConnectNews;
+import com.mit.utils.LinkBuilder;
+
+/**
+ * Created by Lap Pham on 4/4/17.
+ */
+public class ConnectNewsResponse extends NewsResponse {
+	private long userId;
+	private String msg;
+	private String thumb;
+	private int status;
+
+	public ConnectNewsResponse(ConnectNews eventNews) {
+		super(eventNews);
+		this.userId = eventNews.getUserId();
+		this.status = eventNews.getStatus();
+		this.msg = eventNews.getMsg();
+		this.thumb = LinkBuilder.buildPhotoLink(eventNews.getThumb(), ObjectType.USER.getLowerName());
+	}
+
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	public String getMsg() {
+		return msg;
+	}
+
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+
+	public String getThumb() {
+		return thumb;
+	}
+
+	public void setThumb(String thumb) {
+		this.thumb = thumb;
+	}
+
+}

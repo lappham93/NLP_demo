@@ -1,0 +1,103 @@
+package com.mit.navigation.responses;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
+
+/**
+ * Created by Lap Pham on 6/21/17.
+ */
+public class IntCurrentLocationResponse {
+    private double x;
+    private double y;
+    @JsonProperty("raw_x")
+    private double rawX;
+    @JsonProperty("raw_y")
+    private double rawY;
+    @JsonProperty("floor_id")
+    private long floorId;
+    @JsonProperty("last_sampling")
+    private float lastSampling;
+    private List<List<List<Float>>> hx;
+    private double accuracy;
+    private List<List<Float>> mag;
+
+    public IntCurrentLocationResponse() {
+    }
+
+    public double getX() {
+        return x;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setY(double y) {
+        this.y = y;
+    }
+
+    public double getRawX() {
+        return rawX;
+    }
+
+    public void setRawX(double rawX) {
+        this.rawX = rawX;
+    }
+
+    public double getRawY() {
+        return rawY;
+    }
+
+    public void setRawY(double rawY) {
+        this.rawY = rawY;
+    }
+
+    public long getFloorId() {
+        return floorId;
+    }
+
+    public void setFloorId(long floorId) {
+        this.floorId = floorId;
+    }
+
+    public float getLastSampling() {
+        return lastSampling;
+    }
+
+    public void setLastSampling(float lastSampling) {
+        this.lastSampling = lastSampling;
+    }
+
+    public List<List<List<Float>>> getHx() {
+        return hx;
+    }
+
+    public void setHx(List<List<List<Float>>> hx) {
+        this.hx = hx;
+    }
+
+    public CurrentLocationResponse toCurrentLocationResponse() {
+        return new CurrentLocationResponse(getX(), getY(), getFloorId());
+    }
+
+    public double getAccuracy() {
+        return accuracy;
+    }
+
+    public void setAccuracy(double accuracy) {
+        this.accuracy = accuracy;
+    }
+
+    public List<List<Float>> getMag() {
+        return mag;
+    }
+
+    public void setMag(List<List<Float>> mag) {
+        this.mag = mag;
+    }
+}

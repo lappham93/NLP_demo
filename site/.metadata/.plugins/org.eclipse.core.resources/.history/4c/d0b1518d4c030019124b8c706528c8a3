@@ -1,0 +1,32 @@
+package com.mit.map.entities;
+
+public class MapObjectLocation {
+	private Point point;
+	private double height;
+	private double width;
+
+	public Point getPoint() {
+		return point;
+	}
+
+	public void setPoint(Point point) {
+		this.point = point;
+	}
+
+	public double getHeight() {
+		return height;
+	}
+
+	public void setHeight(double height) {
+		this.height = height;
+	}
+
+	public double getWidth() {
+		return width;
+	}
+
+	public void setWidth(double width) {
+		this.width = width;
+	}
+
+}

@@ -1,0 +1,113 @@
+package com.mit.navigation.responses;
+
+import java.util.List;
+
+import com.mit.map.entities.Coordinate;
+import com.mit.navigation.entities.Mapbox;
+
+public class MapboxResponse {
+	private String geojson;
+	private int minZoom;
+	private int maxZoom;
+	private double zoom;
+	private List<Coordinate> outBounds;
+	private Coordinate center;
+	private double rotate;
+	private double scale;
+	private double offset;
+	
+	public MapboxResponse() {
+		super();
+	}
+	
+	public MapboxResponse(Mapbox mapbox, boolean admin) {
+		if (mapbox != null) {
+			this.geojson = admin ? mapbox.getGeojsonFull() : mapbox.getGeojson();
+			this.minZoom = 0;
+			this.maxZoom = 22;
+			this.zoom = mapbox.getZoom();
+			this.center = mapbox.getCenter();
+//			this.outBounds = Arrays.asList(new Coordinate(-85, -180), new Coordinate(85, 180));
+			this.rotate = mapbox.getRotate();
+			this.scale = mapbox.getScale();
+			this.offset = mapbox.getOffset();
+		}
+	}
+	
+	public String getGeojson() {
+		return geojson;
+	}
+
+	public void setGeojson(String geojson) {
+		this.geojson = geojson;
+	}
+
+	public int getMinZoom() {
+		return minZoom;
+	}
+
+	public void setMinZoom(int minZoom) {
+		this.minZoom = minZoom;
+	}
+
+	public int getMaxZoom() {
+		return maxZoom;
+	}
+
+	public void setMaxZoom(int maxZoom) {
+		this.maxZoom = maxZoom;
+	}
+
+	public double getZoom() {
+		return zoom;
+	}
+
+	public void setZoom(double zoom) {
+		this.zoom = zoom;
+	}
+
+	public void setZoom(int zoom) {
+		this.zoom = zoom;
+	}
+
+	public List<Coordinate> getOutBounds() {
+		return outBounds;
+	}
+
+	public void setOutBounds(List<Coordinate> outBounds) {
+		this.outBounds = outBounds;
+	}
+
+	public Coordinate getCenter() {
+		return center;
+	}
+
+	public void setCenter(Coordinate center) {
+		this.center = center;
+	}
+
+	public double getRotate() {
+		return rotate;
+	}
+
+	public void setRotate(double rotate) {
+		this.rotate = rotate;
+	}
+
+	public double getScale() {
+		return scale;
+	}
+
+	public void setScale(double scale) {
+		this.scale = scale;
+	}
+
+	public double getOffset() {
+		return offset;
+	}
+
+	public void setOffset(double offset) {
+		this.offset = offset;
+	}
+
+}

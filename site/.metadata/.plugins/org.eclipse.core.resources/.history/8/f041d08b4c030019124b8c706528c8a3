@@ -1,0 +1,61 @@
+package com.mit.social.repositories;
+
+import com.mit.common.entities.ObjectRef;
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.seq.repositories.SeqIdRepo;
+import com.mit.social.entities.FeedNotification;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Repository
+public class FeedNotificationRepo extends TimeDocRepo<FeedNotification>{
+    @Autowired
+    MongoOperations mongoOps;
+
+    @Autowired
+    SeqIdRepo seqIdRepo;
+    
+    public FeedNotification getById(long id) {
+        return mongoOps.findById(id, FeedNotification.class);
+    }
+
+    public FeedNotification getByObjectRef(ObjectRef objectRef) {
+        return mongoOps.findOne(new Query(Criteria.where("objectRef").is(objectRef)), FeedNotification.class);
+    }
+    
+    public List<FeedNotification> getByIds(List<Long> ids) {
+        List<FeedNotification> feeds = mongoOps.find(new Query(Criteria.where("id").in(ids)), FeedNotification.class);
+        return feeds;
+    }
+    
+    public List<FeedNotification> getSlice(int count, int from, String fieldSort, boolean sortAcs, boolean isActiveStatus) { 
+    	Criteria criteria = new Criteria();
+    	if (isActiveStatus) {
+    		criteria = Criteria.where("status").gt(0);
+    	}
+    	Sort sort = new Sort(new Order(sortAcs ? Direction.ASC : Direction.DESC, fieldSort));
+        List<FeedNotification> profiles = mongoOps.find(new Query(criteria).with(sort).skip(from).limit(count), FeedNotification.class);
+        return profiles;
+    }
+
+    public Map<Long, FeedNotification> getMapByIds(List<Long> profileIds) {
+        List<FeedNotification> profiles = getByIds(profileIds);
+        Map<Long, FeedNotification> profileMap = new HashMap<Long, FeedNotification>();
+        for (FeedNotification profile : profiles) {
+            profileMap.put(profile.getId(), profile);
+        }
+
+        return profileMap;
+    }
+
+}

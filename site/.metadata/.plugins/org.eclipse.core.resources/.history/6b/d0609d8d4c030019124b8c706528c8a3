@@ -1,0 +1,24 @@
+package com.mit.banner.responses;
+
+import com.mit.asset.entities.PhotoInfo;
+import com.mit.banner.entities.EventBanner;
+
+public class EventBannerResponse extends BannerResponse{
+
+	private long eventId;
+
+	public EventBannerResponse(EventBanner banner, PhotoInfo photo) {
+		super(banner, photo);
+		this.eventId = banner.getEventId();
+	}
+	
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+	
+	
+}

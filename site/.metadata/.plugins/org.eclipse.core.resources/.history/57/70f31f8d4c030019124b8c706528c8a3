@@ -1,0 +1,117 @@
+package com.mit.navigation.entities;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.navigation.enums.IndoorLocationType;
+
+public class Booth extends IndoorLocation {
+	public static final int TYPE = IndoorLocationType.BOOTH.getValue();
+
+	private long categoryId;
+	private String desc;
+	private String site;
+	private String phone;
+	private long photo;
+	private long arModel;
+	private long arTexture;
+	private boolean isFeature;
+	private boolean isAdvertised;
+	
+	public Booth() {
+		super(TYPE);
+	}
+	
+	public Booth clone(){
+		Booth booth = new Booth();
+		booth.setId(getId());
+		booth.setEventId(getEventId());
+		booth.setFloorId(getFloorId());
+		booth.setCategoryId(categoryId);
+		booth.setName(getName());
+		booth.setDesc(desc);
+		booth.setSite(site);
+		booth.setPhone(phone);
+		booth.setFeature(isFeature);
+		booth.setCreatedDate(createdDate);
+		booth.setUpdatedDate(updatedDate);
+		booth.setHashTags(getHashTags());
+		return booth;
+	}
+
+	public long getCategoryId() {
+		return categoryId;
+	}
+
+	public void setCategoryId(long categoryId) {
+		this.categoryId = categoryId;
+	}
+
+	public String getDesc() {
+		return desc;
+	}
+
+	public void setDesc(String desc) {
+		this.desc = desc;
+	}
+
+	public String getSite() {
+		return site;
+	}
+
+	public void setSite(String site) {
+		this.site = site;
+	}
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
+	public long getPhoto() {
+		return photo;
+	}
+
+	public void setPhoto(long photo) {
+		this.photo = photo;
+	}
+
+	public long getArModel() {
+		return arModel;
+	}
+
+	public void setArModel(long arModel) {
+		this.arModel = arModel;
+	}
+
+	public long getArTexture() {
+		return arTexture;
+	}
+
+	public void setArTexture(long arTexture) {
+		this.arTexture = arTexture;
+	}
+
+	public boolean isFeature() {
+		return isFeature;
+	}
+
+	public void setFeature(boolean isFeature) {
+		this.isFeature = isFeature;
+	}
+
+	public boolean isAdvertised() {
+		return isAdvertised;
+	}
+
+	public void setAdvertised(boolean isAdvertised) {
+		this.isAdvertised = isAdvertised;
+	}
+
+	@Override
+	public int getObjectType() {
+		return ObjectType.BOOTH.getValue();
+	}
+
+}

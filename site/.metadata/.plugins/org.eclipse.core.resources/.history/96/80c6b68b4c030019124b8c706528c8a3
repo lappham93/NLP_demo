@@ -1,0 +1,27 @@
+package com.mit.stat.bodies;
+
+import com.mit.stat.entities.AppStat;
+
+import java.util.List;
+
+/**
+ * Created by Hung on 6/2/2017.
+ */
+public class DemandStatList {
+    private List<AppStat> demandStats;
+
+    public DemandStatList() {
+    }
+
+    public DemandStatList(List<AppStat> demandStats) {
+        this.demandStats = demandStats;
+    }
+
+    public List<AppStat> getDemandStats() {
+        return demandStats;
+    }
+
+    public void setDemandStats(List<AppStat> demandStats) {
+        this.demandStats = demandStats;
+    }
+}

@@ -1,0 +1,113 @@
+package com.mit.navigation.responses;
+
+import com.mit.navigation.entities.IndoorLocation;
+
+public class IndoorLocationResponse {
+	private long id;
+	private int type;
+	private long eventId;
+	private FloorShortResponse floor;
+	private String name;
+	private double x;
+	private double y;
+	private int status;
+	private long createTime;
+	private long updateTime;
+
+	public IndoorLocationResponse(IndoorLocation indoorLocation, FloorShortResponse floorResponse) {
+		super();
+		this.id = indoorLocation.getId();
+		this.type = indoorLocation.getType();
+		this.eventId = indoorLocation.getEventId();
+		this.floor = floorResponse;
+		this.name = indoorLocation.getName();
+		if (indoorLocation.isLocated()) {
+			this.x = indoorLocation.getPoint().getX();
+			this.y = indoorLocation.getPoint().getY();
+		}
+		this.status = indoorLocation.getStatus();
+		this.createTime = indoorLocation.getCreatedDate().getTime();
+		this.updateTime = indoorLocation.getUpdatedDate().getTime();
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+	public FloorShortResponse getFloor() {
+		return floor;
+	}
+
+	public void setFloor(FloorShortResponse floor) {
+		this.floor = floor;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public double getX() {
+		return x;
+	}
+
+	public void setX(double x) {
+		this.x = x;
+	}
+
+	public double getY() {
+		return y;
+	}
+
+	public void setY(double y) {
+		this.y = y;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	public long getCreateTime() {
+		return createTime;
+	}
+
+	public void setCreateTime(long createTime) {
+		this.createTime = createTime;
+	}
+
+	public long getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(long updateTime) {
+		this.updateTime = updateTime;
+	}
+
+}

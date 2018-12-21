@@ -1,0 +1,23 @@
+package com.mit.responses;
+
+import com.mit.atlas.entities.AtlasProfile;
+import com.mit.atlas.entities.AtlasUser;
+import com.mit.user.responses.ProfileResponse;
+
+public class AtlasProfileResponse extends ProfileResponse {
+	private String userName;
+
+	public AtlasProfileResponse(AtlasProfile profile, AtlasUser user) {
+		super(profile);
+		this.userName = user.getUserName();
+	}
+
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+}

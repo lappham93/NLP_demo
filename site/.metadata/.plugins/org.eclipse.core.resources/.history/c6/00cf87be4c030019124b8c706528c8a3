@@ -1,0 +1,20 @@
+package com.mit.asset.entities;
+
+import java.util.List;
+
+import com.mit.common.entities.ActiveTimeDoc;
+
+public abstract class HashTag extends ActiveTimeDoc<Long>{
+	private List<String> hashTags;
+
+	public abstract int getObjectType();
+	
+	public List<String> getHashTags() {
+		return hashTags;
+	}
+
+	public void setHashTags(List<String> hashTags) {
+		this.hashTags = hashTags;
+	}
+
+}

@@ -1,0 +1,77 @@
+package com.mit.event.responses;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.event.entities.EventCategory;
+import com.mit.utils.LinkBuilder;
+
+public class EventCategoryResponse {
+	private long id;
+	private String name;
+	private String desc;
+	private boolean isFollowed;
+	private boolean isFiltered;
+	private String photo;
+
+	public EventCategoryResponse(EventCategory eventCategory) {
+		this.id = eventCategory.getId();
+		this.name = eventCategory.getName();
+		this.desc = eventCategory.getDesc();
+		this.photo = LinkBuilder.buildPhotoLink(eventCategory.getPhoto(), ObjectType.EVENT.getLowerName());
+	}
+	
+	public EventCategoryResponse(EventCategory eventCategory, boolean isFollowed, boolean isFiltered) {
+		this(eventCategory);
+		this.isFollowed = isFollowed;
+		this.isFiltered = isFiltered;
+		this.photo = LinkBuilder.buildPhotoLink(eventCategory.getPhoto(), ObjectType.EVENT.getLowerName());
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDesc() {
+		return desc;
+	}
+
+	public void setDesc(String desc) {
+		this.desc = desc;
+	}
+
+	public boolean isFollowed() {
+		return isFollowed;
+	}
+
+	public void setFollowed(boolean isFollowed) {
+		this.isFollowed = isFollowed;
+	}
+
+	public boolean isFiltered() {
+		return isFiltered;
+	}
+
+	public void setFiltered(boolean isFiltered) {
+		this.isFiltered = isFiltered;
+	}
+
+	public String getPhoto() {
+		return photo;
+	}
+
+	public void setPhoto(String photo) {
+		this.photo = photo;
+	}
+	
+}

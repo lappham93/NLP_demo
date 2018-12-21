@@ -1,0 +1,29 @@
+package com.mit.react.responses;
+
+public class FollowResponse {
+	private boolean isFollowed;
+	private int totalFollow;
+	
+	public FollowResponse(boolean isFollowed, int follows) {
+		super();
+		this.isFollowed = isFollowed;
+		this.totalFollow = follows;
+	}
+
+	public boolean isFollowed() {
+		return isFollowed;
+	}
+
+	public void setFollowed(boolean isFollowed) {
+		this.isFollowed = isFollowed;
+	}
+
+	public int getTotalFollow() {
+		return totalFollow;
+	}
+
+	public void setTotalFollow(int totalFollow) {
+		this.totalFollow = totalFollow;
+	}
+
+}

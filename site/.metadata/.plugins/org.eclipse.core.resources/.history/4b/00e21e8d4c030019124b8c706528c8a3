@@ -1,0 +1,76 @@
+package com.mit.navigation.entities;
+
+import org.springframework.data.annotation.Id;
+
+import com.mit.common.entities.ActiveTimeDoc;
+
+public class Elevator extends ActiveTimeDoc<Long> {
+	@Id
+	private long id;
+	private long eventId;
+	private String name;
+	private int fromFloorNumber;
+	private int toFloorNumber;
+	private int status;
+	
+	public ElevatorLocation initInMap(long floorId) {
+		ElevatorLocation location = new ElevatorLocation();
+		location.setElevatorId(id);
+		location.setName(name);
+		location.setEventId(eventId);
+		location.setFloorId(floorId);
+		location.setLocated(false);
+		return location;
+	}
+
+	@Override
+	public Long getId() {
+		return id;
+	}
+
+	@Override
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public int getFromFloorNumber() {
+		return fromFloorNumber;
+	}
+
+	public void setFromFloorNumber(int fromFloorNumber) {
+		this.fromFloorNumber = fromFloorNumber;
+	}
+
+	public int getToFloorNumber() {
+		return toFloorNumber;
+	}
+
+	public void setToFloorNumber(int toFloorNumber) {
+		this.toFloorNumber = toFloorNumber;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+}

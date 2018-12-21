@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+    layout:decorator="myapp_layout">
+<head>
+	<script type="text/javascript" th:src="${resources_path} + '/js/app/myapp_edit.js'"></script>
+</head>
+<body>
+<div layout:fragment="content">
+	<div id="formId" class="panel panel-flat">
+		<div class="panel-heading">
+			<h5 class="panel-title">Edit application</h5>
+			<div class="heading-elements">
+			</div>
+		</div>
+		<form id="editAppFrmId" class="form-horizontal">
+			<div th:replace="fragments/fragments :: form_error_2"></div>
+			<div th:replace="fragments/fragments :: form_success_2"></div>
+			<div th:replace="fragments/fragments :: loader"></div>
+			<div class="panel-body">
+				<div class="form-group">
+					<label class="col-lg-3 control-label">Application name: <span class="text-danger">(*)</span></label>
+					<div class="col-lg-9">
+						<input type="text" id="nameAddIptId" class="form-control" placeholder="application name" th:value="${app.name}"/>
+					</div>
+				</div>
+				
+				<div class="form-group">
+					<label class="col-lg-3 control-label">Application description: </label>
+					<div class="col-lg-9">
+						<input type="text" id="descAddIptId" class="form-control" placeholder="application description" th:value="${app.desc}"/>
+					</div>
+				</div>
+				
+				<input type="hidden" id="appId" th:value="${app.idRef}"/>
+				
+				<div class="text-right">
+					<button class="btn btn-default btn-rounded" th:onclick="'window.location.replace(\'' + ${#strings.replace(apps_item_url, '{0}', app.idRef)} + '\'); return false'">Cancel</button>
+					<button class="btn btn-primary btn-rounded" id="editAppBtnId">Submit</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+</body>
+</html>

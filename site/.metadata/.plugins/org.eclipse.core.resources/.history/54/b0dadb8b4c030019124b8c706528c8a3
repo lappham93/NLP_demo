@@ -1,0 +1,22 @@
+package com.mit.social.entities;
+
+import com.mit.social.enums.FeedContentType;
+
+public class LinkFeed extends Feed {
+	public static final int TYPE = FeedContentType.LINK.getValue();
+
+	private long linkId;
+
+	public LinkFeed() {
+		super(TYPE);
+	}
+
+	public long getLinkId() {
+		return linkId;
+	}
+
+	public void setLinkId(long linkId) {
+		this.linkId = linkId;
+	}
+
+}

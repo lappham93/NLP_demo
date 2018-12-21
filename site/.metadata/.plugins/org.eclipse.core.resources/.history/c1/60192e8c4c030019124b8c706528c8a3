@@ -1,0 +1,1042 @@
+package com.mit.react.services;
+
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.util.UrlEncoded;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.asset.entities.PhotoInfo;
+import com.mit.asset.repositories.PhotoInfoRepo;
+import com.mit.asset.services.HttpsRequest;
+import com.mit.common.entities.ObjectRef;
+import com.mit.common.enums.ObjectType;
+import com.mit.errcode.SocialErrCode;
+import com.mit.event.entities.Event;
+import com.mit.event.enums.EventStatus;
+import com.mit.event.repositories.EventRepo;
+import com.mit.event.services.EventService;
+import com.mit.facebook.entities.FacebookUser;
+import com.mit.facebook.repositories.FacebookUserRepo;
+import com.mit.http.exception.SequenceException;
+import com.mit.map.entities.Coordinate;
+import com.mit.map.entities.Point;
+import com.mit.navigation.entities.Booth;
+import com.mit.navigation.entities.BoothProduct;
+import com.mit.navigation.entities.Floor;
+import com.mit.navigation.repositories.BoothProductRepo;
+import com.mit.navigation.repositories.FloorRepo;
+import com.mit.navigation.repositories.IndoorLocationRepo;
+import com.mit.navigation.services.NavigationService;
+import com.mit.notification.services.NewsService;
+import com.mit.react.bodies.CommentBody;
+import com.mit.react.bodies.ConnectBody;
+import com.mit.react.bodies.FollowBody;
+import com.mit.react.bodies.GoingBody;
+import com.mit.react.bodies.LikeBody;
+import com.mit.react.bodies.RatingBody;
+import com.mit.react.bodies.ShareBody;
+import com.mit.react.bodies.ViewBody;
+import com.mit.react.entities.Comment;
+import com.mit.react.entities.Connect;
+import com.mit.react.entities.Live;
+import com.mit.react.entities.LiveTracking;
+import com.mit.react.entities.Rating;
+import com.mit.react.entities.ReactStat;
+import com.mit.react.entities.UserStat;
+import com.mit.react.enums.ReactAction;
+import com.mit.react.enums.ReactType;
+import com.mit.react.repositories.CommentRepo;
+import com.mit.react.repositories.ConnectRepo;
+import com.mit.react.repositories.LiveRepo;
+import com.mit.react.repositories.LiveTrackingRepo;
+import com.mit.react.repositories.RatingRepo;
+import com.mit.react.repositories.ReactStatRepo;
+import com.mit.react.repositories.UserStatRepo;
+import com.mit.react.responses.CommentResponse;
+import com.mit.react.responses.ConnectResponse;
+import com.mit.react.responses.FollowResponse;
+import com.mit.react.responses.GoingResponse;
+import com.mit.react.responses.LikeResponse;
+import com.mit.react.responses.LiveResponse;
+import com.mit.react.responses.ProductCommentResponse;
+import com.mit.react.responses.RatingResponse;
+import com.mit.react.responses.ViewResponse;
+import com.mit.react.responses.WishListResponse;
+import com.mit.social.entities.Feed;
+import com.mit.social.repositories.FeedRepo;
+import com.mit.social.responses.FeedPhotoResponse;
+import com.mit.user.entities.Profile;
+import com.mit.user.repositories.ProfileRepo;
+import com.mit.user.responses.ProfileShortResponse;
+import com.mit.user.services.UserService;
+
+@Service
+public class ReactService {
+	@Autowired
+	private CommentRepo commentRepo;
+	@Autowired
+	private ReactStatRepo reactStatRepo;
+	@Autowired
+	private ProfileRepo profileRepo;
+	@Autowired
+	private PhotoInfoRepo photoInfoRepo;
+	@Autowired
+	private FeedRepo feedRepo;
+	@Autowired
+	private RatingRepo ratingRepo;
+	@Autowired
+	private UserStatRepo userStatRepo;
+	@Autowired
+	private FacebookUserRepo facebookUserRepo;
+	@Autowired
+	private NewsService newsService;
+	@Autowired
+	private LiveRepo liveRepo;
+	@Autowired
+	private FloorRepo floorRepo;
+	@Autowired
+	private IndoorLocationRepo indoorRepo;
+	@Autowired
+	private EventRepo eventRepo;
+	@Autowired
+	private BoothProductRepo productRepo;
+
+	@Value("${facebook.graph.url}")
+	private String API_URL;
+	@Value("${facebook.accessToken}")
+	private String ACCESS_TOKEN;
+
+	@Autowired
+	private HttpsRequest httpsRequest;
+	@Autowired
+	private EventService eventService;
+	@Autowired
+	private NavigationService navigationService;
+	@Autowired
+	private UserService userService;
+	@Autowired
+	private ConnectRepo connectRepo;
+	@Autowired
+	private LiveTrackingRepo liveTrackingRepo;
+
+	public Map<String, Object> getReactUserList(ObjectRef objectRef, int reactType, int from, int count,
+			long viewUserId) {
+		List<Long> userIds = null;
+		if (objectRef.getType() == ObjectType.USER.getValue() && 
+				Arrays.asList(ReactType.FOLLOW.getValue(), ReactType.FOLLOWING.getValue(), ReactType.HFFU.getValue(), ReactType.CONNECT.getValue(), ReactType.REQUEST_CONNECT.getValue()).contains(reactType)) {
+			UserStat userStat = userStatRepo.getByUserId(objectRef.getId(), false);
+			if (userStat != null) {
+				if (reactType == ReactType.FOLLOW.getValue()) {
+					userIds = userStat.getUserFollowIds();
+				} else if (reactType == ReactType.FOLLOWING.getValue()) {
+					userIds = userStat.getFollowUserIds();
+				} else if (reactType == ReactType.HFFU.getValue()) {
+					userIds = userStat.getHffuIds();
+				} else if (reactType == ReactType.CONNECT.getValue()) {
+					userIds = userStat.getConnectUserIds() != null ? new LinkedList<>(userStat.getConnectUserIds()) : null;
+				} else if (reactType == ReactType.REQUEST_CONNECT.getValue()) {
+					userIds = userStat.getRequesteds() != null ? new LinkedList<>(userStat.getRequesteds()) : null;
+				}
+			}
+		} else {
+			ReactStat reactStat = reactStatRepo.getByObjectAndType(objectRef, reactType);
+			if (reactStat != null && !CollectionUtils.isEmpty(reactStat.getUserIds())) {
+				userIds = reactStat.getUserIds();
+			}
+		}
+		if (reactType == ReactType.FRIEND_GOING.getValue()) {
+			UserStat userStat = userStatRepo.getByUserId(viewUserId, false);
+			Set<Long> retainIds = userStat != null && userStat.getConnectUserIds() != null ? userStat.getConnectUserIds() : new HashSet<Long>();
+			userIds.retainAll(retainIds);
+		}
+		return buildReactUserList(userIds, viewUserId, from, count, false, false);
+	}
+	
+	public Map<String, Object> buildReactUserList(List<Long> userIds, long viewUserId, int from, int count, boolean getLocation, boolean removeInactive) {
+		Map<String, Object> rs = new HashMap<>();
+		int err = SocialErrCode.SUCCESS;
+		int totalUser = 0;
+		List<ProfileShortResponse> users = null;
+		boolean hasMore = false;
+		if (!CollectionUtils.isEmpty(userIds)) {
+			userIds = userIds.stream().distinct().collect(Collectors.toList());
+			List<Long> userIdSlices = null;
+			try {
+				userIdSlices = userIds.subList(from, Math.min(userIds.size(), count + 1 + from));
+			} catch (Exception e) {
+			}
+			users = userService.buildProfileShortResponseList(userIdSlices, viewUserId);
+			if (users != null && users.size() > count) {
+				hasMore = true;
+				users = users.subList(0, count);
+			}
+			if (removeInactive) {
+				userService.removeInactiveUser(users);
+			}
+			totalUser = userIds.size();
+		}
+
+		rs.put("err", err);
+		rs.put("hasMore", hasMore);
+		rs.put("totalUser", totalUser);
+		rs.put("users", users);
+		return rs;
+	}
+
+	public Map<String, Object> postComment(CommentBody body) {
+		Map<String, Object> rs = new HashMap<>();
+		int err = SocialErrCode.SUCCESS;
+		try {
+			if (body.getFeedPhotoId() > 0 && body.getObjectRef().getType() == ObjectType.FEED.getValue()
+					&& feedRepo.isSubFeed(body.getObjectRef().getId())) {
+				body.getObjectRef().setId(body.getFeedPhotoId());
+				body.getObjectRef().setType(ObjectType.SUBFEED.getValue());
+			}
+			Comment comment = body.toComment();
+			commentRepo.save(comment);
+			int childs = 0;
+			int totalComment = 0;
+			ReactStat reactStat = updateUserReactStat(body.getObjectRef(), ReactType.COMMENT.getValue(),
+					Arrays.asList(body.getUserId()), true);
+			if (body.getObjectRef().getType() == ObjectType.COMMENT.getValue()) {
+				childs = reactStat.getTotal();
+				Comment parentComment = commentRepo.getById(body.getObjectRef().getId());
+				reactStat = updateUserReactStat(parentComment.getObjectRef(), ReactType.COMMENT.getValue(),
+						Arrays.asList(body.getUserId()), true);
+			}
+			totalComment = reactStat.getTotal();
+
+			rs.put("totalChild", childs);
+			rs.put("totalComment", totalComment);
+			rs.put("comment", buildCommentResponse(body.getUserId(), comment));
+			newsService.comment(body.getObjectRef(), comment.getId(), body.getUserId());
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+		rs.put("err", err);
+		return rs;
+	}
+
+	public Map<String, Object> editComment(long id, CommentBody body) {
+		Map<String, Object> rs = new HashMap<>();
+		int err = SocialErrCode.SUCCESS;
+		try {
+			Comment comment = commentRepo.getById(id);
+			if (comment.getUserId() == body.getUserId()) {
+				body.toComment(comment);
+				commentRepo.save(comment);
+				rs.put("comment", buildCommentResponse(body.getUserId(), comment));
+			} else {
+				err = SocialErrCode.PERMISSION_LIMIT;
+			}
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+		rs.put("err", err);
+		return rs;
+	}
+
+	public Map<String, Object> deleteComment(long id, long userId) {
+		Map<String, Object> rs = new HashMap<>();
+		int err = SocialErrCode.SUCCESS;
+		try {
+			Comment comment = commentRepo.getById(id);
+			boolean isAllow = comment.getUserId() == userId;
+			if (!isAllow) {
+				if (comment.getObjectRef().getType() == ObjectType.FEED.getValue()) {
+					Feed feed = feedRepo.getById(comment.getObjectRef().getId());
+					isAllow = feed.getUserId() == userId;
+				} else if (comment.getObjectRef().getType() == ObjectType.COMMENT.getValue()) {
+					Comment parentCmt = commentRepo.getById(comment.getObjectRef().getId());
+					isAllow = parentCmt.getUserId() == userId;
+				} else if (comment.getObjectRef().getType() == ObjectType.SUBFEED.getValue()) {
+					Feed feed = feedRepo.getByPhotoId(comment.getObjectRef().getId());
+					isAllow = feed.getUserId() == userId;
+				}
+			}
+			if (isAllow) {
+				commentRepo.delete(id);
+				int childs = 0;
+				int totalComment = 0;
+				ReactStat reactStat = updateUserReactStat(comment.getObjectRef(), ReactType.COMMENT.getValue(),
+						Arrays.asList(comment.getUserId()), false);
+				if (comment.getObjectRef().getType() == ObjectType.COMMENT.getValue()) {
+					childs = reactStat.getTotal();
+					Comment parentComment = commentRepo.getById(comment.getObjectRef().getId());
+					reactStat = updateUserReactStat(parentComment.getObjectRef(), ReactType.COMMENT.getValue(),
+							Arrays.asList(comment.getUserId()), false);
+				} else if (comment.getObjectRef().getType() == ObjectType.FEED.getValue()
+						|| comment.getObjectRef().getType() == ObjectType.SUBFEED.getValue()) {
+					List<Comment> childComments = commentRepo.deleteChilds(comment.getId());
+					if (!CollectionUtils.isEmpty(childComments)) {
+						List<Long> userIds = new LinkedList<>();
+						childComments.forEach(t -> userIds.add(t.getUserId()));
+						reactStat = updateUserReactStat(comment.getObjectRef(), ReactType.COMMENT.getValue(), userIds,
+								false);
+					}
+				}
+				totalComment = reactStat.getTotal();
+				rs.put("totalChild", childs);
+				rs.put("totalComment", totalComment);
+				rs.put("comment", buildCommentResponse(userId, comment));
+			} else {
+				err = SocialErrCode.PERMISSION_LIMIT;
+			}
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+		rs.put("err", err);
+		return rs;
+	}
+
+	public Map<String, Object> getCommentList(long viewUserId, ObjectRef objectRef, int count, int from) {
+		Map<String, Object> rs = new HashMap<>();
+		int err = SocialErrCode.SUCCESS;
+		try {
+			List<Comment> comments = commentRepo.getSlice(objectRef, count + 1, from, "createdDate", false, true);
+			boolean hasMore = false;
+			if (comments != null && comments.size() > count) {
+				hasMore = true;
+				comments = comments.subList(0, count);
+			}
+			ReactStat reactStat = reactStatRepo.getByObjectAndType(objectRef, ReactType.COMMENT.getValue());
+			int totalComment = (reactStat != null) ? reactStat.getTotal() : 0;
+			rs.put("hasMore", hasMore);
+			rs.put("comments", buildCommentResponseList(viewUserId, comments));
+			rs.put("totalComment", totalComment);
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+		rs.put("err", err);
+		return rs;
+	}
+
+	public Map<String, Object> getNewCommentList(long viewUserId, long commentId, ObjectRef objectRef, int count) {
+		Map<String, Object> rs = new HashMap<>();
+		int err = SocialErrCode.SUCCESS;
+		try {
+			List<Comment> comments = commentRepo.getNewList(commentId, objectRef, "createdDate", false, true);
+			boolean isAppend = true;
+			if (comments != null && comments.size() > count) {
+				isAppend = false;
+				comments = comments.subList(0, count);
+			}
+			rs.put("isAppend", isAppend);
+			rs.put("comments", buildCommentResponseList(viewUserId, comments));
+		} catch (Exception e) {
+			e.getStackTrace();
+			err = SocialErrCode.SERVER_ERR;
+		}
+		rs.put("err", err);
+		return rs;
+	}
+
+	public Map<String, Object> postRating(RatingBody body) {
+		Map<String, Object> rs = new HashMap<>();
+		int err = SocialErrCode.SUCCESS;
+		try {
+			Rating rating = body.toRating();
+			ratingRepo.save(rating);
+			ObjectRef objectRef = body.getObjectRef();
+			addUserRatingStat(objectRef, body.getUserId(), body.getPoint());
+			rs.put("rating", buildRatingResponse(rating));
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+		rs.put("err", err);
+		return rs;
+	}
+
+	public Map<String, Object> like(LikeBody body) {
+		Map<String, Object> rs = new HashMap<>();
+		int err = SocialErrCode.SUCCESS;
+		try {
+			if (body.getPhotoId() > 0 && body.getObjectRef().getType() == ObjectType.FEED.getValue()
+					&& feedRepo.isSubFeed(body.getObjectRef().getId())) {
+				body.getObjectRef().setId(body.getPhotoId());
+				body.getObjectRef().setType(ObjectType.SUBFEED.getValue());
+			}
+			ReactStat reactStat = updateUserReactStat(body.getObjectRef(), ReactType.LIKE.getValue(),
+					Arrays.asList(body.getUserId()), body.getType() == ReactAction.ADD.getValue());
+			LikeResponse resp = new LikeResponse(reactStat.getUserIds().contains(body.getUserId()),
+					reactStat.getTotal());
+			rs.put("like", resp);
+			if (body.getType() == ReactAction.ADD.getValue()) {
+				newsService.like(body.getObjectRef(), body.getUserId());
+			}
+			addToWishList(body.getUserId(), body.getObjectRef(), body.getType());
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+		rs.put("err", err);
+		return rs;
+	}
+
+	public Map<String, Object> view(ViewBody body) {
+		Map<String, Object> rs = new HashMap<>();
+		int err = SocialErrCode.SUCCESS;
+		try {
+			if (body.getPhotoId() > 0 && body.getObjectRef().getType() == ObjectType.FEED.getValue()
+					&& feedRepo.isSubFeed(body.getObjectRef().getId())) {
+				body.getObjectRef().setId(body.getPhotoId());
+				body.getObjectRef().setType(ObjectType.SUBFEED.getValue());
+			}
+			ReactStat reactStat = updateUserReactStat(body.getObjectRef(), ReactType.VIEW.getValue(),
+					Arrays.asList(body.getUserId()), true);
+			ViewResponse resp = new ViewResponse(reactStat.getUserIds().contains(body.getUserId()),
+					reactStat.getTotal());
+			rs.put("view", resp);
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+		rs.put("err", err);
+		return rs;
+	}
+
+	public int share(ShareBody body) {
+		int err = SocialErrCode.SUCCESS;
+		String facebookId = body.getFacebookId();
+		if (StringUtils.isEmpty(facebookId)) {
+			FacebookUser facebookUser = facebookUserRepo.getByUserId(body.getUserId());
+			if (facebookUser == null) {
+				return SocialErrCode.MISSING_FACEBOOK_ID;
+			}
+			facebookId = facebookUser.getFacebookId();
+			body.setFacebookId(facebookId);
+		} else {
+			try {
+				facebookUserRepo.upsert(body.getUserId(), facebookId);
+			} catch (Exception e) {
+			}
+		}
+
+		return err;
+	}
+
+	public Map<String, Object> follow(FollowBody body) {
+		Map<String, Object> rs = new HashMap<>();
+		int err = SocialErrCode.SUCCESS;
+		if (checkExistObject(body.getObjectRef())) {
+			ReactStat ss = updateUserReactStat(body.getObjectRef(), ReactType.FOLLOW.getValue(), Arrays.asList(body.getUserId()),
+					body.getType() == ReactAction.ADD.getValue());
+			if (ss != null) {
+				FollowResponse follow = new FollowResponse(ss.getUserIds().contains(body.getUserId()), ss.getTotal());
+				rs.put("follow", follow);
+				addToWishList(body.getUserId(), body.getObjectRef(), body.getType());
+			} else {
+				err = SocialErrCode.SERVER_ERR;
+			}
+		} else {
+			err = SocialErrCode.OBJECT_NOT_EXISTED;
+		}
+		rs.put("err", err);
+
+		return rs;
+	}
+
+	public String shareOnProcess(String facebookId, String message, String link) {
+		String paramsScrape = "id=" + UrlEncoded.encodeString(link) + "&scrape=true" + "&access_token="
+				+ UrlEncoded.encodeString(ACCESS_TOKEN);
+		String params = "message=" + UrlEncoded.encodeString(message) + "&link=" + UrlEncoded.encodeString(link)
+				+ "&access_token=" + UrlEncoded.encodeString(ACCESS_TOKEN);
+		String urlScrape = API_URL + "/";
+		String url = API_URL + facebookId + "/feed";
+		Map<String, String> headers = new HashMap<String, String>();
+		headers.put(HttpHeader.CONTENT_TYPE.asString(), "application/x-www-form-urlencoded");
+		try {
+			httpsRequest.doPost(urlScrape, headers, paramsScrape);
+		} catch (Exception e) {
+		}
+		ContentResponse response = httpsRequest.doPost(url, headers, params);
+		return response.getContentAsString();
+	}
+
+	public List<CommentResponse> buildCommentResponseList(long viewUserId, List<Comment> comments) {
+		List<CommentResponse> commentRsps = null;
+		if (comments != null && !comments.isEmpty()) {
+			commentRsps = new LinkedList<>();
+			for (Comment comment : comments) {
+				try {
+					commentRsps.add(buildCommentResponse(viewUserId, comment));
+				} catch (Exception e) {
+				}
+			}
+		}
+
+		return commentRsps;
+	}
+
+	public CommentResponse buildCommentResponse(long viewUserId, Comment comment) {
+		Profile profile = profileRepo.getById(comment.getUserId());
+		FeedPhotoResponse photoCmt = null;
+		if (comment.getPhotoCmtId() > 0) {
+			PhotoInfo photoInfo = photoInfoRepo.getByPhotoAndType(comment.getPhotoCmtId(), ObjectType.FEED.getValue());
+			if (photoInfo != null) {
+				photoCmt = new FeedPhotoResponse(photoInfo);
+			}
+		}
+		ObjectRef objectRef = new ObjectRef(ObjectType.COMMENT.getValue(), comment.getId());
+		List<ReactStat> reactStats = reactStatRepo.getByObject(objectRef);
+		UserStat userStat = userStatRepo.getByUserId(viewUserId, false);
+		Comment lstComment = commentRepo.getLastComment(objectRef);
+		CommentResponse lstCommentResp = lstComment != null ? buildCommentResponse(viewUserId, lstComment) : null;
+		return new CommentResponse(viewUserId, comment, userService.buildProfileShortResponse(profile, viewUserId), photoCmt, lstCommentResp, reactStats, userStat);
+
+	}
+
+	public ProductCommentResponse buildProductCommentResponse(long viewUserId, Comment comment) {
+		Profile profile = profileRepo.getById(comment.getUserId());
+		FeedPhotoResponse photoCmt = null;
+		if (comment.getPhotoCmtId() > 0) {
+			PhotoInfo photoInfo = photoInfoRepo.getByPhotoAndType(comment.getPhotoCmtId(), ObjectType.FEED.getValue());
+			if (photoInfo != null) {
+				photoCmt = new FeedPhotoResponse(photoInfo);
+			}
+		}
+		ObjectRef objectRef = new ObjectRef(ObjectType.COMMENT.getValue(), comment.getId());
+		List<ReactStat> reactStats = reactStatRepo.getByObject(objectRef);
+		UserStat userStat = userStatRepo.getByUserId(viewUserId, false);
+		Comment lstComment = commentRepo.getLastComment(objectRef);
+		CommentResponse lstCommentResp = lstComment != null ? buildCommentResponse(viewUserId, lstComment) : null;
+
+		Rating myRate = ratingRepo.getByObjectAndUser(comment.getObjectRef().getType(), comment.getObjectRef().getId(),
+				comment.getUserId());
+		boolean isRated = false;
+		double myRatingPoint = 0;
+
+		if (myRate != null) {
+			isRated = true;
+			myRatingPoint = myRate.getPoint();
+		}
+
+		return new ProductCommentResponse(viewUserId, comment, userService.buildProfileShortResponse(profile, viewUserId), photoCmt, lstCommentResp, reactStats, userStat,
+				isRated, myRatingPoint);
+
+	}
+
+	public RatingResponse buildRatingResponse(Rating rating) {
+		Profile profile = profileRepo.getById(rating.getUserId());
+		return new RatingResponse(rating, profile);
+	}
+
+	public ReactStat addUserRatingStat(ObjectRef objectRef, long userId, double point) {
+		ReactStat rs = null;
+		try {
+			rs = reactStatRepo.getByObjectAndType(objectRef, ReactType.RATING.getValue());
+			if (rs == null) {
+				rs = new ReactStat(objectRef.getType(), objectRef.getId(), 0L, ReactType.RATING.getValue(), null, null,
+						0);
+			}
+			rs.addRating(userId, point);
+			reactStatRepo.save(rs);
+		} catch (Exception e) {
+			rs = null;
+		}
+
+		return rs;
+	}
+
+	public ReactStat updateUserReactStat(ObjectRef objectRef, int reactType, List<Long> userIds, boolean isAdd) {
+		try {
+			if (ReactStat.REP_ACTION.contains(reactType)) {
+				if (isAdd) {
+					reactStatRepo.addUser(objectRef, reactType, userIds.toArray());
+				} else {
+					reactStatRepo.removeUserUnique(objectRef, reactType, userIds.toArray());
+				}
+			} else {
+				if (isAdd) {
+					reactStatRepo.addUserUnique(objectRef, reactType, userIds.toArray());
+				} else {
+					reactStatRepo.removeUser(objectRef, reactType, userIds.toArray());
+				}
+			}
+		} catch (Exception e) {
+		}
+
+		return reactStatRepo.getByObjectAndType(objectRef, reactType);
+	}
+
+	public ReactStat updateImeiReactStat(ObjectRef objectRef, int reactType, List<String> imeis, boolean isAdd) {
+		ReactStat rs = null;
+		try {
+			rs = reactStatRepo.getByObjectAndType(objectRef, reactType);
+			if (isAdd) {
+				if (rs == null) {
+					rs = new ReactStat(objectRef.getType(), objectRef.getId(), 0L, reactType, null, null, 0);
+				}
+				rs.addToImeiIds(imeis);
+			} else {
+				if (rs != null) {
+					rs.removeFromImeis(imeis);
+				}
+			}
+			reactStatRepo.save(rs);
+		} catch (Exception e) {
+			rs = null;
+		}
+
+		return rs;
+	}
+
+	public Floor autoLive(long userId, long floorId, Point location, Coordinate coordinate) {
+		Floor floor = floorRepo.getById(floorId);
+		Event event = eventRepo.getById(floor.getEventId());
+		if (event.getStatus() == EventStatus.ONGOING.getValue() && event.isActive() && !event.isDeleted()) {
+			boolean isStable = autoLive(floor, userId, location, coordinate);
+			if (isStable) {
+				return floor;
+			}
+		}
+		return null;
+	}
+	
+	public Floor autoLive(long userId, String atlasFloorId, Point location, Coordinate coordinate) {
+		Floor floor = floorRepo.getByAtlasId(atlasFloorId);
+		Event event = eventRepo.getById(floor.getEventId());
+		if (event.getStatus() == EventStatus.ONGOING.getValue() && event.isActive() && !event.isDeleted()) {
+			boolean isStable = autoLive(floor, userId, location, coordinate);
+			if (isStable) {
+				return floor;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * 
+	 * @param floor
+	 * @param userId
+	 * @param location
+	 * @return true if location is seem stably
+	 */
+	private boolean autoLive(Floor floor, long userId, Point location, Coordinate coordinate) {
+		try {
+			checkIn(userId, floor.getEventId());
+			long eventId = floor.getEventId();
+			Live live = liveRepo.getLiveUser(eventId, userId);
+			Point recentLoc = null;
+			if (live == null) {
+				live = new Live();
+				live.setObjectRef(new ObjectRef(ObjectType.EVENT.getValue(), eventId));
+				live.setUserId(userId);
+			} else {
+				recentLoc = live.getLocation();
+			}
+			live.setFloorId(floor.getId());
+			live.setLocation(location);
+			live.setCoordinate(coordinate);
+			live.setLastUpdate(Calendar.getInstance().getTime());
+			liveRepo.save(live);
+			
+			LiveTracking tracking = new LiveTracking();
+			tracking.setUserId(userId);
+			tracking.setObjectRef(new ObjectRef(ObjectType.EVENT.getValue(), eventId));
+			tracking.setFloorId(floor.getId());
+			tracking.setLocation(location);
+			tracking.setCoordinate(coordinate);
+			liveTrackingRepo.save(tracking);
+			
+			if (recentLoc == null) {
+				return false;
+			}
+			double distance = new Point((location.getX() - recentLoc.getX()) * floor.getActualWidth(), (location.getY() - recentLoc.getY()) * floor.getActualHeight()).length();
+			return distance <= 3;
+		} catch (Exception ex) {
+			return false;
+		}
+	}
+	
+	public void checkIn(long userId, long eventId) throws SequenceException {
+		ObjectRef objectRef = new ObjectRef(ObjectType.EVENT.getValue(), eventId);
+		ReactStat reactStat = reactStatRepo.getByObjectAndType(objectRef, ReactType.CHECK_IN.getValue());
+		if (reactStat == null) {
+			reactStat = new ReactStat(objectRef.getType(), objectRef.getId(), 0L, ReactType.CHECK_IN.getValue(), Arrays.asList(userId), null, 1);
+			reactStatRepo.save(reactStat);
+		} else if (reactStat.getUserIds() == null || !reactStat.getUserIds().contains(userId)) {
+			reactStat.addToUserIds(Arrays.asList(userId));
+			reactStatRepo.save(reactStat);
+		}
+		userStatRepo.pushCheckedIn(userId, eventId);
+	}
+	
+	public void addToWishList(long userId, ObjectRef objectRef, int type) {
+		if (objectRef == null) {
+			return;
+		}
+		if (type == ReactAction.ADD.getValue()) {
+			userStatRepo.addToWishList(userId, objectRef.getId(), objectRef.getType());
+		} else {
+			userStatRepo.removeFromWishList(userId, objectRef.getId(), objectRef.getType());
+		}
+	}
+	
+	public boolean checkExistObject(ObjectRef objectRef) {
+		if (objectRef.getType() == ObjectType.BOOTH.getValue()) {
+			Booth object = (Booth) indoorRepo.getById(objectRef.getId());
+			return object != null && object.isActive() && !object.isDeleted();
+		}
+		if (objectRef.getType() == ObjectType.COMMENT.getValue()) {
+			Comment object = commentRepo.getById(objectRef.getId());
+			return object != null && object.getStatus() > 0;
+		}
+		if (objectRef.getType() == ObjectType.EVENT.getValue()) {
+			Event object = eventRepo.getById(objectRef.getId());
+			return object != null && object.isActive() && !object.isDeleted();
+		}
+		if (objectRef.getType() == ObjectType.FEED.getValue()) {
+			Feed object = feedRepo.getById(objectRef.getId());
+			return object != null && object.getStatus() > 0;
+		}
+		if (objectRef.getType() == ObjectType.PRODUCT.getValue()) {
+			BoothProduct object = productRepo.getById(objectRef.getId());
+			return object != null && object.isActive() && !object.isDeleted();
+		}
+		if (objectRef.getType() == ObjectType.USER.getValue()) {
+			Profile object = profileRepo.getById(objectRef.getId());
+			return object != null && object.getStatus() > 0;
+		}
+		return true;
+	}
+	
+	public Map<String, Object> getWishList(long userId, int from, int count, int objectType, double lon, double lat) {
+		Map<String, Object> rs = new HashMap<>();
+		WishListResponse wishlist = new WishListResponse();
+		boolean hasMore = false;
+		int total = 0;
+		UserStat userStat = userStatRepo.getByUserId(userId, false);
+		if (userStat != null) {
+			ObjectType oType = ObjectType.getType(objectType);
+			List<Long> ids = userStat.getList(oType);
+			if (ids != null) {
+				total = ids.size();
+				if (from < total) {
+					if (total > from + count) {
+						hasMore = true;
+						ids = ids.subList(from, from + count);
+					} else {
+						ids = ids.subList(from, total);
+					}
+				} else {
+					ids = null;
+				}
+			}
+			if (!CollectionUtils.isEmpty(ids)) {
+				if (oType == ObjectType.EVENT) {
+					wishlist.setEvents(eventService.getListEvent(ids, userId, lon, lat));
+				} else if (oType == ObjectType.BOOTH) {
+					wishlist.setBooths(navigationService.getBoothByIdList(ids, userId));
+				} else if (oType == ObjectType.PRODUCT) {
+					wishlist.setProducts(navigationService.getProductByIdList(ids, userId));
+				}
+			}
+		}
+		wishlist.setTotal(total);
+		rs.put("wishList", wishlist);
+		rs.put("hasMore", hasMore);
+		
+		return rs;
+	}
+	
+	public int clearWishList(long userId, int objectType) {
+		UserStat userStat = userStatRepo.getByUserId(userId, false);
+		if (userStat == null) {
+			return SocialErrCode.SUCCESS;
+		}
+		if (objectType == ObjectType.EVENT.getValue()) {
+			userStat.setEventIds(null);
+		} else if (objectType == ObjectType.BOOTH.getValue()) {
+			userStat.setBoothIds(null);
+		} else if (objectType == ObjectType.PRODUCT.getValue()) {
+			userStat.setProductIds(null);
+		}
+		try {
+			userStatRepo.save(userStat);
+		} catch (Exception e) {
+			return SocialErrCode.SERVER_ERR;
+		}
+		return SocialErrCode.SUCCESS;
+	}
+	
+	public int removeWishListItem(long userId, int objectType, long objectId) {
+		UserStat userStat = userStatRepo.getByUserId(userId, false);
+		if (userStat == null) {
+			return SocialErrCode.SERVER_ERR;
+		}
+		userStat.removeFromList(objectId, ObjectType.getType(objectType));
+		try {
+			userStatRepo.save(userStat);
+		} catch (Exception e) {
+			return SocialErrCode.SERVER_ERR;
+		}
+		return SocialErrCode.SUCCESS;
+	}
+	
+	public Map<String, Object> connnect(ConnectBody body) {
+		Map<String, Object> rs = new HashMap<>();
+		int err = SocialErrCode.SUCCESS;
+		if (checkExistObject(body.getObjectRef())) {
+			boolean isConnected = false, isRequested = false;
+			int totalConnect = 0, totalRequest = 0, totalMyConnect = 0;
+			Connect connect = connectRepo.getConnect(body.getUserId(), body.getObjectRef().getId());
+			if (body.getType() == ReactAction.REQUEST_CONNECT.getValue()) {
+				if (connect == null || connect.getStatus() == ReactAction.DELETE_REQUEST.getValue() || connect.getStatus() == ReactAction.CANCEL_REQUEST.getValue() || connect.getStatus() == ReactAction.DISCONNECT.getValue()) {
+					if (connect == null) {
+						connect = body.toConnect();
+					}
+					connect.setFromUserId(body.getUserId());
+					connect.setStatus(ReactAction.REQUEST_CONNECT.getValue());
+					userStatRepo.pushRequest(body.getUserId(), body.getObjectRef().getId());
+					userStatRepo.pushRequested(body.getObjectRef().getId(), body.getUserId());
+					isRequested = true;
+					Profile profile = profileRepo.getById(body.getUserId());
+					newsService.notifyConnect(body.getUserId(), ReactAction.REQUEST_CONNECT.getValue(),"You have a request connection from " +  profile.getFullName(), profile.getAvatar(), body.getObjectRef().getId());
+				}
+				UserStat userStat = userStatRepo.getByUserId(body.getObjectRef().getId(), false);
+				if (userStat != null) {
+					totalRequest = userStat.getRequesteds() != null ? userStat.getRequesteds().size() : 0;
+					totalConnect = userStat.getConnectUserIds() != null ? userStat.getConnectUserIds().size() : 0;
+				}
+				userStat = userStatRepo.getByUserId(body.getUserId(), false);
+				if (userStat != null) {
+					totalMyConnect = userStat.getConnectUserIds() != null ? userStat.getConnectUserIds().size() : 0;
+				}
+			} else if (body.getType() == ReactAction.CANCEL_REQUEST.getValue()) {
+				if (connect != null && connect.getStatus() == ReactAction.REQUEST_CONNECT.getValue() && connect.getFromUserId() == body.getUserId()) {
+					userStatRepo.pullRequest(body.getUserId(), body.getObjectRef().getId());
+					userStatRepo.pullRequested(body.getObjectRef().getId(), body.getUserId());
+					connect.setStatus(ReactAction.CANCEL_REQUEST.getValue());
+					UserStat userStat = userStatRepo.getByUserId(body.getObjectRef().getId(), false);
+					if (userStat != null) {
+						totalRequest = userStat.getRequesteds() != null ? userStat.getRequesteds().size() : 0;
+						totalConnect = userStat.getConnectUserIds() != null ? userStat.getConnectUserIds().size() : 0;
+					}
+					userStat = userStatRepo.getByUserId(body.getUserId(), false);
+					if (userStat != null) {
+						totalMyConnect = userStat.getConnectUserIds() != null ? userStat.getConnectUserIds().size() : 0;
+					}
+					
+				} else {
+					err = SocialErrCode.SERVER_ERR;
+				}
+			} else if (body.getType() == ReactAction.CONFIRM_REQUEST.getValue()) {
+				if (connect != null && connect.getStatus() == ReactAction.REQUEST_CONNECT.getValue() && connect.getFromUserId() == body.getObjectRef().getId()) {
+					userStatRepo.pullRequested(body.getUserId(), body.getObjectRef().getId());
+					userStatRepo.pullRequest(body.getObjectRef().getId(), body.getUserId());
+					userStatRepo.pushConnect(body.getUserId(), body.getObjectRef().getId());
+					userStatRepo.pushConnect(body.getObjectRef().getId(), body.getUserId());
+					connect.setStatus(ReactAction.CONFIRM_REQUEST.getValue());
+					isConnected = true;
+					UserStat userStat = userStatRepo.getByUserId(body.getObjectRef().getId(), false);
+					if (userStat != null) {
+						totalConnect = userStat.getConnectUserIds() != null ? userStat.getConnectUserIds().size() : 0;
+					}
+					userStat = userStatRepo.getByUserId(body.getUserId(), false);
+					if (userStat != null) {
+						totalRequest = userStat.getRequesteds() != null ? userStat.getRequesteds().size() : 0;
+						totalMyConnect = userStat.getConnectUserIds() != null ? userStat.getConnectUserIds().size() : 0;
+					}
+					Profile profile = profileRepo.getById(body.getUserId());
+					newsService.notifyConnect(body.getUserId(), ReactAction.CONFIRM_REQUEST.getValue(), profile.getFullName() + " accepted your request. You are connected now.", profile.getAvatar(), body.getObjectRef().getId());
+				} else {
+					err = SocialErrCode.SERVER_ERR;
+				}
+			} else if (body.getType() == ReactAction.DELETE_REQUEST.getValue()) {
+				if (connect != null && connect.getStatus() == ReactAction.REQUEST_CONNECT.getValue() && connect.getFromUserId() == body.getObjectRef().getId()) {
+					userStatRepo.pullRequest(body.getObjectRef().getId(), body.getUserId());
+					userStatRepo.pullRequested(body.getUserId(), body.getObjectRef().getId());
+					connect.setStatus(ReactAction.DELETE_REQUEST.getValue());
+					UserStat userStat = userStatRepo.getByUserId(body.getObjectRef().getId(), false);
+					if (userStat != null) {
+						totalConnect = userStat.getConnectUserIds() != null ? userStat.getConnectUserIds().size() : 0;
+					}
+					userStat = userStatRepo.getByUserId(body.getUserId(), false);
+					if (userStat != null) {
+						totalRequest = userStat.getRequesteds() != null ? userStat.getRequesteds().size() : 0;
+						totalMyConnect = userStat.getConnectUserIds() != null ? userStat.getConnectUserIds().size() : 0;
+					}
+				}
+			} else if (body.getType() == ReactAction.DISCONNECT.getValue()) {
+				if (connect != null && connect.getStatus() == ReactAction.CONFIRM_REQUEST.getValue()) {
+					userStatRepo.pullConnect(body.getUserId(), body.getObjectRef().getId());
+					userStatRepo.pullConnect(body.getObjectRef().getId(), body.getUserId());
+					connect.setStatus(ReactAction.DISCONNECT.getValue());
+					
+					UserStat userStat = userStatRepo.getByUserId(body.getObjectRef().getId(), false);
+					if (userStat != null) {
+						totalRequest = userStat.getRequesteds() != null ? userStat.getRequesteds().size() : 0;
+						totalConnect = userStat.getConnectUserIds() != null ? userStat.getConnectUserIds().size() : 0;
+					}
+					userStat = userStatRepo.getByUserId(body.getUserId(), false);
+					if (userStat != null) {
+						totalMyConnect = userStat.getConnectUserIds() != null ? userStat.getConnectUserIds().size() : 0;
+					}
+				}
+			}
+			if (connect != null) {
+				try {
+					connectRepo.save(connect);
+				} catch (Exception e) {
+				}
+			}
+			ConnectResponse connectRsp = new ConnectResponse(isConnected, totalConnect, isRequested, totalRequest, totalMyConnect);
+			rs.put("connect", connectRsp);
+		} else {
+			err = SocialErrCode.OBJECT_NOT_EXISTED;
+		}
+		rs.put("err", err);
+
+		return rs;
+	}
+	
+	public Map<String, Object> getSuggestConnectList(long userId, long eventId, int count, int from) {
+		final int stopSize = 20;
+		//suggest on event where user is online
+		List<Long> suggestUserIds = new LinkedList<>();
+		UserStat userStat = userStatRepo.getByUserId(userId, false);
+		List<Long> eliminateLst = new LinkedList<>();
+		if (userStat != null) {
+			if (!CollectionUtils.isEmpty(userStat.getConnectUserIds())) {
+				eliminateLst.addAll(userStat.getConnectUserIds());
+			}
+			if (!CollectionUtils.isEmpty(userStat.getRequests())) {
+				eliminateLst.addAll(userStat.getRequests());
+			}
+			if (!CollectionUtils.isEmpty(userStat.getRequesteds())) {
+				eliminateLst.addAll(userStat.getRequesteds());
+			}
+		}
+		eliminateLst.add(userId);
+		Live liveUser = liveRepo.getLiveUser(userId);
+		if (liveUser != null && liveUser.getObjectRef().getType() == ObjectType.EVENT.getValue()) {
+			eventId = liveUser.getObjectRef().getId();
+		}
+		if (eventId > 0) {
+			List<Live> lives = liveRepo.getListInEvent(eventId);
+			if (lives != null) {
+				for (Live live: lives) {
+					if (!eliminateLst.contains(live.getUserId()) && !suggestUserIds.contains(live.getUserId())) {
+						suggestUserIds.add(live.getUserId());
+					}
+				}
+			}
+		}
+		if (suggestUserIds.size() <= stopSize) {
+			if (userStat != null) {
+				//suggest by up-on event
+				Set<Long> eventMatchedIds = new HashSet<>();
+				if (userStat.getEventIds() != null) {
+					eventMatchedIds.addAll(userStat.getEventIds());
+				}
+				if (userStat.getGoingIds() != null) {
+					eventMatchedIds.addAll(userStat.getGoingIds());
+				}
+				List<Long> upCommingEventIds = eventRepo.getUpOnEventIds(eventMatchedIds);
+				List<UserStat> uss = userStatRepo.getMatchingUserIdList(upCommingEventIds);
+				if (uss != null) {
+					for (UserStat us: uss) {
+						if (!eliminateLst.contains(us.getUserId()) && !suggestUserIds.contains(us.getUserId())) {
+							suggestUserIds.add(us.getUserId());
+						}
+					}
+				}
+				//suggest by up-on category event
+				if (suggestUserIds.size() <= stopSize) {
+					if (userStat.getEventCategoryIds() != null) {
+						upCommingEventIds = eventRepo.getUpOnEventIdsByCategory(userStat.getEventCategoryIds());
+						uss = userStatRepo.getMatchingUserIdList(upCommingEventIds);
+						if (uss != null) {
+							for (UserStat us: uss) {
+								if (!eliminateLst.contains(us.getUserId()) && !suggestUserIds.contains(us.getUserId())) {
+									suggestUserIds.add(us.getUserId());
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		//suggest in region
+//		if (suggestUserIds.size() <= stopSize) {
+//			Profile profile = profileRepo.getById(userId);
+//			List<Long> regionUserIds = profileRepo.getRegionUserIds(profile.getCountryCode(), profile.getAddress().getStateId(), profile.getAddress().getCityId());
+//			if (regionUserIds != null) {
+//				for (long id: regionUserIds) {
+//					if (!eliminateLst.contains(id) && !suggestUserIds.contains(id)) {
+//						suggestUserIds.add(id);
+//					}
+//				}
+//			}
+//		}
+		return buildReactUserList(suggestUserIds, userId, from, count, eventId > 0, true);
+	}
+	
+	public Map<String, Object> going(GoingBody body) {
+		Map<String, Object> rs = new HashMap<>();
+		int err = SocialErrCode.SUCCESS;
+		try {
+			ReactStat reactStat = updateUserReactStat(body.getObjectRef(), ReactType.GOING.getValue(),
+					Arrays.asList(body.getUserId()), body.getType() == ReactAction.ADD.getValue());
+			if (body.getType() == ReactAction.ADD.getValue()) {
+				userStatRepo.pushGoing(body.getUserId(), body.getObjectRef().getId());
+			} else {
+				userStatRepo.pullGoing(body.getUserId(), body.getObjectRef().getId());
+			}
+			GoingResponse resp = new GoingResponse(reactStat.getUserIds().contains(body.getUserId()),
+					reactStat.getTotal());
+			rs.put("going", resp);
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+		rs.put("err", err);
+		return rs;
+	}
+	
+	public Map<String, Object> searchFriend(long userId, String q, String company, String designation, String homeTown, int from, int count) {
+		Map<String, Object> rs = new HashMap<>();
+		List<ProfileShortResponse> friends = new LinkedList<>();
+		boolean hasMore = false;
+		List<Profile> profiles = profileRepo.getListFriend(q, company, designation, homeTown, from, count + 1);
+		if (profiles != null) {
+			for (Profile profile: profiles) {
+				if (profile.getId() != userId) {
+					friends.add(userService.buildProfileShortResponse(profile, userId));
+				}
+			}
+			if (profiles.size() > count) {
+				hasMore = true;
+				if (friends.size() > count) {
+					friends = friends.subList(0, count);
+				}
+			}
+		}
+		rs.put("users", friends);
+		rs.put("hasMore", hasMore);
+		return rs;
+	}
+	
+	public List<LiveResponse> getListLocationTracking(long userId, long eventId, long floorId, long fromTime, long toTime) {
+		List<LiveTracking> lives = liveTrackingRepo.getTracking(userId, eventId, floorId, new Date(fromTime), new Date(toTime));
+		List<LiveResponse> liveRps = new LinkedList<>();
+		if (lives != null) {
+			lives.forEach(t -> liveRps.add(new LiveResponse(t)));
+		}
+		
+		return liveRps;
+	}
+}

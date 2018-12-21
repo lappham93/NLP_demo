@@ -1,0 +1,21 @@
+package com.mit.event.enums;
+
+public enum EventType {
+	CONFERENCE(1, "Conference"), TRADESHOW(2, "Tradeshow");
+	
+	private int value;
+	private String name;
+	
+	private EventType(int value, String name) {
+		this.value = value;
+		this.name = name;
+	}
+	
+	public int getValue() {
+		return this.value;
+	}
+	
+	public String getName() {
+		return this.name;
+	}
+}

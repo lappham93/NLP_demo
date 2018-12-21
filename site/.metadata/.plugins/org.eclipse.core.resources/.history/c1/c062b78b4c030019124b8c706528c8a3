@@ -1,0 +1,38 @@
+package com.mit.stat.bodies;
+
+import com.mit.stat.entities.ZipCodeStatTotal;
+
+import java.util.List;
+
+/**
+ * Created by Lap Pham on 4/20/17.
+ */
+public class ServiceZipCodeStatTotal {
+    private String zipCode;
+    private List<Long> serviceIds;
+    private ZipCodeStatTotal statTotal;
+
+    public String getZipCode() {
+        return zipCode;
+    }
+
+    public void setZipCode(String zipCode) {
+        this.zipCode = zipCode;
+    }
+
+    public List<Long> getServiceIds() {
+        return serviceIds;
+    }
+
+    public void setServiceIds(List<Long> serviceIds) {
+        this.serviceIds = serviceIds;
+    }
+
+    public ZipCodeStatTotal getStatTotal() {
+        return statTotal;
+    }
+
+    public void setStatTotal(ZipCodeStatTotal statTotal) {
+        this.statTotal = statTotal;
+    }
+}

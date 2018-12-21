@@ -1,0 +1,13 @@
+package com.mit.navigation.responses;
+
+import com.mit.navigation.entities.Floor;
+
+import java.util.List;
+
+public class FloorResponse extends FloorShortResponse {
+	
+    public FloorResponse(Floor floor, List<MapLevelResponse> mapLevels) {
+        super(floor, mapLevels);
+    }
+
+}

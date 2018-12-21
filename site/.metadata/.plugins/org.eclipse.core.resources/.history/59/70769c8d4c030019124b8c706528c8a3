@@ -1,0 +1,65 @@
+package com.mit.banner.services;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.mit.asset.entities.PhotoInfo;
+import com.mit.asset.repositories.PhotoInfoRepo;
+import com.mit.banner.entities.Banner;
+import com.mit.banner.entities.BoothBanner;
+import com.mit.banner.entities.EventBanner;
+import com.mit.banner.repositories.BannerRepo;
+import com.mit.banner.responses.BannerResponse;
+import com.mit.banner.responses.BoothBannerResponse;
+import com.mit.banner.responses.EventBannerResponse;
+import com.mit.common.entities.ObjectRef;
+import com.mit.common.enums.ObjectType;
+
+/**
+ * Created by Lap Pham on 5/22/17.
+ */
+
+@Service
+public class BannerService {
+
+    @Autowired
+    private BannerRepo bannerRepo;
+    @Autowired
+    private PhotoInfoRepo photoInfoRepo;
+
+    public List<BannerResponse> getListBanner(int objectType, long objectId) {
+        ObjectRef objectRef = new ObjectRef(objectType, objectId);
+        return buildListBannerResponse(bannerRepo.getListActiveByObjectRef(objectRef));
+    }
+
+    public List<BannerResponse> buildListBannerResponse(List<Banner> banners) {
+        List<BannerResponse> bannerResponses = new ArrayList<>(banners.size());
+        List<Long> photoIds = new ArrayList<>();
+        for (Banner banner: banners) {
+            if (banner.getThumb() > 0) {
+                photoIds.add(banner.getThumb());
+            }
+        }
+
+        Map<Long, PhotoInfo> photoInfoMap = photoInfoRepo.getMapByIds(photoIds, ObjectType.BANNER.getValue());
+
+        for (Banner banner: banners) {
+        	if (banner instanceof EventBanner) {
+        		EventBanner eventBanner = (EventBanner) banner;
+        		bannerResponses.add(new EventBannerResponse(eventBanner, photoInfoMap.get(banner.getThumb())));
+        	} else if (banner instanceof BoothBanner) {
+        		BoothBanner boothBanner = (BoothBanner) banner;
+        		bannerResponses.add(new BoothBannerResponse(boothBanner, photoInfoMap.get(banner.getThumb())));
+        	} else {
+        		bannerResponses.add(new BannerResponse(banner, photoInfoMap.get(banner.getThumb())));
+        	}
+        }
+
+        return bannerResponses;
+    }
+    
+}

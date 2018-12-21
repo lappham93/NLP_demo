@@ -1,0 +1,24 @@
+$(function(){
+	
+})
+
+function predict(comment) {
+	data = JSON.stringify({
+		'comment': comment
+		});
+	$.ajax({
+    	  headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+    	  url: url,
+    	  method: method,
+    	  dataType: 'json',
+    	  data: data,
+    	  success: callback,
+    	  error: function(httpObj) {
+    		  if (httpObj.status == 401) {
+    			  App.redirect("/login");
+    		  } else {
+    			  App.showMessage("Server error + " + httpObj.status);
+    		  }
+    	  }
+	});
+}

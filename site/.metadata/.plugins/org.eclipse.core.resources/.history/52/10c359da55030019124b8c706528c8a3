@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+    layout:decorator="header_layout">
+<head>
+	<!-- HTTPS required. HTTP will give a 403 forbidden response -->
+	<script src="https://sdk.accountkit.com/en_US/sdk.js"></script>
+	<!--  page ref -->
+	<link th:href="${resources_path} + '/css/app/login.css'" rel="stylesheet" type="text/css"/>
+	<script type="text/javascript" th:src="${resources_path} + '/js/app/register.js'"></script>
+	
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		/* AccountKit_OnInteractive = function initAccountKit(){
+		    AccountKit.init(
+		      {
+		        appId:[[${facebook_appId}]], 
+		        state:[[${csrf}]],
+		        version:[[${accountKit_api_version}]],
+		        fbAppEventsEnabled:true,
+		        debug:false,
+		      }
+		    );
+		}; */
+		/*]]>*/
+	</script>
+	<style type="text/css">
+		#formId {
+			margin-left: 20%; width: 60%;
+		}
+	</style>
+</head>
+
+<body class="login-container">
+	<div layout:fragment="body">
+		<!-- Main navbar -->
+		<div class="navbar navbar-inverse bg-indigo">
+			<div class="navbar-header">
+				<!-- <a class="navbar-brand" th:href="${admin_prefix}"><img th:src="${resources_path} + '/images/app-logo.png'" alt=""/></a> -->
+	
+				<ul class="nav navbar-nav pull-right visible-xs-block">
+					<li><a data-toggle="collapse" data-target="#navbar-mobile"><i class="icon-tree5"></i></a></li>
+				</ul>
+			</div>
+	
+			<div class="navbar-collapse collapse" id="navbar-mobile">
+				<ul class="nav navbar-nav navbar-right">
+				</ul>
+			</div>
+		</div>
+		<!-- /main navbar -->
+	
+	
+		<!-- Page container -->
+		<div class="page-container">
+	
+			<!-- Page content -->
+			<div class="page-content">
+	
+				<!-- Main content -->
+				<div class="content-wrapper">
+	
+					<!-- Content area -->
+					<div class="content">
+						<!-- Simple login form -->
+						<div id="formId" class="panel panel-flat">
+							<div class="panel-heading">
+								<h5 class="panel-title">Create a new account</h5>
+							</div>
+							<form id="registerFrmId" class="form-horizontal">
+								<div th:replace="fragments/fragments :: form_error_2"></div>
+								<div th:replace="fragments/fragments :: form_success_2"></div>
+								<div th:replace="fragments/fragments :: loader"></div>
+								<div class="panel-body">
+									<div class="form-group">
+										<label class="col-lg-3 control-label">Username: <span class="text-danger">(*)</span></label>
+										<div class="col-lg-9">
+											<input type="text" id="userNameAddIptId" class="form-control" placeholder="Username" />
+										</div>
+									</div>
+									
+									<div class="form-group">
+										<label class="col-lg-3 control-label">Email: <span class="text-danger">(*)</span></label>
+										<div class="col-lg-9">
+											<input type="email" id="emailAddIptId" class="form-control" placeholder="Email" />
+										</div>
+									</div>
+									
+									<div class="form-group">
+										<label class="col-lg-3 control-label">Company: </label>
+										<div class="col-lg-9">
+											<input type="text" id="companyAddIptId" class="form-control" placeholder="Company" />
+										</div>
+									</div>
+									
+									<div class="form-group">
+										<label class="col-lg-3 control-label">Password: <span class="text-danger">(*)</span></label>
+										<div class="col-lg-9">
+											<input type="password" id="passwordAddIptId" class="form-control" placeholder="Password"/>
+										</div>
+									</div>
+									
+									<div class="form-group">
+										<div class="col-lg-offset-3 col-lg-1">
+											<div class="checkbox checkbox-switchery">
+												<input type="checkbox" id="agreeAddIptId" class="switchery-primary"/>
+											</div>
+										</div>
+										<label class="col-lg-6 control-label" style="float: left">I agree to <a>Indoor Innkom Terms and Conditions</a> and <a>Privacy Policy</a></label>
+									</div>
+									
+									<div class="text-center">
+										<button class="btn btn-primary btn-rounded btn-submit" id="registerBtnId" disabled="disabled"> Create Account<i class="icon-circle-right2 position-right"></i></button> <br/>
+										<label class="control-label">Already have an account? <a th:href="@{${login_url}}">Sign in here</a></label>
+									</div>
+									
+								</div>
+							</form>
+						</div>
+						<!-- Footer -->
+						<div class="footer text-muted text-center">
+							&copy; 2017. Innkom
+						</div>
+						<!-- /footer -->
+	
+					</div>
+					<!-- /content area -->
+	
+				</div>
+				<!-- /main content -->
+	
+			</div>
+			<!-- /page content -->
+	
+		</div>
+		<!-- /page container -->
+	</div>
+</body>
+</html>

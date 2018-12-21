@@ -1,0 +1,127 @@
+package com.mit.stat.entities;
+
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * Created by Hung on 4/19/2017.
+ */
+public class ZipCodeStatTotal {
+    private List<Long> matchProviderIds;
+    private List<Long> matchClientIds;
+    private List<Long> acceptProviderIds;
+    private List<Long> acceptClientIds;
+    private List<Long> completeProviderIds;
+    private List<Long> completeClientIds;
+    private long providerCancelTotal;
+    private long clientCancelTotal;
+    private long matchTotal;
+    private long acceptTotal;
+    private long completeTotal;
+
+    public List<Long> getMatchProviderIds() {
+        if (matchProviderIds == null) {
+            return Collections.emptyList();
+        }
+        return matchProviderIds;
+    }
+
+    public void setMatchProviderIds(List<Long> matchProviderIds) {
+        this.matchProviderIds = matchProviderIds;
+    }
+
+    public List<Long> getMatchClientIds() {
+        if (matchClientIds == null) {
+            return Collections.emptyList();
+        }
+        return matchClientIds;
+    }
+
+    public void setMatchClientIds(List<Long> matchClientIds) {
+        this.matchClientIds = matchClientIds;
+    }
+
+    public List<Long> getAcceptProviderIds() {
+        if (acceptProviderIds == null) {
+            return Collections.emptyList();
+        }
+        return acceptProviderIds;
+    }
+
+    public void setAcceptProviderIds(List<Long> acceptProviderIds) {
+        this.acceptProviderIds = acceptProviderIds;
+    }
+
+    public List<Long> getAcceptClientIds() {
+        if (acceptClientIds == null) {
+            return Collections.emptyList();
+        }
+        return acceptClientIds;
+    }
+
+    public void setAcceptClientIds(List<Long> acceptClientIds) {
+        this.acceptClientIds = acceptClientIds;
+    }
+
+    public List<Long> getCompleteProviderIds() {
+        if (completeProviderIds == null) {
+            return Collections.emptyList();
+        }
+        return completeProviderIds;
+    }
+
+    public void setCompleteProviderIds(List<Long> completeProviderIds) {
+        this.completeProviderIds = completeProviderIds;
+    }
+
+    public List<Long> getCompleteClientIds() {
+        if (completeClientIds == null) {
+            return Collections.emptyList();
+        }
+        return completeClientIds;
+    }
+
+    public void setCompleteClientIds(List<Long> completeClientIds) {
+        this.completeClientIds = completeClientIds;
+    }
+
+    public long getProviderCancelTotal() {
+        return providerCancelTotal;
+    }
+
+    public void setProviderCancelTotal(long providerCancelTotal) {
+        this.providerCancelTotal = providerCancelTotal;
+    }
+
+    public long getClientCancelTotal() {
+        return clientCancelTotal;
+    }
+
+    public void setClientCancelTotal(long clientCancelTotal) {
+        this.clientCancelTotal = clientCancelTotal;
+    }
+
+    public long getMatchTotal() {
+        return matchTotal;
+    }
+
+    public void setMatchTotal(long matchTotal) {
+        this.matchTotal = matchTotal;
+    }
+
+    public long getAcceptTotal() {
+        return acceptTotal;
+    }
+
+    public void setAcceptTotal(long acceptTotal) {
+        this.acceptTotal = acceptTotal;
+    }
+
+    public long getCompleteTotal() {
+        return completeTotal;
+    }
+
+    public void setCompleteTotal(long completeTotal) {
+        this.completeTotal = completeTotal;
+    }
+}

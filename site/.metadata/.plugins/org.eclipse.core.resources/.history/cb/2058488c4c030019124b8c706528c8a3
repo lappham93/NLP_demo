@@ -1,0 +1,86 @@
+package com.mit.react.repositories;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import com.mit.common.entities.ObjectRef;
+import com.mit.common.enums.ObjectType;
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.react.entities.Comment;
+import com.mit.seq.repositories.SeqIdRepo;
+
+@Repository
+public class CommentRepo extends TimeDocRepo<Comment>{
+    @Autowired
+    MongoOperations mongoOps;
+
+    @Autowired
+    SeqIdRepo seqIdRepo;
+    
+    public Comment getById(long commentId) {
+        return mongoOps.findById(commentId, Comment.class);
+    }
+    
+    public Comment getLastComment(ObjectRef objectRef) {
+    	Query query = new Query(Criteria.where("objectRef.type").is(objectRef.getType()).and("objectRef.id").is(objectRef.getId()).and("status").gt(0));
+    	Sort sort = new Sort(new Order(Direction.DESC, "createdDate"));
+    	return mongoOps.findOne(query.with(sort), Comment.class);
+    }
+    
+    public List<Comment> getByIds(List<Long> commentIds) {
+        List<Comment> comments = mongoOps.find(new Query(Criteria.where("id").in(commentIds)), Comment.class);
+        return comments;
+    }
+    
+    public List<Comment> getSlice(ObjectRef objectRef, int count, int from, String fieldSort, boolean sortAcs, boolean isActiveStatus) { 
+    	Criteria criteria = Criteria.where("objectRef.type").is(objectRef.getType()).and("objectRef.id").is(objectRef.getId());
+    	if (isActiveStatus) {
+    		criteria = criteria.and("status").gt(0);
+    	}
+    	Sort sort = new Sort(new Order(sortAcs ? Direction.ASC : Direction.DESC, fieldSort));
+        List<Comment> profiles = mongoOps.find(new Query(criteria).with(sort).skip(from).limit(count), Comment.class);
+        return profiles;
+    }
+    
+    public List<Comment> getNewList(long id, ObjectRef objectRef, String fieldSort, boolean sortAcs, boolean isActiveStatus) { 
+    	Criteria criteria = Criteria.where("id").gt(id).and("objectRef.type").is(objectRef.getType()).and("objectRef.id").is(objectRef.getId());
+    	if (isActiveStatus) {
+    		criteria = criteria.and("status").gt(0);
+    	}
+    	Sort sort = new Sort(new Order(sortAcs ? Direction.ASC : Direction.DESC, fieldSort));
+        List<Comment> profiles = mongoOps.find(new Query(criteria).with(sort), Comment.class);
+        return profiles;
+    }
+
+    public Map<Long, Comment> getMapByIds(List<Long> profileIds) {
+        List<Comment> profiles = getByIds(profileIds);
+        Map<Long, Comment> profileMap = new HashMap<Long, Comment>();
+        for (Comment profile : profiles) {
+            profileMap.put(profile.getId(), profile);
+        }
+
+        return profileMap;
+    }
+    
+    public void delete(long id) {
+		Query query = new Query(Criteria.where("_id").is(id));
+		Update update = new Update().set("status", 0);
+		mongoOps.findAndModify(query, update, Comment.class);
+	}
+    
+    public List<Comment> deleteChilds(long parentId) {
+    	Query query = new Query(Criteria.where("objectRef._id").is(parentId).and("objectRef.type").is(ObjectType.COMMENT.getValue()));
+    	return mongoOps.findAllAndRemove(query, Comment.class);
+    }
+}

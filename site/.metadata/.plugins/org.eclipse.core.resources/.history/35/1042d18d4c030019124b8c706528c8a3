@@ -1,0 +1,32 @@
+package com.mit.address.responses;
+
+import com.mit.address.entities.City;
+
+/**
+ * Created by Lap Pham on 3/29/17.
+ */
+public class CityResponse {
+    private long id;
+    private String name;
+
+    public CityResponse(City city) {
+        this.id = city.getId();
+        this.name = city.getName();
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}

@@ -1,0 +1,80 @@
+App.formObject.formEles = {
+		name: ["#nameAddIptId", App.formEleType.INPUT],
+		desc: ["#descAddIptId", App.formEleType.INPUT],
+		address: ["#addressAddIptId", App.formEleType.INPUT],
+		lon: ["#lonAddIptId", App.formEleType.INPUT],
+		lat: ["#latAddIptId", App.formEleType.INPUT]
+}
+App.formObject.formId = '#editLocationFrmId';
+App.formObject.submitId = '#saveLocationBtnId';
+App.formObject.checkData = function(data) {
+			if (!data) {
+				data = App.getFormData();
+			}
+			var check = data.name && App.validateCoordinate(data.lon, data.lat);
+			return check;
+}
+
+$(function(){
+	$('#mapStyleOptionId').change(function(){
+		mbChangeStyle($(this).val());
+	});
+	
+	$('#yourLocationBtnId').click(function(){
+		App.getCurrentLocation(function(position){
+			var coordinate = {lng: position.coords.longitude, lat: position.coords.latitude};
+			mbDrawLocation(coordinate);
+			updateLocation(coordinate);
+		});
+	});
+	
+	$(App.formObject.formId).submit(function() {
+		App.showLoader('Processing', App.formObject.formId);
+		App.initAjaxRequest(App.formObject.formId);
+		
+		var data = App.getFormData();
+		data.coordinate = {'lon': data.lon, 'lat': data.lat};
+		var locationId = $('#locationId').val();
+		var url = App.getFullUri(App.uris.locationEdit.replace('{0}', locationId));
+		App.ajaxRequest('PUT', url, data, function(resp) {
+			App.callbackAjaxRequest2($(App.formObject.formId), resp, null, App.uris.locationItem + "/" + resp.data.idRef, "", "");
+		})
+		
+		return false;
+	});
+	
+	$(App.formObject.formEles.lat[0]).change(function(){
+		lonlatChange();
+	});
+	
+	$(App.formObject.formEles.lon[0]).change(function(){
+		lonlatChange();
+	});
+});
+
+function init() {
+	var data = App.getFormData();
+	var coordinate = {lng: data.lon, lat: data.lat};
+	mbDrawLocation(coordinate);
+}
+
+function lonlatChange() {
+	var lon = $(App.formObject.formEles.lon[0]).val();
+	var lat = $(App.formObject.formEles.lat[0]).val();
+	if (App.validateCoordinate(lon, lat)) {
+		var coordinate = {lng: lon, lat: lat};
+		mbDrawLocation(coordinate);
+		updateLocation(coordinate);
+	}
+}
+
+function updateLocation(coordinate) { 
+	App.getAddress(coordinate.lng, coordinate.lat, function(place) {
+		if (place && place.display_name) {
+			$(App.formObject.formEles.address[0]).val(place.display_name);
+		}
+	});
+	$(App.formObject.formEles.lat[0]).val(coordinate.lat);
+	$(App.formObject.formEles.lon[0]).val(coordinate.lng);
+}
+

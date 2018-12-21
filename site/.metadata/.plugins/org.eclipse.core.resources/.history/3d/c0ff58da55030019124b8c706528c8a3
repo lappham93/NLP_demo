@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+    layout:decorator="layout">
+<head>
+	<script type="text/javascript" th:src="${resources_path} + '/js/app/myapp.js'"></script>
+</head>
+<body>
+<div layout:fragment="page-header" th:with="hasApp=${apps != null and #lists.size(apps) > 0 and app != null}">
+	<div class="panel panel-flat">
+		<div class="panel-heading">
+			<h1 class="panel-title page-header" th:if="${not(hasApp)}">My Apps</h1>
+			<select class="page-header-select" id="appSltId" th:if="${hasApp}">
+				<option th:each="item: ${apps}" th:text="${item.name}" th:value="${item.idRef}" th:selected="${app.idRef == item.idRef} ? selected"></option>
+			</select>
+		</div>
+		<div class="panel-body">
+			<!-- <h6 class="panel-title">Start by creating a location and uploading your first floor plan.</h6> -->
+			<button id="createAppBtnId" class="btn btn-primary btn-rounded pull-right" th:onclick="'window.location.replace(\'' + ${apps_add_url} + '\')'">
+				Create new application
+			</button>
+		</div>
+	</div>
+</div>
+</body>
+</html>

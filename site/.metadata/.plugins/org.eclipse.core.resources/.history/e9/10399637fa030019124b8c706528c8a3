@@ -1,0 +1,32 @@
+site.title=Earth Painting
+site.prefix=/nlp/demo
+site.resources=/static
+site.resources.path=${site.prefix}${site.resources}
+site.paging.pageSize=10
+
+# HTTP encoding (HttpEncodingProperties)
+spring.http.encoding.charset=UTF-8
+spring.http.encoding.enabled=true
+spring.http.encoding.force=true
+spring.thymeleaf.cache=false
+#spring.thymeleaf.prefix=file:///${user.dir}/homber-site/src/main/resources/templates/
+#spring.resources.static-locations=file:///${user.dir}/homber-site/src/main/resources/static/
+#spring.resources.cache-period=0
+spring.http.multipart.max-file-size=30MB
+spring.http.multipart.max-request-size=30MB
+
+server.jetty.uri-encoding = UTF-8
+server.port=10701
+#server.ssl.key-store=classpath:keystore.jks
+#server.ssl.key-store-password=secret
+#server.ssl.key-password=another-secret
+server.session.persistent=true
+
+
+spring.data.mongodb.host=45.77.34.142
+spring.data.mongodb.port=27017
+spring.data.mongodb.database=innkom
+spring.data.mongodb.authentication-database=site
+spring.data.mongodb.username=innkomuser
+spring.data.mongodb.password=iNnk0m@@Uz3r#DDb
+spring.messages.basename = messages

@@ -1,0 +1,119 @@
+package com.mit.navigation.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.common.entities.ActiveTimeDoc;
+
+@Document(collection = "map_level")
+public class MapLevel extends ActiveTimeDoc<Long> {
+	@Id
+	private long id;
+	private long eventId;
+	private long floorId;
+	private int level;
+	private double tilePcW;
+	private double tilePcH;
+	private int tilePxW;
+	private int tilePxH;
+	private int status;
+
+	public MapLevel() {
+		super();
+	}
+	
+	public MapLevel(long eventId, long floorId, int level, double tilePcW, double tilePcH, int tilePxW, int tilePxH) {
+		super();
+		this.eventId = eventId;
+		this.floorId = floorId;
+		this.level = level;
+		this.tilePcW = tilePcW;
+		this.tilePcH = tilePcH;
+		this.tilePxW = tilePxW;
+		this.tilePxH = tilePxH;
+		this.isActive = true;
+		this.status = 1;
+	}
+
+	@Override
+	public Long getId() {
+		return id;
+	}
+
+	@Override
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+	public long getFloorId() {
+		return floorId;
+	}
+
+	public void setFloorId(long floorId) {
+		this.floorId = floorId;
+	}
+
+	public int getLevel() {
+		return level;
+	}
+
+	public void setLevel(int level) {
+		this.level = level;
+	}
+
+	public double getTilePcW() {
+		return tilePcW;
+	}
+
+	public void setTilePcW(double tilePcW) {
+		this.tilePcW = tilePcW;
+	}
+
+	public double getTilePcH() {
+		return tilePcH;
+	}
+
+	public void setTilePcH(double tilePcH) {
+		this.tilePcH = tilePcH;
+	}
+
+	public int getTilePxW() {
+		return tilePxW;
+	}
+
+	public void setTilePxW(int tilePxW) {
+		this.tilePxW = tilePxW;
+	}
+
+	public int getTilePxH() {
+		return tilePxH;
+	}
+
+	public void setTilePxH(int tilePxH) {
+		this.tilePxH = tilePxH;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	@Override
+	public String toString() {
+		return "MapLevel{" + "id=" + id + ", eventId=" + eventId + ", floorId=" + floorId + ", level=" + level
+				+ ", tilePcW=" + tilePcW + ", tilePcH=" + tilePcH + ", tilePxW=" + tilePxW + ", tilePxH=" + tilePxH
+				+ ", status=" + status + ", createTime=" + createdDate + ", updateTime=" + updatedDate + '}';
+	}
+
+}

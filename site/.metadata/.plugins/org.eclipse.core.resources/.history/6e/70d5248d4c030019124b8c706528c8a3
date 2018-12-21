@@ -1,0 +1,36 @@
+package com.mit.navigation.entities;
+
+import java.util.LinkedList;
+import java.util.List;
+
+public class Route {
+	private List<FloorRoute> floorRoutes;
+	private double distance;
+	
+	public Route() {
+		super();
+		
+		floorRoutes = new LinkedList<FloorRoute>();
+	}
+
+	public List<FloorRoute> getFloorRoutes() {
+		return floorRoutes;
+	}
+
+	public void setFloorRoutes(List<FloorRoute> floorRoutes) {
+		this.floorRoutes = floorRoutes;
+	}
+
+	public double getDistance() {
+		return distance;
+	}
+
+	public void setDistance(double distance) {
+		this.distance = distance;
+	}
+
+	public void addFloorRoute(FloorRoute floorRoute) {
+		floorRoutes.add(floorRoute);
+		distance += floorRoute.getDistance();
+	}
+}

@@ -1,0 +1,6 @@
+INDEX VERSION 1.4+/Users/lappv/project_2018/vnAI/NLP_Demo/.metadata/.plugins/org.eclipse.wst.jsdt.core/indexes
+95436272.index
+2437129467.index
+1121828096.index
+253735512.index
+202628100.index

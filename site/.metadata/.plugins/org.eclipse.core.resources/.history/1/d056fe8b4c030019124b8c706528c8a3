@@ -1,0 +1,25 @@
+package com.mit.sensor.entities;
+
+/**
+ * Created by Hung on 8/25/2017.
+ */
+public class CheckedWayPoint {
+    private double checkTime;
+    private long wayPointId;
+
+    public double getCheckTime() {
+        return checkTime;
+    }
+
+    public void setCheckTime(double checkTime) {
+        this.checkTime = checkTime;
+    }
+
+    public long getWayPointId() {
+        return wayPointId;
+    }
+
+    public void setWayPointId(long wayPointId) {
+        this.wayPointId = wayPointId;
+    }
+}

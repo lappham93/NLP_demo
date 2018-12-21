@@ -1,0 +1,1325 @@
+var map = null;
+var canvas = null;
+var accessToken = 'pk.eyJ1IjoibGFwcGhhbSIsImEiOiJjam16dG53MHQxYzRkM2tvMWl0bmlwaDJzIn0.Uk6ImyUqGicN4hPpPobhnw';
+var mapContainer = 'mapId';
+
+var cursorCoordinate = null;
+var popup = null;
+
+var overlayObject = {
+		rotate: 0,
+		scale: 1,
+		offset: 1/Math.pow(2, 10),
+		offsetWidth: 1/Math.pow(2, 10),
+		offsetHeight: 1/Math.pow(2, 10),
+		anpha: Math.PI / 4,
+		center: null,
+		isSetting: false,
+		photo:"",
+		opacity: 1
+}
+
+var config = {
+		point: {r: 8, color: '#3887be', colorHover: '#3bb2d0'},
+		line: {width: 4, color: '#00f', colorHover: '#0f0'},
+		label: {size: 16, color: '#926475', iconColor: '#954ec6'},
+		cursor: {normal: "", focus: "pointer", move: "move"},
+		zoom: {init: 19, min: 0, max: 22},
+		offset: 0.001,
+		center: [106.7017555, 10.7758439]
+}
+
+var mapStyle = {
+		street: "mapbox://styles/lappham/cjb20pr0p5wy62rpljuayag3t",//mapbox://styles/lappham/cjamb69tldiar2slmentozzwm
+		satelite: "mapbox://styles/lappham/cjamb69tldiar2slmentozzwm"
+}
+
+var labelStyle = {
+		booth: {type: 1, icon: "ic-booth-pin"}, elevator: {type: 2, icon: "ic-elevator-pin"}, escalator: {type: 3, icon: "ic-escalator-up-pin"}, wc: {type: 5, icon: "ic-wc-pin"}, talk: {type: 6, icon: "ic-keynote-pin"}, yourLocation: {type: 11, icon:"marker-15"},
+		getLabelStyle: function(type) {
+			if (type == labelStyle.booth.type) {
+				return labelStyle.booth;
+			}
+			if (type == labelStyle.elevator.type) {
+				return labelStyle.elevator;
+			}
+			if (type == labelStyle.escalator.type) {
+				return labelStyle.escalator;
+			}
+			if (type == labelStyle.wc.type) {
+				return labelStyle.wc;
+			}
+			if (type == labelStyle.talk.type) {
+				return labelStyle.talk;
+			}
+			if (type == labelStyle.yourLocation.type) {
+				return labelStyle.yourLocation;
+			}
+		}
+}
+
+var controlButton = {
+		move: {type: 1, icon: "paris-metro", id: 1}, rotate: {type: 2, icon: "us-state-2", id1: 2, id2: 3}, scale: {type: 3, icon: "hr-state-3", id1: 4, id2: 5}, yourLocation: {type: 4, icon: "harbor-15"},
+		getButtonStyle: function(type) {
+			if (type == controlButton.move.type) {
+				return controlButton.move;
+			}
+			if (type == controlButton.rotate.type) {
+				return controlButton.rotate;
+			}
+			if (type == controlButton.scale.type) {
+				return controlButton.scale;
+			}
+			if (type == controlButton.yourLocation.type) {
+				return controlButton.yourLocation;
+			}
+		}
+}
+
+var MapObjectId = {
+		point: 'ik-point', labelShort: 'ik-label-short', label: 'ik-label', line: 'ik-line', overlay: 'ik-overlay', controlButton: 'ik-control-button',
+		heatmapPoint: 'ik-heatmap-point', heatmap: 'ik-heatmap', heatmapLine: 'ik-heatmap-line'
+}
+
+$(function(){
+	mapboxgl.accessToken = accessToken;
+	
+	if ($('#' + mapContainer).length > 0) {
+		var style = mapStyle.satelite;
+		map = new mapboxgl.Map({
+		    container: mapContainer,
+		    maxZoom: config.zoom.max,
+		    minZoom: config.zoom.min,
+		    zoom: config.zoom.init,
+		    center: [config.center[0] - config.offset, config.center[1]],
+		    style: style,
+		    hash: false,
+		    maxBounds: [[-180, -85], [180, 85]]
+		});
+		
+		canvas = map.getCanvasContainer();
+		
+		map.on('load', function() {
+			
+			map.on('click', function(e) {
+				if (typeof clickOnMapFunc === "function") {
+					if (inPolygon([e.lngLat.lng, e.lngLat.lat], map.getSource(MapObjectId.overlay).coordinates)) {
+						clickOnMapFunc(e);
+					}
+				}
+			});
+			
+			//#control
+			map.on('mouseenter', MapObjectId.controlButton, function(e) {
+				focusControlFunc(e);
+			})
+			
+			map.on('mouseleave', MapObjectId.controlButton, function(e) {
+				leaveControlFunc(e);
+			})
+			
+			map.on("mousedown", function(e){
+				mousedownControlFunc(e);
+			});
+			
+			//#Point
+			map.on("mouseenter", MapObjectId.point, function(e) {
+		        focusPointFunc(e);
+			});
+			
+			map.on("mouseleave", MapObjectId.point, function(e) {
+		        leavePointFunc(e);
+			})
+			
+			map.on("mousedown", function(e) {
+				mousedownLineFunc(e);
+			});
+			
+			map.on("contextmenu", MapObjectId.point, function(e) {
+				if (typeof renderLabelMenu === "function") {
+					popup = new mapboxgl.Popup()
+		            	.setLngLat(e.features[0].geometry.coordinates)
+		            	.setHTML(renderPointMenu(e));
+		            popup.addTo(map);
+				}
+			});
+			
+			
+			//#Label
+			map.on("mouseenter", MapObjectId.label, function(e){
+				focusLabelFunc(e);
+			});
+			
+			map.on("mouseleave", MapObjectId.label, function(e){
+				leaveLabelFunc(e);
+			});
+			
+			map.on("mousedown", function(e){
+				mousedownLabelFunc(e);
+			});
+			
+			map.on("contextmenu", MapObjectId.label, function(e) {
+				if (typeof renderLabelMenu === "function") {
+					popup = new mapboxgl.Popup()
+		            	.setLngLat(e.features[0].geometry.coordinates)
+		            	.setHTML(renderLabelMenu(e));
+		            popup.addTo(map);
+				}
+			});
+			
+			//#Label-short
+			map.on("mouseenter", MapObjectId.labelShort, function(e){
+				focusLabelFunc(e);
+			});
+			
+			map.on("mouseleave", MapObjectId.labelShort, function(e){
+				leaveLabelFunc(e);
+			});
+			
+			//#Line
+			map.on("mouseenter", MapObjectId.line, function(e){
+				focusLineFunc(e);
+			})
+			
+			map.on("mouseleave", MapObjectId.line, function(e){
+				leaveLineFunc(e);
+			});
+			
+			map.on("contextmenu", MapObjectId.line, function(e) {
+				if (typeof renderLabelMenu === "function") {
+					popup = new mapboxgl.Popup()
+		            	.setLngLat(e.lngLat)
+		            	.setHTML(renderLineMenu(e));
+		            popup.addTo(map);
+				}
+			});
+			
+			if (typeof init === "function") {
+				init();
+			}
+			
+		});
+	}
+});
+
+/* 
+ * Event Listener
+ */
+
+//point
+var pointFocus = null;
+var isDrawLine = false;
+function focusPointFunc(e) {
+	map.setPaintProperty(MapObjectId.point, 'circle-color', config.point.colorHover);
+    canvas.style.cursor = 'e-resize';
+    pointFocus = e;
+    map.dragPan.disable();
+}
+
+function leavePointFunc(e) {
+	map.setPaintProperty(MapObjectId.point, 'circle-color', config.point.color);
+    canvas.style.cursor = config.cursor.focus;
+    pointFocus = null;
+    if (!isDrawLine) {
+    	map.dragPan.enable();
+    }
+}
+
+//drawline
+var linePoints = [];
+function mousedownLineFunc(e){ 
+	if (!pointFocus) {
+		return;
+	}
+	linePoints = [pointFocus];
+	isDrawLine = true;
+	map.on("mouseup", MapObjectId.point, endLine);
+	map.on("mouseup", stopLining);
+}
+
+function endLine(e) {
+	if (!isDrawLine) {
+		return;
+	}
+	linePoints.push(e);
+	mbDrawLine(linePoints);
+	stopLining();
+}
+
+function stopLining(e) {
+	isDrawLine = false;
+	map.dragPan.enable();
+	map.off("mouseup", MapObjectId.point, endLine);
+	map.off("mouseup", stopLining);
+}
+
+function focusLineFunc(e) {
+	canvas.style.cursor = 'move';
+}
+
+function leaveLineFunc(e) {
+	canvas.style.cursor = config.cursor.focus;
+}
+
+// move label
+var isOverLabel = false;
+var isDragging = false;
+var labelFocus = null;
+function focusLabelFunc(e) {
+	canvas.style.cursor = 'move';
+	isOverLabel = true;
+    map.dragPan.disable();
+    labelFocus = e;
+}
+
+function leaveLabelFunc(e) {
+	canvas.style.cursor = config.cursor.focus;
+	isOverLabel = false;
+    map.dragPan.enable();
+}
+
+function mousedownLabelFunc(e) {
+	if (!isOverLabel) {
+		return;
+	}
+	isDragging = true;
+	map.on("mousemove", moveLabel)
+	map.once("mouseup", stopMoveLabel);
+}
+
+function moveLabel(e) {
+	if (!isDragging) {
+		return;
+	}
+	var objectData = labelFocus.features[0].properties;
+	var coordinate = e.lngLat;
+	mbUpdateSourceCoordinate(MapObjectId.label, coordinate, objectData);
+}
+
+function stopMoveLabel(e) {
+	if (!isDragging) {
+		return;
+	}
+	isDragging = false;
+	map.off("mousemove", moveLabel);
+	var objectData = labelFocus.features[0].properties;
+	if (objectData.type == labelStyle.yourLocation.type) {
+		updateLocation(e.lngLat);
+		map.setCenter([e.lngLat.lng - config.offset, e.lngLat.lat]);
+	}
+}
+
+//#control
+//move label
+var isOverControl = false;
+var isDragging = false;
+var controlFocus = null;
+var currentScale = 0;
+var currentRefVector;
+function focusControlFunc(e) {
+	canvas.style.cursor = config.cursor.focus;
+	isOverControl = true;
+    map.dragPan.disable();
+    controlFocus = e;
+    var currentControlLoc = mbGetSource(MapObjectId.controlButton, controlFocus.features[0].properties).geometry.coordinates;
+    currentRefVector = [currentControlLoc[1] - overlayObject.center[0], currentControlLoc[0] - overlayObject.center[1]];
+    currentScale = overlayObject.scale;
+}
+
+function leaveControlFunc(e) {
+	canvas.style.cursor = config.cursor.normal;
+	isOverControl = false;
+    map.dragPan.enable();
+}
+
+function mousedownControlFunc(e) {
+	if (!isOverControl) {
+		return;
+	}
+	isDragging = true;
+	map.on("mousemove", moveControl);
+	map.once("mouseup", stopMoveControl);
+}
+
+function moveControl(e) {
+	if (!e || !isDragging) {
+		return;
+	}
+	var objectData = controlFocus.features[0];
+	var type = objectData.properties.type;
+	
+	if (type == controlButton.move.type) {
+		mbMoveOverlay([e.lngLat.lat, e.lngLat.lng]);
+	} else {
+		if (type == controlButton.scale.type) {
+			var moveVector = [e.lngLat.lat - overlayObject.center[0], e.lngLat.lng - overlayObject.center[1]];
+			var offset = distance(moveVector) / distance(currentRefVector);
+			var scale = currentScale * offset;
+			mbScaleOverlay(scale);
+		} else {
+			var moveVector = [e.lngLat.lat - overlayObject.center[0], e.lngLat.lng - overlayObject.center[1]];
+			var beta = 0;
+			if (moveVector[1] == 0) {
+				beta = moveVector[0] > 0 ? Math.PI / 2 : -Math.PI / 2;
+			} else if (moveVector[1] < 0) {
+				beta = Math.PI + Math.atan(moveVector[0] / moveVector[1]);
+			} else {
+				beta = Math.atan(moveVector[0] / moveVector[1]);
+			}
+			if (beta > 0) {
+				beta = 2 * Math.PI + beta;
+			}
+			var rotate = (overlayObject.anpha - beta) * 180 / Math.PI;
+			mbRotateOverlay(rotate);
+		}
+	}
+}
+
+function stopMoveControl(e) {
+	if (!isDragging) {
+		return;
+	}
+	moveControl(e);
+	isDragging = false;
+	map.off("mousemove", moveControl);
+}
+
+function increase(point) {
+	var n = [controlFocus.lat - overlayObject.center.lat, controlFocus.lon - overlayObject.center.lon];
+	return (n[0] * (overlayObject.center.lat - controlFocus.lat) + n[1] * (overlayObject.center.lon - controlFocus.lon)) 
+				* (n[0] * (point.lat - controlFocus.lat) + n[1] * (point.lon - controlFocus.lon)) < 0;
+}
+
+
+/*
+ * mapbox func
+ */
+function mbGetZoom() {
+	return map.getZoom();
+}
+
+function mbChangeStyle(layerId) {
+	var style = (layerId == "satelite") ? mapStyle.satelite : mapStyle.street;
+	map.setStyle(style);
+	mbLoadOverlay();
+}
+
+function mbLoadOverlay() {
+	if (map.isStyleLoaded()) {
+		mbOverlay();
+	} else {
+		setTimeout(function(){
+			mbLoadOverlay();
+		}, 500);
+	}
+}
+
+function styleLoadedCallback(func) {
+	if (map.isStyleLoaded()) {
+		func();
+	} else {
+		setTimeout(function(){
+			styleLoadedCallback(func);
+		}, 100);
+	}
+}
+
+function mbRemovePopup() {
+	if (popup) {
+		popup.remove();
+	}
+}
+
+function mbGetPoint(lngLat) {
+	var lat = lngLat.lat;
+	var lng = lngLat.lng;
+	var siny = Math.sin(lat * Math.PI / 180);
+    siny = Math.min(Math.max(siny, -0.999999999), 0.999999999);
+    var point = {};
+    point.x = 0.5 + lng/360;
+    point.y = 0.5 - Math.log((1 + siny) / (1 - siny)) / (4 * Math.PI);
+    return point;
+}
+
+function mbGetStyle() {
+	var fullStyle = map.getStyle();
+	if (fullStyle.layers.length > 0) {
+		for (var i = 0; i < fullStyle.layers.length; i++) {
+			var value = fullStyle.layers[i];
+			if (value.id == MapObjectId.controlButton) {
+				fullStyle.layers.splice(i, 1);
+				i--;
+			}
+		}
+	}
+	var shortStyle = JSON.parse(JSON.stringify(fullStyle));
+	if (shortStyle.layers.length > 0) {
+		for (var i = 0; i < shortStyle.layers.length; i++) {
+			var value = shortStyle.layers[i];
+			if (value.id == MapObjectId.point || value.id == MapObjectId.line) {
+				shortStyle.layers.splice(i, 1);
+				i--;
+			}
+		}
+	}
+	return {fullStyle: fullStyle, shortStyle: shortStyle};
+}
+
+function mbGetSource() {
+	var source = {};
+	for(var key in MapObjectId) {
+		if (MapObjectId[key] == MapObjectId.labelShort || MapObjectId[key] == MapObjectId.controlButton) {
+			continue;
+		}
+		var mbSource = map.getSource(MapObjectId[key]);
+		mbSource = (mbSource && mbSource._data && mbSource._data.features) ? mbSource._data.features : "";
+		source[key] = mbSource;
+	}
+	return source;
+}
+
+function mbOverlay() {
+	mbAddUpOverlaySource();
+	if (!map.getLayer(MapObjectId.overlay)) {
+		map.addLayer({
+			"id": MapObjectId.overlay,
+			"type": "raster",
+			"source": MapObjectId.overlay,
+			"paint": {"raster-opacity": overlayObject.opacity}
+		});
+	}
+	if (!overlayObject.isSetting) {
+		mbDrawControl();
+	}
+}
+
+function mbHideOverlay() {
+	if (map.getLayer(MapObjectId.overlay)) {
+		map.removeLayer(MapObjectId.overlay);
+	}
+	mbHideControl();
+}
+
+function mbMoveOverlay(center) {
+	if (!center) {
+		return;
+	}
+	overlayObject.center = center;
+	mbAddUpOverlaySource();
+	mbDrawControl();
+	if (typeof mapChange === "function") {
+		mapChange();
+	};
+}
+
+function mbScaleOverlay(scale) {
+	if (scale >= 0) {
+		overlayObject.scale = scale;
+		mbAddUpOverlaySource();
+	}
+	mbDrawControl();
+	if (typeof mapChange === "function") {
+		mapChange();
+	};
+}
+
+function mbRotateOverlay(rotate) {
+	if (isNaN(rotate)) {
+		return;
+	}
+	rotate = rotate % 360;
+	if (rotate < 0) {
+		rotate += 360;
+	}
+	overlayObject.rotate = rotate;
+	mbAddUpOverlaySource();
+	mbDrawControl();
+	if (typeof mapChange === "function") {
+		mapChange();
+	};
+}
+
+function mbOpacityOverlay(opacity) {
+	overlayObject.opacity = opacity;
+	map.setPaintProperty(MapObjectId.overlay, 'raster-opacity', opacity);
+	if (typeof mapChange === "function") {
+		mapChange();
+	};
+}
+
+function mbDrawPoint(coordinate, objectData) {
+	mbAddSource(MapObjectId.point, coordinate, objectData);
+	if (!map.getLayer(MapObjectId.point)) {
+		map.addLayer({
+			"id": MapObjectId.point,
+			"type": "circle",
+			"source": MapObjectId.point,
+			"paint": {
+	            "circle-radius": config.point.r,
+	            "circle-color": config.point.color
+	        }
+		})
+	}
+}
+
+function mbDrawHeatmapPoint() {
+	if (map.getLayer(MapObjectId.heatmapPoint)) {
+		return;
+	}
+	map.addLayer({
+        "id": MapObjectId.heatmapPoint,
+        "type": "circle",
+        "source": MapObjectId.heatmapPoint,
+        "minzoom": 7,
+        "paint": {
+            //Size circle raidus by earthquake magnitude and zoom level
+            "circle-radius": {
+                "property": "mag",
+                "type": "exponential",
+                "stops": [
+                    [{ zoom: 7, value: 1 }, 1],
+                    [{ zoom: 7, value: 6 }, 4],
+                    [{ zoom: 16, value: 1 }, 5],
+                    [{ zoom: 16, value: 6 }, 50],
+                    [{ zoom: 22, value: 1 }, 10],
+                    [{ zoom: 22, value: 6 }, 100],
+                ]
+            },
+            //Color circle by earthquake magnitude
+            "circle-color": {
+                "property": "mag",
+                "type": "exponential",
+                "stops": [
+                    [1, "rgba(33,102,172,0)"],
+                    [2, "rgb(103,169,207)"],
+                    [3, "rgb(209,229,240)"],
+                    [4, "rgb(253,219,199)"],
+                    [5, "rgb(239,138,98)"],
+                    [6, "rgb(178,24,43)"]
+                ]
+            },
+            "circle-stroke-color": "white",
+            "circle-stroke-width": 1,
+            //Transition from heatmap to circle layer by zoom level
+            "circle-opacity": {
+                "stops": [
+                    [7, 0],
+                    [8, 1]
+                ]
+            }
+        }
+    });
+}
+
+function mbDrawHeatmap() {
+	if (map.getLayer(MapObjectId.heatmap)) {
+		return;
+	}
+	map.addLayer({
+        "id": MapObjectId.heatmap,
+        "type": "heatmap",
+        "source": MapObjectId.heatmapPoint,
+//        "maxzoom": 9,
+        "paint": {
+            //Increase the heatmap weight based on frequency and property magnitude
+            "heatmap-weight": {
+                "property": "mag",
+                "type": "exponential",
+                "stops": [
+                    [0, 0],
+                    [6, 1]
+                ]
+            },
+            //Increase the heatmap color weight weight by zoom level
+            //heatmap-ntensity is a multiplier on top of heatmap-weight
+            "heatmap-intensity": {
+                "stops": [
+                    [0, 1],
+                    [9, 3]
+                ]
+            },
+            //Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+            //Begin color ramp at 0-stop with a 0-transparancy color
+            //to create a blur-like effect.
+            "heatmap-color": [
+                "interpolate",
+                ["linear"],
+                ["heatmap-density"],
+                0, "rgba(33,102,172,0)",
+                0.2, "rgb(103,169,207)",
+                0.4, "rgb(209,229,240)",
+                0.6, "rgb(253,219,199)",
+                0.8, "rgb(239,138,98)",
+                1, "rgb(178,24,43)"
+            ],
+            //Adjust the heatmap radius by zoom level
+            "heatmap-radius": {
+                "stops": [
+                    [0, 2],
+                    [9, 20]
+                ]
+            },
+            //Transition from heatmap to circle layer by zoom level
+            "heatmap-opacity": {
+                "default": 1,
+                "stops": [
+                    [7, 1],
+                    [9, 1]
+                ]
+            },
+        }
+    });
+}
+
+function mbDrawHeatmapLine() {
+	map.addLayer({
+		"id": MapObjectId.heatmapLine,
+		"type": "line",
+		"source": MapObjectId.heatmapLine,
+		"layout": {
+            "line-join": "round",
+            "line-cap": "round"
+        },
+        "paint": {
+            "line-color": config.line.color,
+            "line-width": config.line.width
+        }
+	})
+}
+
+function mbDrawLocation(coordinate) {
+	var objectData = {title: "", type: labelStyle.yourLocation.type, id: labelStyle.yourLocation.type};
+	if (map.getSource(MapObjectId.label)) {
+		mbUpdateSourceCoordinate(MapObjectId.label, coordinate, objectData);
+	} else {
+		mbDrawLabel(coordinate, objectData);
+	}
+	map.setCenter([coordinate.lng - config.offset, coordinate.lat]);
+}
+
+function mbHideLocation() {
+	var objectData = {title: "", type: labelStyle.yourLocation.type, id: labelStyle.yourLocation.type};
+	mbRemoveSource(MapObjectId.label, objectData);
+}
+
+function mbDrawControl() {
+	var offsetWidth = overlayObject.offsetWidth;
+	var offsetHeight = overlayObject.offsetHeight;
+	var lon = overlayObject.center[1];
+	var lat = overlayObject.center[0];
+	var point1 = mbCreateOverlayPoint([lat, lon]);
+	var point2 = mbCreateOverlayPoint([lat - offsetHeight, lon - offsetWidth]);
+	var point3 = mbCreateOverlayPoint([lat + offsetHeight, lon + offsetWidth]);
+	var point4 = mbCreateOverlayPoint([lat - offsetHeight, lon + offsetWidth]);
+	var point5 = mbCreateOverlayPoint([lat + offsetHeight, lon - offsetWidth]);
+	if (map.getSource(MapObjectId.controlButton)) {
+		map.removeSource(MapObjectId.controlButton);
+	}
+	mbAddSource(MapObjectId.controlButton, {lng: point1[1], lat: point1[0]}, {type: controlButton.move.type, id: controlButton.move.id});
+	mbAddSource(MapObjectId.controlButton, {lng: point2[1], lat: point2[0]}, {type: controlButton.rotate.type, id: controlButton.rotate.id1});
+	mbAddSource(MapObjectId.controlButton, {lng: point3[1], lat: point3[0]}, {type: controlButton.rotate.type, id: controlButton.rotate.id2});
+	mbAddSource(MapObjectId.controlButton, {lng: point4[1], lat: point4[0]}, {type: controlButton.scale.type, id: controlButton.scale.id1});
+	mbAddSource(MapObjectId.controlButton, {lng: point5[1], lat: point5[0]}, {type: controlButton.scale.type, id: controlButton.scale.id2});
+	
+	if (!map.getLayer(MapObjectId.controlButton)) {
+		map.addLayer({
+	        "id": MapObjectId.controlButton,
+	        "type": "symbol",
+	        "source": MapObjectId.controlButton,
+	        "layout": {
+	            "icon-image": "{icon}",
+	            "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
+	            "text-offset": [0, 0.6],
+	            "text-anchor": "top",
+	        },
+	        "paint": {
+	        	"icon-color": config.label.iconColor,
+	        	"text-color": config.label.color
+	        }
+	    });
+	}
+}
+
+function mbHideControl() {
+	if (map.getLayer(MapObjectId.controlButton)) {
+		map.removeLayer(MapObjectId.controlButton);
+	}
+}
+
+function mbDrawLabel(coordinate, objectData) {
+	mbAddSource(MapObjectId.label, coordinate, objectData)
+	if (!map.getLayer(MapObjectId.label)) {
+		map.addLayer({
+	        "id": MapObjectId.label,
+	        "type": "symbol",
+	        "source": MapObjectId.label,
+	        "layout": {
+	            "icon-image": "{icon}",
+	            "icon-anchor": "center",
+	            "icon-padding": 2,
+	            "text-field": "{title}",
+	            "text-font": ["Roboto Regular", "Open Sans Semibold", "Arial Unicode MS Bold"],
+	            "text-offset": [0, 0.8],
+	            "text-anchor": "top",
+	            "text-size": 15,
+	            "text-padding": 2
+	        },
+	        "paint": {
+	        	"icon-color": config.label.iconColor,
+	        	"icon-halo-width": 2,
+	        	"icon-halo-color": "#ffffff",
+	        	"text-color": "#2a2a2a",
+	        	"text-halo-width": 2,
+	        	"text-halo-color": "#ffffff"
+	        }
+	    });
+	}
+	
+//	mbAddSource(MapObjectId.labelShort, coordinate, objectData)
+//	if (!map.getLayer(MapObjectId.labelShort)) {
+//		map.addLayer({
+//	        "id": MapObjectId.labelShort,
+//	        "type": "symbol",
+//	        "source": MapObjectId.labelShort,
+//	        "layout": {
+//	            "icon-image": "{icon}",
+//	            "text-field": "{title}",
+//	            "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
+//	            "text-offset": [0, 0.6],
+//	            "text-anchor": "top",
+//	            "text-size": config.label.size,
+//	        },
+//	        "paint": {
+//	        	"icon-color": config.label.iconColor,
+//	        	"text-color": config.label.color
+//	        }
+//	    }, MapObjectId.label);
+//	}
+}
+
+function mbDrawLine(points) {
+	if (!points || points.length < 2) {
+		return;
+	}
+	if (points[0].features[0].id == points[1].features[0].id) {
+		return;
+	}
+	var coordinates = [points[0].features[0].geometry.coordinates, points[1].features[0].geometry.coordinates];
+	var objectData = {
+			id: points[0].features[0].id + "-" + points[1].features[0].id,
+			from: points[0].features[0].id,
+			to: points[1].features[0].id
+	}
+	mbAddSource(MapObjectId.line, coordinates, objectData);
+	if (!map.getLayer(MapObjectId.line)) {
+		map.addLayer({
+			"id": MapObjectId.line,
+			"type": "line",
+			"source": MapObjectId.line,
+			"layout": {
+	            "line-join": "round",
+	            "line-cap": "round"
+	        },
+	        "paint": {
+	            "line-color": config.line.color,
+	            "line-width": config.line.width
+	        }
+		})
+	}
+}
+
+function mbRemoveHeatmapLine() {
+	if (map.getSource(MapObjectId.heatmapLine)) {
+		map.removeSource(MapObjectId.heatmapLine);
+	}
+	if (map.getLayer(MapObjectId.heatmapLine)) {
+		map.removeLayer(MapObjectId.heatmapLine);
+	}
+}
+
+function mbRemoveHeatmap() {
+	if (map.getLayer(MapObjectId.heatmapPoint)) {
+		map.removeLayer(MapObjectId.heatmapPoint);
+	}
+	if (map.getLayer(MapObjectId.heatmap)) {
+		map.removeLayer(MapObjectId.heatmap);
+	}
+}
+
+function mbRemoveLabel(objectData) {
+	mbRemoveSource(MapObjectId.label, objectData);
+//	mbRemoveSource(MapObjectId.labelShort, objectData);
+}
+
+function mbRemovePoint(objectData) {
+	mbRemoveSource(MapObjectId.point, objectData);
+	mbRemoveLine({pointId: objectData.id});
+}
+
+function mbRemoveLine(objectData) {
+	mbRemoveSource(MapObjectId.line, objectData);
+}
+
+function mbUpdateLabelTitle(objectData) {
+	var pointSource = map.getSource(MapObjectId.label);
+	if (pointSource) {
+		var features = pointSource._data.features;
+		if (features) {
+			for (var i = 0; i < features.length; i++) {
+				var feature = features[i];
+				var properties = feature.properties;
+				if (objectData[properties.type] && objectData[properties.type][properties.id]) {
+					feature.properties.title = objectData[properties.type][properties.id].title;
+				}
+				if (feature.properties.id == objectData.id && feature.properties.type == objectData.type) {
+					feature.properties.title = objectData.title;
+				}
+			}
+			map.getSource(MapObjectId.label).setData(pointSource._data);
+		}
+	}
+}
+
+function mbGetSource(objectType, objectData) {
+	var pointSource = map.getSource(objectType);
+	if (pointSource) {
+		var features = pointSource._data.features;
+		if (features) {
+			for (var i = 0; i < features.length; i++) {
+				var feature = features[i];
+				if (feature.properties.id == objectData.id && feature.properties.type == objectData.type) {
+					return feature;
+				}
+			}
+		}
+	}
+}
+
+function mbUpdateSourceCoordinate(objectType, coordinate, objectData) {
+	var pointSource = map.getSource(objectType);
+	if (pointSource) {
+		var features = pointSource._data.features;
+		if (features) {
+			for (var i = 0; i < features.length; i++) {
+				var feature = features[i];
+				if (feature.properties.id == objectData.id && feature.properties.type == objectData.type) {
+					feature.geometry.coordinates = [coordinate.lng, coordinate.lat];
+					map.getSource(objectType).setData(pointSource._data);
+					break;
+				}
+			}
+		}
+	}
+}
+
+function mbAddUpOverlaySource() {
+	var overlaySource = map.getSource(MapObjectId.overlay);
+	var data = mbCreateOverlay();
+	if (!overlaySource) {
+		map.addSource(MapObjectId.overlay, data);
+	} else {
+		overlaySource.setCoordinates(data.coordinates);
+	}
+}
+
+function mbRemoveOverlaySource() {
+	var overlaySource = map.getSource(MapObjectId.overlay);
+	if (overlaySource) {
+		map.removeSource(MapObjectId.overlay);
+	}
+}
+
+function mbAddSource(objectType, coordinate, objectData) {
+	var pointSource = map.getSource(objectType);
+	if (!pointSource) {
+		var geojson = {
+		    "type": "FeatureCollection",
+		    "features": [mbCreateObject(objectType, coordinate, objectData)]
+		};
+		map.addSource(objectType, {
+	        "type": "geojson",
+	        "data": geojson
+	    });
+	} else {
+		pointSource._data.features.push(mbCreateObject(objectType, coordinate, objectData));
+		map.getSource(objectType).setData(pointSource._data);
+	}
+}
+
+function mbAddHeatmapSource(coordinates) {
+	if (map.getSource(MapObjectId.heatmapPoint)) {
+		map.removeSource(MapObjectId.heatmapPoint);
+	}
+	var features = [];
+	coordinates.forEach(function(coordinate){
+		features.push({
+	        "type": "Feature",
+	        "geometry": {
+	            "type": "Point",
+	            "coordinates": [coordinate.lng, coordinate.lat]
+	        }
+		})
+	});
+	var geojson = {
+			"type": "geojson",
+			"data": {
+				"type": "FeatureCollection",
+		        "features": features
+			}
+	}
+	map.addSource(MapObjectId.heatmapPoint, geojson);
+}
+
+function mbUpdateHeatmapSource(coordinates) {
+	var heatmap = map.getSource(MapObjectId.heatmapPoint);
+	if (heatmap) {
+		coordinates.forEach(function(coordinate){
+			heatmap._data.features.push({
+		        "type": "Feature",
+		        "geometry": {
+		            "type": "Point",
+		            "coordinates": [coordinate.lng, coordinate.lat]
+		        }
+			})
+		});
+		heatmap.setData(heatmap._data);
+	} else {
+		mbAddHeatmapSource(coordinates);
+	}
+}
+
+function mbUpdateHeatmapLineSource(data) {
+	var heatmap = map.getSource(MapObjectId.heatmapLine);
+	if (heatmap) {
+		data.forEach(function(dataEle){
+			heatmap._data.features[0].geometry.coordinates.push([dataEle.coordinates.lng, dataEle.coordinates.lat]);
+		});
+		heatmap.setData(heatmap._data);
+	} else {
+		var coors = [];
+		data.forEach(function(dataEle){
+			coors.push([dataEle.coordinates.lng, dataEle.coordinates.lat]);
+		});
+		var features = [];
+		features.push({
+	        "type": "Feature",
+	        "geometry": {
+	            "type": "LineString",
+	            "coordinates": coors
+	        }
+		})
+		var geojson = {
+				"type": "geojson",
+				"data": {
+					"type": "FeatureCollection",
+			        "features": features
+				}
+		}
+		map.addSource(MapObjectId.heatmapLine, geojson);
+	}
+}
+
+function mbRemoveSource(objectType, objectData) {
+	var pointSource = map.getSource(objectType);
+	if (pointSource) {
+		var features = pointSource._data.features;
+		if (features) {
+			if (objectType == MapObjectId.line) {
+				for (var i = 0; i < features.length; i++) {
+					var feature = features[i];
+					if (feature.properties.id == objectData.id || feature.properties.from == objectData.pointId || feature.properties.to == objectData.pointId) {
+						features.splice(i, 1);
+						i--;
+					}
+				}
+				map.getSource(objectType).setData(pointSource._data);
+			} else {
+				for (var i = 0; i < features.length; i++) {
+					var feature = features[i];
+					if (feature.properties.id == objectData.id && feature.properties.type == objectData.type) {
+						features.splice(i, 1);
+						map.getSource(objectType).setData(pointSource._data);
+						break;
+					}
+				}
+			}
+		}
+	}
+}
+
+function mbCreateObject(objectType, coordinate, objectData) {
+	if (objectType == MapObjectId.point) {
+		return mbCreatePoint(coordinate, objectData);
+	}
+	if (objectType == MapObjectId.labelShort) {
+		return mbCreateShortLabel(coordinate, objectData);
+	}
+	if (objectType == MapObjectId.label) {
+		return mbCreateLabel(coordinate, objectData);
+	}
+	if (objectType == MapObjectId.line) {
+		return mbCreateLine(coordinate, objectData);
+	}
+	if (objectType == MapObjectId.controlButton) {
+		return mbCreateControl(coordinate, objectData);
+	}
+}
+
+function mbCreateLine(coordinates, lineData) {
+	var line = {
+		"id": lineData.id,
+        "type": "Feature",
+        "properties": {
+        	"id": lineData.id,
+        	"from": lineData.from,
+        	"to": lineData.to
+        },
+        "geometry": {
+            "type": "LineString",
+            "coordinates": coordinates
+        },
+    };
+	return line;
+}
+
+function mbCreateLabel(coordinate, labelData) {
+	var style = labelStyle.getLabelStyle(labelData.type);
+	var aTitle = {
+			"id": labelData.id,
+	        "type": "Feature",
+	        "geometry": {
+	            "type": "Point",
+	            "coordinates": [coordinate.lng, coordinate.lat]
+	        },
+	        "properties": {
+	        	"id": labelData.id,
+	        	"type": labelData.type,
+	        	"title": labelData.title,
+	        	"icon": style.icon
+	        }
+	    }
+	return aTitle;
+}
+
+function mbCreateShortLabel(coordinate, labelData) {
+	var style = labelStyle.getLabelStyle(labelData.type);
+	var aTitle = {
+			"id": labelData.id,
+	        "type": "Feature",
+	        "geometry": {
+	            "type": "Point",
+	            "coordinates": [coordinate.lng, coordinate.lat]
+	        },
+	        "properties": {
+	        	"id": labelData.id,
+	        	"type": labelData.type,
+	        	"title": labelData.title.substr(0, 5) + '.',
+	        	"icon": style.icon
+	        }
+	    }
+	return aTitle;
+}
+
+function mbCreatePoint(coordinate, pointData) {
+	var aPoint = {
+			"id": pointData.id,
+	        "type": "Feature",
+	        "geometry": {
+	            "type": "Point",
+	            "coordinates": [coordinate.lng, coordinate.lat]
+	        },
+	        "properties": {
+	        	"id": pointData.id,
+	        	"type": pointData.type,
+	        	"title": ""
+	        }
+	   }
+	return aPoint;
+}
+
+function mbCreateOverlay() {
+	var offsetWidth = overlayObject.offsetWidth;
+	var offsetHeight = overlayObject.offsetHeight;
+	var lon = overlayObject.center[1];
+	var lat = overlayObject.center[0];
+	
+	var leftTop = mbCreateOverlayPoint([lat + offsetHeight, lon - offsetWidth]);
+	var rightTop = mbCreateOverlayPoint([lat + offsetHeight, lon + offsetWidth]);
+	var rightBot = mbCreateOverlayPoint([lat - offsetHeight, lon + offsetWidth]);
+	var leftBot = mbCreateOverlayPoint([lat - offsetHeight, lon - offsetWidth]);
+	
+	var overlay = {
+        "type": "image",
+        "url": overlayObject.photo,
+        "coordinates": [
+            [leftTop[1], leftTop[0]],
+            [rightTop[1], rightTop[0]],
+            [rightBot[1], rightBot[0]],
+            [leftBot[1], leftBot[0]]
+        ]
+    };
+    return overlay;
+}
+
+function mbCreateOverlayPoint(point) {
+//	var center = overlayObject.center;
+//	var tranVector1 = [- center[0], - center[1]];
+//	point = translate(tranVector1, point);
+//	point = scale(overlayObject.scale, point);
+//	point = rotateO(overlayObject.rotate, point);
+//	var tranVector2 = center;
+//	point = translate(tranVector2, point);
+	point = transform2D(overlayObject.rotate, overlayObject.scale, overlayObject.center, point);
+	return [normalLat(point[0]), normalLng(point[1])];
+}
+
+function mbCreateControl(coordinate, controlData) {
+	var style = controlButton.getButtonStyle(controlData.type);
+	var aTitle = {
+	        "type": "Feature",
+	        "geometry": {
+	            "type": "Point",
+	            "coordinates": [coordinate.lng, coordinate.lat]
+	        },
+	        "properties": {
+	        	"type": controlData.type,
+	        	"id": controlData.id,
+	        	"icon": style.icon
+	        }
+	    }
+	return aTitle;
+}
+
+function normalLng(lng) {
+	return Math.max(Math.min(lng, 180), -180);
+}
+
+function normalLat(lat) {
+	return Math.max(Math.min(lat, 90), -90);
+}
+
+function transform2D(angle, scale, center, point) {
+	var radian = toRadian(angle);
+	var sin = Math.sin(radian), cos = Math.cos(radian);
+	var x = center[0], y = center[1];
+	var matrix = [[cos*scale, -sin*scale, x - x*cos*scale + y*sin*scale], [sin*scale, cos*scale, y - x*sin*scale - y*cos*scale], [0, 0, 1]];
+	point[2] = 1;
+	return multiMatVec(matrix, point);
+}
+
+function rotatePoint(angle, pointRoot, point) {
+	var point1 = translate([-pointRoot[0], -pointRoot[1]], point);
+	var point2 = rotateO(angle, point1);
+	var point3 = translate(pointRoot, point2);
+	return point3;
+}
+
+function scale(scale, point) {
+	var matrix = [[scale, 0, 0], [0, scale, 0], [0, 0, 1]];
+	point[2] = 1;
+	return multiMatVec(matrix, point);
+}
+
+function rotateO(angle, point) {
+	var radian = toRadian(angle);
+	var matrix = [[Math.cos(radian), -Math.sin(radian), 0], [Math.sin(radian), Math.cos(radian), 0]];
+	point[2] = 1;
+	return multiMatVec(matrix, point);
+}
+
+function translate(vector, point) {
+	var matrix = [[1, 0, vector[0]], [0, 1, vector[1]], [0, 0, 1]];
+	point[2] = 1;
+	return multiMatVec(matrix, point);
+}
+
+function toRadian(angle) {
+	return angle * Math.PI / 180;
+}
+
+function toDegree(angle) {
+	return angle * 180 / Math.PI;
+}
+
+function multiMatVec(matrix, vector) {
+	var matrix2 = vector2Matrix(vector);
+	var result = multiMatrix(matrix, matrix2);
+	return matrix2Vector(result);
+}
+
+function multiMatrix(matrix1, matrix2) {
+	var matrix = [];
+	for (var i = 0; i < matrix1.length; i++) {
+		for (var j = 0; j < matrix2[0].length; j++) {
+			matrix[i] = [];
+			matrix[i][j] = 0;
+			for (var k = 0; k < matrix1[0].length; k++) {
+				matrix[i][j] += matrix1[i][k] * matrix2[k][j];
+			}
+		}
+	}
+	return matrix;
+}
+
+function vector2Matrix(vector) {
+	var matrix = [];
+	for (var i = 0; i < vector.length; i ++) {
+		matrix[i] = [vector[i]];
+	}
+	return matrix;
+}
+
+function matrix2Vector(matrix) {
+	var vector = [];
+	for (var i = 0; i < matrix.length; i ++) {
+		vector[i] = matrix[i][0];
+	}
+	return vector;
+}
+
+function distance(vector) {
+	var s = 0;
+	for (var i = 0; i < vector.length; i++) {
+		s += vector[i] * vector[i];
+	}
+	return Math.pow(s, 0.5);
+}
+
+function dotProduct(vector1, vector2) {
+	var s = 0;
+	for (var i = 0; i < vector1.length; i++) {
+		s += vector1[i] * vector2[i];
+	}
+	return s;
+}
+
+function angle(vector1, vector2) {
+	var arcos = dotProduct(vector1, vector2) / (distance(vector1) * distance(vector2));
+	return toDegree(Math.acos(arcos));
+}
+
+function inPolygon(point, polygon) {
+	var pos = 0, neg = 0;
+	for (var i = 0; i < polygon.length; i++) {
+		var point1 = polygon[i], point2 = polygon[(i + 1) % polygon.length];
+		var d = (point2[1] - point1[1])*(point[0] - point1[0]) - (point2[0] - point1[0])*(point[1] - point1[1]);
+		if (d > 0) {
+			pos++;
+		} else if(d < 0) {
+			neg++;
+		}
+		if (pos > 0 && neg > 0) {
+			return false;
+		}
+	}
+	return true;
+}
+
+function point2Coordinate(point) {
+	var lon = 360 * (point.x - 0.5);
+	var a = Math.pow(Math.E, 4 * Math.PI * (0.5 - point.y));
+	var lat = Math.asin((a - 1) / (a + 1)) * 180 / Math.PI;
+	lon = Math.max(Math.min(lon, 180), -180);
+	lat = Math.max(Math.min(lat, 85), -85);
+	return {lng: lon, lat: lat};
+}

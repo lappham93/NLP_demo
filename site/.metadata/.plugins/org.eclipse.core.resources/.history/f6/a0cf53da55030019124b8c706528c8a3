@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+    layout:decorator="layout">
+<head>
+	<script type="text/javascript" th:src="${resources_path} + '/js/app/location.js'"></script>
+</head>
+<body>
+<div layout:fragment="page-header" th:with="hasLocation=${locations != null and #lists.size(locations) > 0 and location != null}">
+	<div class="panel panel-flat">
+		<div class="panel-heading">
+			<h1 class="panel-title page-header" th:if="${not(hasLocation)}">My locations</h1>
+			<select class="page-header-select" id="locationSltId" th:if="${hasLocation}">
+				<option th:each="item: ${locations}" th:text="${item.name}" th:value="${item.idRef}" th:selected="${location.idRef == item.idRef} ? selected"></option>
+			</select>
+		</div>
+		<div class="panel-body">
+			<!-- <h6 class="panel-title">Start by creating a location and uploading your first floor plan.</h6> -->
+			<button id="createLocationBtnId" class="btn btn-primary btn-rounded pull-right" th:if="${location == null}" th:onclick="'window.location.replace(\'' + ${locations_add_url} + '\')'">
+				Create new location
+			</button>
+			<button id="createFloor2BtnId" class="btn btn-primary btn-rounded pull-right" th:if="${location != null}" th:onclick="'window.location.replace(\'' + ${#strings.replace(floor_add_url, '{0}', location.idRef)} + '\')'">
+				Add new floor plan
+			</button>
+		</div>
+	</div>
+</div>
+</body>
+</html>

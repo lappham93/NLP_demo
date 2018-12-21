@@ -1,0 +1,14 @@
+package com.mit.react.enums;
+
+public enum ReactAction {
+	ADD(1), REMOVE(2), REQUEST_CONNECT(3), CANCEL_REQUEST(4), CONFIRM_REQUEST(5), DELETE_REQUEST(6), DISCONNECT(7);
+	private int value;
+	
+	private ReactAction(int value) {
+		this.value = value;
+	}
+	
+	public int getValue() {
+		return value;
+	}
+}

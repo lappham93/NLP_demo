@@ -1,0 +1,69 @@
+package com.mit.navigation.responses;
+
+import com.mit.navigation.entities.FloorRoute;
+import com.mit.navigation.entities.Route;
+import com.mit.utils.MathUtils;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created by Lap Pham on 6/21/17.
+ */
+public class RouteResponse {
+    private List<FloorRouteResponse> floorRoutes;
+    private double distance;
+    private long roundDistanceInYd;
+    private long time; //milisecond
+
+    public RouteResponse(Route route, Map<Long, FloorShortResponse> floors) {
+        floorRoutes = new LinkedList<>();
+
+        distance = 0;
+        roundDistanceInYd = 0;
+
+        FloorRouteResponse preFloorRoute = null;
+        for (FloorRoute floorRoute: route.getFloorRoutes()) {
+            preFloorRoute = new FloorRouteResponse(floorRoute, floors, preFloorRoute);
+            distance += preFloorRoute.getDistance();
+            roundDistanceInYd += preFloorRoute.getRoundDistanceInYd();
+            floorRoutes.add(preFloorRoute);
+        }
+        
+        time = (long) (distance / MathUtils.userSpeed * 1000);
+    }
+
+    public List<FloorRouteResponse> getFloorRoutes() {
+        return floorRoutes;
+    }
+
+    public void setFloorRoutes(List<FloorRouteResponse> floorRoutes) {
+        this.floorRoutes = floorRoutes;
+    }
+
+    public double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(double distance) {
+        this.distance = distance;
+    }
+
+    public long getRoundDistanceInYd() {
+        return roundDistanceInYd;
+    }
+
+    public void setRoundDistanceInYd(long roundDistanceInYd) {
+        this.roundDistanceInYd = roundDistanceInYd;
+    }
+
+	public long getTime() {
+		return time;
+	}
+
+	public void setTime(long time) {
+		this.time = time;
+	}
+    
+}

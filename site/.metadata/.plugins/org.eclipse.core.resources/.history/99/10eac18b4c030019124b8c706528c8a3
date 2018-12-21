@@ -1,0 +1,70 @@
+package com.mit.social.repositories;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
+
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.seq.repositories.SeqIdRepo;
+import com.mit.social.entities.FeedReport;
+
+@Repository
+public class FeedReportRepo extends TimeDocRepo<FeedReport>{
+	@Autowired
+	MongoOperations mongoOps;
+
+	@Autowired
+	SeqIdRepo seqIdRepo;
+
+	public int totalAll(boolean onlyActive) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (onlyActive) {
+			criteria.and("status").gt(0);
+		}
+		return (int) mongoOps.count(new Query(criteria), FeedReport.class);
+	}
+	
+	public FeedReport getById(long id) {
+		return mongoOps.findById(id, FeedReport.class);
+	}
+
+	public FeedReport getByFeedId(long feedId) {
+		return mongoOps.findOne(new Query(Criteria.where("feedId").is(feedId)), FeedReport.class);
+	}
+
+	public List<FeedReport> getByIds(List<Long> ids) {
+		List<FeedReport> feeds = mongoOps.find(new Query(Criteria.where("id").in(ids)), FeedReport.class);
+		return feeds;
+	}
+
+	public List<FeedReport> getSlice(int count, int from, boolean onlyActive) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (onlyActive) {
+			criteria = Criteria.where("status").gt(0);
+		}
+		Sort sort = new Sort(new Order(Direction.DESC, "status"), new Order(Direction.DESC, "updatedDate"));
+		List<FeedReport> profiles = mongoOps.find(new Query(criteria).with(sort).skip(from).limit(count),
+				FeedReport.class);
+		return profiles;
+	}
+
+	public Map<Long, FeedReport> getMapByIds(List<Long> profileIds) {
+		List<FeedReport> profiles = getByIds(profileIds);
+		Map<Long, FeedReport> profileMap = new HashMap<Long, FeedReport>();
+		for (FeedReport profile : profiles) {
+			profileMap.put(profile.getId(), profile);
+		}
+
+		return profileMap;
+	}
+
+}

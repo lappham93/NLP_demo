@@ -1,0 +1,63 @@
+$(function(){
+	if ($('#addAppFrmId').length > 0) {
+		$('#createAppBtnId').prop('disabled', true);
+	}
+	
+	$('#appSltId').on('change', function(){
+		App.redirect(App.uris.appItem.replace('{0}', $(this).val()));
+	});
+});
+
+function showDeleteApp() {
+	$('#deleteAppMdlId').modal({backdrop: 'static', keyboard: false, show: true});
+}
+
+
+function deleteApp(appId) {
+	var url = App.getFullUri(App.uris.appItem.replace('{0}', appId));
+	App.ajaxRequest('DELETE', url, null, function(resp) {
+		var successUrl = resp.code >= 0 ? App.uris.apps: "";
+		App.callbackAjaxRequest2($('#deleteAppMdlId'), resp, null, successUrl, "", "");
+	})
+}
+
+function showSecretKey(control, container, apiKey) {
+	var $control = $('#' + control), $container = $('#' + container), $containerDefault = $('#' + container + '-default');
+	var isShow = $control.text() == 'Show';
+	$control.text(isShow ? 'Hide' : 'Show');
+	if (isShow && !$container.text()) {
+		var url = App.getFullUri(App.uris.secretKey.replace('{0}', 'appid').replace('{1}', apiKey));
+		App.ajaxRequest('GET', url, null, function(resp) {
+			if (resp.code >= 0) {
+				$container.text(resp.data);
+			}
+		})
+	}
+	if (isShow) {
+		$container.show();
+		$containerDefault.hide();
+		$control.text('Hide');
+	} else {
+		$container.hide();
+		$containerDefault.show();
+		$control.text('Show');
+	}
+} 
+
+function enableApikey(appId, apiKey) {
+	var data = {'active': true};
+	editApiKey(appId, apiKey, data);
+}
+
+function disableApikey(appId, apiKey) {
+	var data = {'active': false};
+	editApiKey(appId, apiKey, data);
+}
+
+function editApiKey(appId, apiKey, data) {
+	var url = App.getFullUri(App.uris.secretKey.replace('{0}', appId).replace('{1}', apiKey));
+	App.ajaxRequest('PUT', url, data, function(resp) {
+		var successUrl = resp.code >= 0 ? App.uris.appItem.replace('{0}', appId) : "";
+		App.callbackAjaxRequest2($(App.formObject.formId), resp, null, successUrl, "", "", 500);
+	})
+}

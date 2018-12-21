@@ -1,0 +1,83 @@
+package com.mit.bodies;
+
+import com.mit.atlas.entities.AtlasLocation;
+import com.mit.map.entities.Coordinate;
+import com.mit.utils.StringUtils;
+
+public class AtlasLocationBody {
+	private long userId;
+	private String name;
+	private String address;
+	private Coordinate coordinate;
+	private String desc;
+	private boolean isPrivate;
+	
+	public AtlasLocation toLocation() {
+		AtlasLocation location = new AtlasLocation();
+		location.setUserId(userId);
+		location.setIdRef(StringUtils.genNormalKey(30));
+		location.setActive(true);
+		updateLocation(location);
+		return location;
+	}
+	
+	public void updateLocation(AtlasLocation location) {
+		if (location == null) {
+			return;
+		}
+		location.setName(name);
+		location.setAddress(address);
+		location.setDesc(desc);
+		location.setCoordinate(coordinate);
+		location.setPrivate(isPrivate);
+	}
+
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public boolean isPrivate() {
+		return isPrivate;
+	}
+
+	public void setPrivate(boolean isPrivate) {
+		this.isPrivate = isPrivate;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+	public Coordinate getCoordinate() {
+		return coordinate;
+	}
+
+	public void setCoordinate(Coordinate coordinate) {
+		this.coordinate = coordinate;
+	}
+
+	public String getDesc() {
+		return desc;
+	}
+
+	public void setDesc(String desc) {
+		this.desc = desc;
+	}
+
+}

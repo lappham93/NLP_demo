@@ -1,0 +1,168 @@
+var locationObject = {};
+var floorObject = {};
+var isUpload = false;
+
+App.formObject.formEles = {
+		name: ["#nameAddIptId", App.formEleType.INPUT],
+		number: ["#numberAddIptId", App.formEleType.INPUT],
+		altitude: ["#altitudeAddIptId", App.formEleType.INPUT],
+		photo: ["#photoIptId", App.formEleType.FILE],
+		lon: ["#lonAddIptId", App.formEleType.INPUT],
+		lat: ["#latAddIptId", App.formEleType.INPUT],
+		angle: ["#angleAddIptId", App.formEleType.INPUT],
+		scale: ["#scaleAddIptId", App.formEleType.INPUT],
+		opacity: ["#opacityAddIptId", App.formEleType.INPUT],
+}
+App.formObject.formId = '#editFloorFrmId';
+App.formObject.submitId = $('#editFloorPlan').length > 0 ? '#saveEditFloorPlanBtnId' : '#saveEditFloorAligmentBtnId';
+App.formObject.checkData = function(data) {
+			if (!data) {
+				data = App.getFormData();
+			}
+			var check = null;
+			if ($('#editFloorPlan').length > 0) {
+				check = data.name && data.number && !isNaN(data.number)> 0;
+			} else {
+				check = data.angle && !isNaN(data.angle) && data.scale && !isNaN(data.scale) && data.opacity && !isNaN(data.opacity) && App.validateCoordinate(data.lon, data.lat);
+			}
+			
+			return check;
+}
+
+$(function() {
+	$('#mapStyleOptionId').change(function(){
+		mbChangeStyle($(this).val());
+	});
+	
+	$(App.formObject.formId).submit(function() {
+		App.showLoader('Processing', App.formObject.formId);
+		App.initAjaxRequest(App.formObject.formId);
+		
+		var data = App.getFormData();
+		data.coordinate = {'lon': data.lon, 'lat': data.lat};
+		data.photo = floorObject.photoId;
+		data.planRotation = data.angle;
+		data.planScaleX = data.scale;
+		data.planScaleY = data.scale;
+		
+		var url = $('#editFloorPlan').length > 0 ? App.getFullUri(App.uris.floorPlanEdit.replace('{0}', locationObject.id).replace('{1}', floorObject.id)) 
+				: App.getFullUri(App.uris.floorAlignEdit.replace('{0}', locationObject.id).replace('{1}', floorObject.id)) ;
+		App.ajaxRequest('PUT', url, data, function(resp) {
+			var successUrl = resp.code >= 0 ? App.uris.locationItem + "/" + resp.data.locationId : "";
+			App.callbackAjaxRequest2($(App.formObject.formId), resp, null, successUrl, "", "");
+		})
+		
+		return false;
+	});
+	
+	$(App.formObject.formEles.photo[0]).on('change', function() {
+		var files = $(this)[0].files;
+		uploadPhoto(files);
+	});
+	
+	$('#lonAddIptId').on('change keyup', function() {
+		centerChange($(this).val(), $('#latAddIptId').val());
+	});
+	$('#latAddIptId').on('change keyup', function() {
+		centerChange($('#lonAddIptId').val(), $(this).val());
+	});
+	
+	$('#angleAddIptId').on('change keyup blur input', function() {
+		angleChange($(this).val());
+	});
+	$('#angleAddIptId-ui').on('change keyup blur input', function() {
+		angleChange($(this).val());
+	});
+	
+	$('#scaleAddIptId').on('change keyup blur input', function(){
+		scaleChange($(this).val());
+	});
+	$('#scaleAddIptId-ui').on('change keyup blur input', function(){
+		scaleChange($(this).val());
+	});
+	
+	$('#opacityAddIptId').on('change keyup blur input', function(){
+		opacityChange($(this).val());
+	});
+	$('#opacityAddIptId-ui').on('change keyup blur input', function(){
+		opacityChange($(this).val());
+	});
+});
+
+function init() {
+	mbLoadOverlay();
+}
+
+function uploadPhoto(files) {
+	if (files.length == 0) {
+		return;
+	}
+	isUpload = true;
+	App.ajaxUploadPhotoRequest(App.photoType.ATLAS, files, 
+			function(resp) {
+				console.log(resp);
+				if (resp.data.width != floorObject.photoWidth || resp.data.height != floorObject.photoHeight) {
+					$(App.formObject.formId + ' .form-error').html('The uploaded image is wrong size. It must be exactly ' + floorObject.photoWidth + 'x' + floorObject.photoHeight + ' pixels.');
+					$(App.formObject.formId + ' .form-error').show();
+				} else {
+					$(App.formObject.formId + ' .form-error').hide();
+					overlayObject.photo = resp.data.link;
+					floorObject.photoId = resp.data.id;
+					overlayObject.offsetWidth = overlayObject.offsetHeight * resp.data.width / resp.data.height;
+					overlayObject.anpha = Math.atan(overlayObject.offsetHeight / overlayObject.offsetWidth);
+					mbLoadOverlay();
+				}
+			}, 
+			function(resp) {
+				console.log(resp);
+				alert("Upload floor plan image fail");
+				isUpload = false;
+			});
+}
+
+function centerChange(lon, lat) {
+	centerUpdateUI(lon, lat);
+	mbMoveOverlay([Number(lat), Number(lon)]);
+}
+
+function centerUpdateUI(lon, lat) {
+	$('#lonAddIptId').val(lon);
+	$('#latAddIptId').val(lat);
+}
+
+function angleChange(angle) {
+	angleUpdateUI(angle);
+	mbRotateOverlay(angle);
+}
+
+function angleUpdateUI(angle) {
+	$('#angleAddIptId').val(angle);
+	$('#angleAddIptId-ui').val(angle);
+}
+
+function scaleChange(scale) {
+	scaleUpdateUI(scale);
+	mbScaleOverlay(scale/100);
+}
+
+function scaleUpdateUI(scale) {
+	$('#scaleAddIptId').val(scale);
+	$('#scaleAddIptId-ui').val(scale);
+}
+
+function opacityChange(opacity) {
+	opacityUpdateUI(opacity);
+	mbOpacityOverlay(opacity/100);
+}
+
+function opacityUpdateUI(opacity) {
+	$('#opacityAddIptId').val(opacity);
+	$('#opacityAddIptId-ui').val(opacity);
+}
+
+function mapChange() {
+	angleUpdateUI(overlayObject.rotate);
+	scaleUpdateUI(overlayObject.scale * 100);
+	opacityUpdateUI(overlayObject.opacity * 100);
+	centerUpdateUI(overlayObject.center[1], overlayObject.center[0]);
+}

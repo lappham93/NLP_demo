@@ -1,0 +1,82 @@
+package com.mit.user.responses;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.event.responses.MyCalendarResponse;
+import com.mit.map.entities.Point;
+import com.mit.react.entities.UserStat;
+import com.mit.user.entities.Profile;
+import com.mit.user.entities.UserLocation;
+import com.mit.utils.LinkBuilder;
+
+/**
+ * Created by Hung on 6/19/2017.
+ */
+public class UserLocationResponse extends ProfileShortResponse{
+    private String photo;
+    private double x;
+    private double y;
+    private double lat;
+    private double lon;
+    private double distance;
+    
+    public UserLocationResponse() {
+    }
+
+    public UserLocationResponse(UserLocation userLocation, Profile profile, UserStat userStat, Point location, long viewUserId, MyCalendarResponse calendar) {
+        super(profile, userStat, location, viewUserId, calendar);
+        this.photo = LinkBuilder.buildPhotoLink(profile.getAvatar(), ObjectType.USER.getLowerName());
+        this.x = userLocation.getX();
+        this.y = userLocation.getY();
+        this.lat = userLocation.getLat();
+        this.lon = userLocation.getLon();
+        this.distance = userLocation.getDistance();
+    }
+    
+    public String getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(String photo) {
+        this.photo = photo;
+    }
+
+    public double getX() {
+		return x;
+	}
+
+	public void setX(double x) {
+		this.x = x;
+	}
+
+	public double getY() {
+		return y;
+	}
+
+	public void setY(double y) {
+		this.y = y;
+	}
+
+	public double getLat() {
+        return lat;
+    }
+
+    public void setLat(double lat) {
+        this.lat = lat;
+    }
+
+    public double getLon() {
+        return lon;
+    }
+
+    public void setLon(double lon) {
+        this.lon = lon;
+    }
+
+    public double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(double distance) {
+        this.distance = distance;
+    }
+}

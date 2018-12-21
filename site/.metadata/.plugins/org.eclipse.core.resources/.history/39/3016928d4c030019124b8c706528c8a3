@@ -1,0 +1,97 @@
+package com.mit.blog.entities;
+
+import java.util.List;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.common.entities.ActiveTimeDoc;
+
+@Document(collection = "blog")
+public class Blog extends ActiveTimeDoc<Long> {
+	@Id
+	private long id;
+	private long categoryId;
+	private String author;
+	private String title;
+	private String description;
+	private String content;
+	private long thumb;
+	private List<Long> otherPhotos;
+	private int views;
+
+	@Override
+	public Long getId() {
+		return id;
+	}
+
+	@Override
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public long getCategoryId() {
+		return categoryId;
+	}
+
+	public void setCategoryId(long categoryId) {
+		this.categoryId = categoryId;
+	}
+
+	public String getAuthor() {
+		return author;
+	}
+
+	public void setAuthor(String author) {
+		this.author = author;
+	}
+
+	public long getThumb() {
+		return thumb;
+	}
+
+	public void setThumb(long thumb) {
+		this.thumb = thumb;
+	}
+
+	public List<Long> getOtherPhotos() {
+		return otherPhotos;
+	}
+
+	public void setOtherPhotos(List<Long> otherPhotos) {
+		this.otherPhotos = otherPhotos;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getContent() {
+		return content;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+
+	public int getViews() {
+		return views;
+	}
+
+	public void setViews(int views) {
+		this.views = views;
+	}
+
+}

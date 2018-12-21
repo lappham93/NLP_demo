@@ -1,0 +1,90 @@
+package com.mit.banner.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.common.entities.ActiveTimeDoc;
+import com.mit.common.entities.ObjectRef;
+
+/**
+ * Created by Lap Pham on 2/21/17.
+ */
+
+@Document(collection = "banner")
+public class Banner extends ActiveTimeDoc<Long> {
+	@Id
+	private long id;
+	private int type;
+	private ObjectRef objectRef;
+	private String msg;
+	private long thumb;
+	private String content;
+	private int displayOrder;
+
+	
+	public Banner() {
+		super();
+	}
+	
+	public Banner(int type) {
+		super();
+		this.type = type;
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	public ObjectRef getObjectRef() {
+		return objectRef;
+	}
+
+	public void setObjectRef(ObjectRef objectRef) {
+		this.objectRef = objectRef;
+	}
+
+	public String getMsg() {
+		return msg;
+	}
+
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+
+	public long getThumb() {
+		return thumb;
+	}
+
+	public void setThumb(long thumb) {
+		this.thumb = thumb;
+	}
+
+	public String getContent() {
+		return content;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+
+	public int getDisplayOrder() {
+		return displayOrder;
+	}
+
+	public void setDisplayOrder(int displayOrder) {
+		this.displayOrder = displayOrder;
+	}
+
+}

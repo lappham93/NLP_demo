@@ -1,0 +1,28 @@
+package com.mit.stat.enums;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonFormat.Shape;
+
+/**
+ * Created by Lap Pham on 4/19/17.
+ */
+@JsonFormat(shape = Shape.OBJECT)
+public enum TimelineType {
+    MINUTE(1, "Minute"), HOUR(2, "Hour"), DAY(3, "Day"), WEEK(4, "Week"), MONTH(5, "Month"), YEAR(6, "Year");
+
+    private int value;
+    private String name;
+
+    TimelineType(int value, String name) {
+        this.value = value;
+        this.name = name;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public String getName() {
+        return name;
+    }
+}

@@ -1,0 +1,29 @@
+package com.mit.react.responses;
+
+public class LikeResponse {
+	private boolean isLiked;
+	private int totalLike;
+
+	public LikeResponse(boolean isLiked, int likes) {
+		super();
+		this.isLiked = isLiked;
+		this.totalLike = likes;
+	}
+
+	public boolean isLiked() {
+		return isLiked;
+	}
+
+	public void setLiked(boolean isLiked) {
+		this.isLiked = isLiked;
+	}
+
+	public int getTotalLike() {
+		return totalLike;
+	}
+
+	public void setTotalLike(int totalLike) {
+		this.totalLike = totalLike;
+	}
+
+}

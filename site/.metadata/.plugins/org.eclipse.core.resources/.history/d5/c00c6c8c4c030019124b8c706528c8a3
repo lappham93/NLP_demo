@@ -1,0 +1,49 @@
+package com.mit.react.bodies;
+
+import com.mit.common.entities.ObjectRef;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel
+public class ShareBody {
+	private long userId;
+	private ObjectRef objectRef;
+	private String facebookId;
+	private String message;
+
+	@ApiModelProperty(hidden = true)
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+	
+	@ApiModelProperty(required = true, notes = "Feed(id=feedId, type=5), SubFeed(id=photoId, type=6), Event(id=eventId, type=4, Booth(id=boothId, type=1), Product(id=productId,  type=2)")
+	public ObjectRef getObjectRef() {
+		return objectRef;
+	}
+
+	public void setObjectRef(ObjectRef objectRef) {
+		this.objectRef = objectRef;
+	}
+
+	public String getFacebookId() {
+		return facebookId;
+	}
+
+	public void setFacebookId(String facebookId) {
+		this.facebookId = facebookId;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+}

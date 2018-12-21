@@ -1,0 +1,291 @@
+package com.mit.sensor.bodies;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mit.map.entities.Point;
+import org.springframework.util.CollectionUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by Hung on 12/3/2017.
+ */
+public class IntIndrLocationBody {
+    private List<IntSensorBody> acc;
+    private List<IntSensorBody> mag;
+    private List<IntSensorBody> gyr;
+    private List<IntSensorBody> press;
+    private List<IntLocationBody> gps;
+    private List<IntRFBody> bluetooth;
+    private List<IntRFBody> wifi;
+    private List<IntSensorBody> rotation;
+    @JsonProperty("step_counter")
+    private List<IntStepCounterBody> stepCounter;
+    @JsonProperty("step_detector")
+    private List<IntStepCounterBody> stepDetector;
+    @JsonProperty("step_dist")
+    private List<IntStepDistanceBody> stepDist;
+    @JsonProperty("start_time")
+    private double startTime;
+    @JsonProperty("event_id")
+    private long eventId;
+    @JsonProperty("last_sampling")
+    private double lastSampling;
+    private List<List<List<Float>>> hx;
+    private List<Point> points;
+    @JsonProperty("point_idx")
+    private int pointIdx;
+    @JsonProperty("floor_id")
+    private long floorId;
+    @JsonProperty("mag_mean")
+    private List<Double> magMean;
+    @JsonProperty("mag_std")
+    private List<Double> magStd;
+    @JsonProperty("user_id")
+    private long userId;
+
+
+    public IntIndrLocationBody() {
+    }
+
+    public IntIndrLocationBody(IndrLocationBody body, double lastSampling, List<List<List<Float>>> hx) {
+        if (!CollectionUtils.isEmpty(body.getAcc())) {
+            this.acc = new ArrayList<>(body.getAcc().size());
+            for (SensorBody sensorBody : body.getAcc()) {
+                this.acc.add(new IntSensorBody(sensorBody));
+            }
+        }
+        if (!CollectionUtils.isEmpty(body.getMag())) {
+            this.mag = new ArrayList<>(body.getMag().size());
+            for (SensorBody sensorBody : body.getMag()) {
+                this.mag.add(new IntSensorBody(sensorBody));
+            }
+        }
+        if (!CollectionUtils.isEmpty(body.getGyr())) {
+            this.gyr = new ArrayList<>(body.getGyr().size());
+            for (SensorBody sensorBody : body.getGyr()) {
+                this.gyr.add(new IntSensorBody(sensorBody));
+            }
+        }
+        if (!CollectionUtils.isEmpty(body.getPress())) {
+            this.press = new ArrayList<>(body.getPress().size());
+            for (SensorBody sensorBody : body.getPress()) {
+                this.press.add(new IntSensorBody(sensorBody));
+            }
+        }
+        if (!CollectionUtils.isEmpty(body.getGps())) {
+            this.gps = new ArrayList<>(body.getGps().size());
+            for (LocationBody sensorBody : body.getGps()) {
+                this.gps.add(new IntLocationBody(sensorBody));
+            }
+        }
+        if (!CollectionUtils.isEmpty(body.getBluetooth())) {
+            this.bluetooth = new ArrayList<>(body.getBluetooth().size());
+            for (RFBody sensorBody : body.getBluetooth()) {
+                this.bluetooth.add(new IntRFBody(sensorBody));
+            }
+        }
+        if (!CollectionUtils.isEmpty(body.getWifi())) {
+            this.wifi = new ArrayList<>(body.getWifi().size());
+            for (RFBody sensorBody : body.getWifi()) {
+                this.wifi.add(new IntRFBody(sensorBody));
+            }
+        }
+        if (!CollectionUtils.isEmpty(body.getRotation())) {
+            this.rotation = new ArrayList<>(body.getRotation().size());
+            for (SensorBody sensorBody : body.getRotation()) {
+                this.rotation.add(new IntSensorBody(sensorBody));
+            }
+        }
+        if (!CollectionUtils.isEmpty(body.getStepCounter())) {
+            this.stepCounter = new ArrayList<>(body.getStepCounter().size());
+            for (StepCounterBody sensorBody : body.getStepCounter()) {
+                this.stepCounter.add(new IntStepCounterBody(sensorBody));
+            }
+        }
+        if (!CollectionUtils.isEmpty(body.getStepDetector())) {
+            this.stepDetector = new ArrayList<>(body.getStepCounter().size());
+            for (StepCounterBody sensorBody : body.getStepCounter()) {
+                this.stepDetector.add(new IntStepCounterBody(sensorBody));
+            }
+        }
+        if (!CollectionUtils.isEmpty(body.getStepDist())) {
+            this.stepDist = new ArrayList<>(body.getStepDist().size());
+            for (StepDistanceBody sensorBody : body.getStepDist()) {
+                this.stepDist.add(new IntStepDistanceBody(sensorBody));
+            }
+        }
+        this.startTime = body.getStartTime();
+        this.eventId = body.getEventId();
+        this.lastSampling = lastSampling;
+        this.hx = hx;
+    }
+
+    public List<IntSensorBody> getAcc() {
+        return acc;
+    }
+
+    public void setAcc(List<IntSensorBody> acc) {
+        this.acc = acc;
+    }
+
+    public List<IntSensorBody> getMag() {
+        return mag;
+    }
+
+    public void setMag(List<IntSensorBody> mag) {
+        this.mag = mag;
+    }
+
+    public List<IntSensorBody> getGyr() {
+        return gyr;
+    }
+
+    public void setGyr(List<IntSensorBody> gyr) {
+        this.gyr = gyr;
+    }
+
+    public List<IntSensorBody> getPress() {
+        return press;
+    }
+
+    public void setPress(List<IntSensorBody> press) {
+        this.press = press;
+    }
+
+    public List<IntLocationBody> getGps() {
+        return gps;
+    }
+
+    public void setGps(List<IntLocationBody> gps) {
+        this.gps = gps;
+    }
+
+    public List<IntRFBody> getBluetooth() {
+        return bluetooth;
+    }
+
+    public void setBluetooth(List<IntRFBody> bluetooth) {
+        this.bluetooth = bluetooth;
+    }
+
+    public List<IntRFBody> getWifi() {
+        return wifi;
+    }
+
+    public void setWifi(List<IntRFBody> wifi) {
+        this.wifi = wifi;
+    }
+
+    public double getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(double startTime) {
+        this.startTime = startTime;
+    }
+
+    public long getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(long eventId) {
+        this.eventId = eventId;
+    }
+
+    public double getLastSampling() {
+        return lastSampling;
+    }
+
+    public void setLastSampling(double lastSampling) {
+        this.lastSampling = lastSampling;
+    }
+
+    public List<List<List<Float>>> getHx() {
+        return hx;
+    }
+
+    public void setHx(List<List<List<Float>>> hx) {
+        this.hx = hx;
+    }
+
+    public List<IntSensorBody> getRotation() {
+        return rotation;
+    }
+
+    public void setRotation(List<IntSensorBody> rotation) {
+        this.rotation = rotation;
+    }
+
+    public List<IntStepCounterBody> getStepCounter() {
+        return stepCounter;
+    }
+
+    public void setStepCounter(List<IntStepCounterBody> stepCounter) {
+        this.stepCounter = stepCounter;
+    }
+
+    public List<IntStepCounterBody> getStepDetector() {
+        return stepDetector;
+    }
+
+    public void setStepDetector(List<IntStepCounterBody> stepDetector) {
+        this.stepDetector = stepDetector;
+    }
+
+    public List<IntStepDistanceBody> getStepDist() {
+        return stepDist;
+    }
+
+    public void setStepDist(List<IntStepDistanceBody> stepDist) {
+        this.stepDist = stepDist;
+    }
+
+    public List<Point> getPoints() {
+        return points;
+    }
+
+    public void setPoints(List<Point> points) {
+        this.points = points;
+    }
+
+    public int getPointIdx() {
+        return pointIdx;
+    }
+
+    public void setPointIdx(int pointIdx) {
+        this.pointIdx = pointIdx;
+    }
+
+    public long getFloorId() {
+        return floorId;
+    }
+
+    public void setFloorId(long floorId) {
+        this.floorId = floorId;
+    }
+
+    public List<Double> getMagMean() {
+        return magMean;
+    }
+
+    public void setMagMean(List<Double> magMean) {
+        this.magMean = magMean;
+    }
+
+    public List<Double> getMagStd() {
+        return magStd;
+    }
+
+    public void setMagStd(List<Double> magStd) {
+        this.magStd = magStd;
+    }
+
+    public long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
+}

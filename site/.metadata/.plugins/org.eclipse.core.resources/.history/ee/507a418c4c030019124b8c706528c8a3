@@ -1,0 +1,27 @@
+package com.mit.react.responses;
+
+import java.util.List;
+
+import com.mit.user.responses.ProfileShortResponse;
+
+public class ReactUserResponse {
+	private List<ProfileShortResponse> users;
+	private int totalUser;
+
+	public List<ProfileShortResponse> getUsers() {
+		return users;
+	}
+
+	public void setUsers(List<ProfileShortResponse> users) {
+		this.users = users;
+	}
+
+	public int getTotalUser() {
+		return totalUser;
+	}
+
+	public void setTotalUser(int totalUser) {
+		this.totalUser = totalUser;
+	}
+
+}

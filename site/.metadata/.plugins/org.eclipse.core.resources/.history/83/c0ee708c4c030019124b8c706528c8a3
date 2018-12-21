@@ -1,0 +1,50 @@
+package com.mit.react.bodies;
+
+import com.mit.common.entities.ObjectRef;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel
+public class LikeBody {
+	private long userId;
+	private ObjectRef objectRef;
+	private long photoId;
+	private int type;
+
+	@ApiModelProperty(hidden = true)
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	@ApiModelProperty(required = true, value = "type: FEED(2), COMMENT(4)")
+	public ObjectRef getObjectRef() {
+		return objectRef;
+	}
+
+	public void setObjectRef(ObjectRef objectRef) {
+		this.objectRef = objectRef;
+	}
+
+	public long getPhotoId() {
+		return photoId;
+	}
+
+	public void setPhotoId(long photoId) {
+		this.photoId = photoId;
+	}
+
+	@ApiModelProperty(required = true, value = "LIKE(1), DISLIKE(2)")
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+}

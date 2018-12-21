@@ -1,0 +1,22 @@
+package com.mit.errcode;
+
+public class UserErrCode {
+	public static final int SUCCESS = 0;
+	public static final int SERVER_ERR = -1;
+	
+	public static final int APPLICATION_PENDING = -101;
+	public static final int BANK_ACCOUNT_INVALID = -102;
+	public static final int ZIP_CODE_INVALID = -103;
+	public static final int ADDRESS_INVALID = -104;
+	public static final int PERSONAL_INFO_INVALID = -105;
+	public static final int APPLICATION_STATUS_INVALID = -106;
+	public static final int PAYMENT_METHOD_NOT_AVAILABLE = -107;
+	public static final int PAYMENT_ERROR = -108;
+	public static final int MISSING_PARAMS = -109;
+	public static final int EMAIL_INVALID = -110;
+	public static final int DUPLICATE_USERNAME = -111;
+	public static final int ERR_USERNAME = -112;
+	public static final int ERR_PASSWORD = -113;
+	public static final int BAN = -114;
+	public static final int CONFIRM_NEW_PASSWORD_NOT_MATCH = -115;
+}

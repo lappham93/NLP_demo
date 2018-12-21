@@ -1,0 +1,90 @@
+package com.mit.stat.repositories;
+
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import com.mit.http.exception.SequenceException;
+import com.mit.seq.repositories.SeqIdRepo;
+import com.mit.stat.entities.AppStatTotal;
+
+@Repository
+public class AppStatTotalRepo {
+    @Autowired
+    MongoOperations mongoOps;
+
+    @Autowired
+    SeqIdRepo seqIdRepo;
+    
+    public AppStatTotal getAppStat() {
+    	Criteria criteria = Criteria.where("global").is(true);
+        return mongoOps.findOne(new Query(criteria), AppStatTotal.class);
+    }
+    
+    public AppStatTotal getTempStat() {
+    	Criteria criteria = Criteria.where("temp").is(true);
+        return mongoOps.findOne(new Query(criteria), AppStatTotal.class);
+    }
+    
+    public void updateSignUpStat(long value) {
+    	Update update = new Update().inc("totalSignUp", value);
+    	mongoOps.updateFirst(new Query(Criteria.where("temp").is(true)), update, AppStatTotal.class);
+    }
+    
+    public void updateFeedStat(long value) {
+    	Update update = new Update().inc("totalFeed", value);
+    	mongoOps.updateFirst(new Query(Criteria.where("temp").is(true)), update, AppStatTotal.class);
+    }
+    
+    public void updateCommentStat(long value) {
+    	Update update = new Update().inc("totalComment", value);
+    	mongoOps.updateFirst(new Query(Criteria.where("temp").is(true)), update, AppStatTotal.class);
+    }
+    
+    public void updateLikeStat(long value) {
+    	Update update = new Update().inc("totalLike", value);
+    	mongoOps.updateFirst(new Query(Criteria.where("temp").is(true)), update, AppStatTotal.class);
+    }
+    
+    public void updateFollowStat(long value) {
+    	Update update = new Update().inc("totalFollow", value);
+    	mongoOps.updateFirst(new Query(Criteria.where("temp").is(true)), update, AppStatTotal.class);
+    }
+    
+    public void updateShareStat(long value) {
+    	Update update = new Update().inc("totalShare", value);
+    	mongoOps.updateFirst(new Query(Criteria.where("temp").is(true)), update, AppStatTotal.class);
+    }
+    
+    public List<AppStatTotal> getDairyStat(Date fromDate, Date toDate) {
+    	Date fromDate2 = (Date) fromDate.clone();
+    	fromDate2.setDate(fromDate.getDate() - 1);
+        fromDate2.setHours(23);
+        fromDate2.setMinutes(59);
+        fromDate2.setSeconds(59);
+        Date toDate2 = (Date) toDate.clone();
+        toDate2.setDate(toDate.getDate() + 1);
+        toDate2.setHours(0);
+        toDate2.setMinutes(0);
+        toDate2.setSeconds(0);
+    	Criteria criteria = Criteria.where("statTime").gt(fromDate2.getTime()).lt(toDate2.getTime());
+    	Sort sort = new Sort(new Order(Direction.ASC, "statTime"));
+    	return mongoOps.find(new Query(criteria).with(sort), AppStatTotal.class);
+    }
+    
+    public void save(AppStatTotal stat) throws SequenceException {
+    	if (stat.getId() <= 0) {
+    		stat.setId(seqIdRepo.getNextSequenceId(mongoOps.getCollectionName(AppStatTotal.class)));
+    	}
+        mongoOps.save(stat);
+    }
+}

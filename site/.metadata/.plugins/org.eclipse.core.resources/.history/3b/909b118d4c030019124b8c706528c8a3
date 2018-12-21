@@ -1,0 +1,25 @@
+package com.mit.navigation.enums;
+
+
+public enum ProductSortOption {
+	DEFAULT(0), AZ(1), ZA(2);
+	
+	private int value;
+	
+	private ProductSortOption(int value) {
+		this.value = value;
+	}
+
+	public int getValue() {
+		return value;
+	}
+	
+	public static ProductSortOption get(int value) {
+		for (ProductSortOption skuSortOption: values()) {
+			if (skuSortOption.getValue() == value) {
+				return skuSortOption;
+			}
+		}
+		return DEFAULT;
+	}
+}

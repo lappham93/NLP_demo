@@ -1,0 +1,24 @@
+package com.mit.suggest.entities;
+
+public enum ElasticSuggestType {
+	NAME(1), EN_NAME(2), VI_NORMAL(3), TAG(4);
+
+	private int value;
+
+	private ElasticSuggestType(int value) {
+		this.value = value;
+	}
+
+	public int getValue() {
+		return value;
+	}
+
+	public static ElasticSuggestType getType(int value) {
+		for (ElasticSuggestType type : ElasticSuggestType.values()) {
+			if (type.getValue() == value) {
+				return type;
+			}
+		}
+		return null;
+	}
+}

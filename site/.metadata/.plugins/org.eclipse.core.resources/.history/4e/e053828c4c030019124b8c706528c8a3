@@ -1,0 +1,46 @@
+package com.mit.notification.responses;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.notification.entities.AdvertisementNews;
+import com.mit.utils.LinkBuilder;
+
+/**
+ * Created by Lap Pham on 4/4/17.
+ */
+public class AdvertisementNewsResponse extends NewsResponse {
+	private long advertisementId;
+	private String msg;
+	private String thumb;
+
+	public AdvertisementNewsResponse(AdvertisementNews advNews) {
+		super(advNews);
+		this.advertisementId = advNews.getAdvertisementId();
+		this.msg = advNews.getMsg();
+		this.thumb = LinkBuilder.buildPhotoLink(advNews.getThumb(), ObjectType.BOOTH.getLowerName());
+	}
+
+	public long getAdvertisementId() {
+		return advertisementId;
+	}
+
+	public void setAdvertisementId(long advertisementId) {
+		this.advertisementId = advertisementId;
+	}
+
+	public String getMsg() {
+		return msg;
+	}
+
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+
+	public String getThumb() {
+		return thumb;
+	}
+
+	public void setThumb(String thumb) {
+		this.thumb = thumb;
+	}
+
+}

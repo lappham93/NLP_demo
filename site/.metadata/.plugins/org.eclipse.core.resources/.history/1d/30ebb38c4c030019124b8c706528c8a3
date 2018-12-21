@@ -1,0 +1,1496 @@
+package com.mit.navigation.services;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.banner.responses.BannerResponse;
+import com.mit.banner.services.BannerService;
+import com.mit.common.entities.ObjectRef;
+import com.mit.common.enums.ObjectType;
+import com.mit.event.entities.Advertisement;
+import com.mit.event.entities.Event;
+import com.mit.event.enums.EventStatus;
+import com.mit.event.repositories.AdvertisementRepo;
+import com.mit.event.repositories.EventRepo;
+import com.mit.event.responses.AdvertisementResponse;
+import com.mit.event.responses.AgendaResponse;
+import com.mit.event.responses.EventShortResponse;
+import com.mit.map.entities.Point;
+import com.mit.navigation.bodies.IndoorLocationBody;
+import com.mit.navigation.entities.Booth;
+import com.mit.navigation.entities.BoothCategory;
+import com.mit.navigation.entities.BoothProduct;
+import com.mit.navigation.entities.Counter;
+import com.mit.navigation.entities.Elevator;
+import com.mit.navigation.entities.ElevatorLocation;
+import com.mit.navigation.entities.Escalator;
+import com.mit.navigation.entities.EscalatorLocation;
+import com.mit.navigation.entities.Floor;
+import com.mit.navigation.entities.FloorRoute;
+import com.mit.navigation.entities.IndoorLocation;
+import com.mit.navigation.entities.MapLevel;
+import com.mit.navigation.entities.MapTile;
+import com.mit.navigation.entities.NavigationPoint;
+import com.mit.navigation.entities.Path;
+import com.mit.navigation.entities.Route;
+import com.mit.navigation.entities.Talk;
+import com.mit.navigation.entities.TilePosition;
+import com.mit.navigation.enums.EscalatorDirection;
+import com.mit.navigation.enums.FloorDirection;
+import com.mit.navigation.enums.IndoorLocationType;
+import com.mit.navigation.enums.PathDirection;
+import com.mit.navigation.enums.ProductSortOption;
+import com.mit.navigation.enums.SortOption;
+import com.mit.navigation.enums.TransitMode;
+import com.mit.navigation.repositories.BoothCategoryRepo;
+import com.mit.navigation.repositories.BoothProductRepo;
+import com.mit.navigation.repositories.ElasticBoothProductRepo;
+import com.mit.navigation.repositories.ElasticBoothRepo;
+import com.mit.navigation.repositories.ElevatorRepo;
+import com.mit.navigation.repositories.EscalatorRepo;
+import com.mit.navigation.repositories.FloorRepo;
+import com.mit.navigation.repositories.IndoorLocationRepo;
+import com.mit.navigation.repositories.MapLevelRepo;
+import com.mit.navigation.repositories.MapTileRepo;
+import com.mit.navigation.repositories.NavigationPointRepo;
+import com.mit.navigation.responses.BoothCategoryResponse;
+import com.mit.navigation.responses.BoothProductResponse;
+import com.mit.navigation.responses.BoothProductShortResponse;
+import com.mit.navigation.responses.BoothResponse;
+import com.mit.navigation.responses.BoothShortResponse;
+import com.mit.navigation.responses.FloorResponse;
+import com.mit.navigation.responses.FloorShortResponse;
+import com.mit.navigation.responses.IndoorLocationResponse;
+import com.mit.navigation.responses.MapLevelResponse;
+import com.mit.navigation.responses.RouteListResponse;
+import com.mit.navigation.responses.RouteResponse;
+import com.mit.navigation.responses.TalkResponse;
+import com.mit.navigation.utils.MapUtils;
+import com.mit.rabbitmq.RabbitRoutingKey;
+import com.mit.react.entities.Comment;
+import com.mit.react.entities.Rating;
+import com.mit.react.entities.ReactStat;
+import com.mit.react.entities.UserStat;
+import com.mit.react.repositories.CommentRepo;
+import com.mit.react.repositories.LiveRepo;
+import com.mit.react.repositories.RatingRepo;
+import com.mit.react.repositories.ReactStatRepo;
+import com.mit.react.repositories.UserStatRepo;
+import com.mit.react.responses.ProductCommentResponse;
+import com.mit.react.services.ReactService;
+import com.mit.user.entities.Profile;
+import com.mit.user.entities.Speaker;
+import com.mit.user.entities.UserLocation;
+import com.mit.user.repositories.ProfileRepo;
+import com.mit.user.repositories.SpeakerRepo;
+import com.mit.user.responses.SpeakerResponse;
+import com.mit.user.responses.UserLocationResponse;
+import com.mit.user.services.UserService;
+
+/**
+ * Created by Lap Pham on 6/19/17.
+ */
+
+@Service
+public class NavigationService {
+	private final Logger logger = LoggerFactory.getLogger(NavigationService.class);
+
+    @Autowired
+    private FloorRepo floorRepo;
+    @Autowired
+    private MapLevelRepo mapLevelRepo;
+    @Autowired
+    private ElasticBoothRepo elasticBoothRepo;
+    @Autowired
+    private ReactStatRepo reactStatRepo;
+    @Autowired
+    private IndoorLocationRepo indoorLocationRepo;
+    @Autowired
+    private BoothCategoryRepo boothCategoryRepo;
+    @Autowired
+    private LiveRepo liveRepo;
+    @Autowired
+    private EventRepo eventRepo;
+    @Autowired
+    private BannerService bannerService;
+    @Autowired
+    private CommentRepo commentRepo;
+    @Autowired
+    private ReactService reactService;
+    @Autowired
+    private RatingRepo ratingRepo;
+    @Autowired
+    private SpeakerRepo speakerRepo;
+    @Autowired
+    private ElasticBoothProductRepo elasticBoothProductRepo;
+    @Autowired
+    private BoothProductRepo boothProductRepo;
+    @Autowired
+    private ElevatorRepo elevatorRepo;
+    @Autowired
+    private EscalatorRepo escalatorRepo;
+    @Autowired
+    private NavigationPointRepo navigationPointRepo;
+    @Autowired
+    private ProfileRepo profileRepo;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+    @Autowired
+    private AdvertisementRepo advertisementRepo;
+    @Autowired
+    private MapTileRepo mapTileRepo;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private UserStatRepo userStatRepo;
+    
+    public MapTile getTile(Point point, long floorId, int level) {
+    	try {
+	    	int tileInRows = (int)Math.pow(2, level - 1);
+	    	int tileX = (int) (point.getX()*tileInRows);
+	    	int tileY = (int) (point.getY()*tileInRows);
+	    	tileX = Math.min(tileX, tileInRows - 1);
+	    	tileY = Math.min(tileY, tileInRows - 1);
+	    	String quadKey = MapUtils.tileXYToQuadKey(tileX, tileY, level);
+	    	MapLevel mapLevel = mapLevelRepo.getByFloorAndLevel(floorId, level);
+	    	return mapTileRepo.getByLevelIdAndQuadKey(mapLevel.getId(), quadKey);
+    	} catch (Exception e) {
+    		return null;
+    	}
+    }
+    
+    public MapTile getTile(int tileX, int tileY, long floorId, int level) {
+    	try {
+	    	String quadKey = MapUtils.tileXYToQuadKey(tileX, tileY, level);
+	    	MapLevel mapLevel = mapLevelRepo.getByFloorAndLevel(floorId, level);
+	    	return mapTileRepo.getByLevelIdAndQuadKey(mapLevel.getId(), quadKey);
+    	} catch (Exception e) {
+    		return null;
+    	}
+    }
+
+    public List<FloorShortResponse> getListFloor(long eventId) {
+        List<Floor> floors = floorRepo.getList(eventId);
+        return getListFloor(floors);
+    }
+
+    public List<FloorShortResponse> getListFloor(List<Floor> floors) {
+        List<Long> floorIds = new ArrayList<>(floors.size());
+        for (Floor floor: floors) {
+            floorIds.add(floor.getId());
+        }
+
+        Map<Long, List<MapLevelResponse>> mapLevelResponseMap = getMapLevelList(floorIds);
+        List<FloorShortResponse> floorShortResponses = new ArrayList<>(floors.size());
+        for (Floor floor: floors) {
+            floorShortResponses.add(new FloorShortResponse(floor, mapLevelResponseMap.get(floor.getId())));
+        }
+
+        return floorShortResponses;
+    }
+
+    public Map<Long, List<MapLevelResponse>> getMapLevelList(List<Long> floorIds) {
+        Map<Long, List<MapLevel>> mapLevelMap = mapLevelRepo.getMapByListFloorIds(floorIds);
+
+        Map<Long, List<MapLevelResponse>> mapLevelResponseMap = new HashMap<>();
+        for (Map.Entry<Long, List<MapLevel>> mapLevelEntry: mapLevelMap.entrySet()) {
+            List<MapLevel> mapLevels = mapLevelEntry.getValue();
+            List<MapLevelResponse> mapLevelResponses = new ArrayList<>(mapLevels.size());
+
+            for (MapLevel mapLevel: mapLevels) {
+                mapLevelResponses.add(new MapLevelResponse(mapLevel));
+            }
+            mapLevelResponseMap.put(mapLevelEntry.getKey(), mapLevelResponses);
+        }
+
+        return mapLevelResponseMap;
+    }
+
+    public FloorResponse getFloorDetail(long floorId) {
+        Floor floor = floorRepo.getById(floorId);
+        if (floor == null) {
+            return null;
+        }
+
+        Map<Long, List<MapLevelResponse>> mapLevels = getMapLevelList(Arrays.asList(floorId));
+        return  new FloorResponse(floor, mapLevels.get(floorId));
+    }
+
+    public List<BoothCategoryResponse> getListBoothCategory(long eventId, long userId) {
+        List<BoothCategory> categories = boothCategoryRepo.getList(eventId);
+        List<BoothCategoryResponse> categoryResponses = buildBoothCategoryResponse(categories);
+        if (userId > 0) {
+            Profile profile = profileRepo.getById(userId);
+            List<Long> boothCategoryIds = profile != null && profile.getInterestCategoryIds() != null ? profile.getInterestCategoryIds().get(eventId) : null;
+            if (boothCategoryIds != null) {
+                Set<Long> interestCategoryIds = new HashSet<>(boothCategoryIds);
+                for (BoothCategoryResponse categoryResponse: categoryResponses) {
+                    categoryResponse.setFollowed(interestCategoryIds.contains(categoryResponse.getId()));
+                }
+            }
+        }
+
+        return categoryResponses;
+    }
+
+    public Map<String, Object> getBoothList(long eventId, long categoryId, long floorId, double x, double y, String query, boolean isFeature,
+                                            int from, int size, String imei, SortOption boothSortOption, long userId) {
+        Map<String, Object> rs = new HashMap<String, Object>();
+        int page = getPage(from, size);
+        List<Long> boothIds;
+        List<Long> categoryIds = new LinkedList<>();
+        if (categoryId > 0) {
+        	categoryIds.add(categoryId);
+        } else {
+        	Profile profile = profileRepo.getById(userId);
+        	if (profile != null && profile.getInterestCategoryIds()!= null) {
+        		if (eventId > 0) {
+        			if (profile.getInterestCategoryIds().containsKey(eventId)) {
+        				categoryIds.addAll(profile.getInterestCategoryIds().get(eventId));
+        			}
+        		} else {
+        			for (List<Long> key: profile.getInterestCategoryIds().values()) {
+        				if (key != null) {
+        					categoryIds.addAll(key);
+        				}
+        			}
+        		}
+        	}
+        }
+        if (boothSortOption == SortOption.AZ) {
+            boothIds = elasticBoothRepo.page2Ids(elasticBoothRepo.findAZ(eventId, categoryIds, floorId, query, isFeature, page, size));
+        } else if (boothSortOption == SortOption.ZA) {
+            boothIds = elasticBoothRepo.page2Ids(elasticBoothRepo.findZA(eventId, categoryIds, floorId, query, isFeature, page, size));
+        } else if (boothSortOption == SortOption.ONLINE) {
+            boothIds = getTopBoothByOnline(eventId, size);
+        } else {
+            boothIds = elasticBoothRepo.page2Ids(elasticBoothRepo.findDefault(eventId, categoryIds, floorId, query, isFeature, page, size));
+        }
+
+        boolean hasMore = false;
+        if (boothIds.size() >= size) {
+            hasMore = true;
+            boothIds = boothIds.subList(0, size);
+        }
+
+        List<BoothShortResponse> booths = getBoothByIdList(boothIds, userId);
+        rs.put("booths", booths);
+        rs.put("hasMore", hasMore);
+
+        return rs;
+    }
+    
+    public int getPage(int from, int count) {
+    	if (from % count == 0) {
+    		return from/count;
+    	}
+    	return from/count + 1;
+    }
+
+    public List<BoothShortResponse> getBoothByIdList(List<Long> boothIds, long userId) {
+        Map<Long, IndoorLocation> booths = indoorLocationRepo.getMapByIds(boothIds);
+
+        Set<Long> eventIds = new HashSet<>();
+        Set<Long> floorIds = new HashSet<>();
+        Set<Long> categoryIds = new HashSet<>();
+        for (IndoorLocation booth: booths.values()) {
+            eventIds.add(booth.getEventId());
+            floorIds.add(booth.getFloorId());
+
+            if (booth instanceof Booth) {
+                Booth b = (Booth) booth;
+                categoryIds.add(b.getCategoryId());
+            }
+        }
+
+        Map<Long, Event> eventMap = eventRepo.getMapFromIds(new ArrayList<>(eventIds));
+
+        List<Long> floorIdList = new LinkedList<>(floorIds);
+        Map<Long, List<MapLevelResponse>> mapLevels = getMapLevelList(floorIdList);
+
+        Map<Long, Floor> floors = floorRepo.getMapByIds(floorIdList);
+        Map<Long, FloorShortResponse> floorViews = new HashMap<>();
+        for (Floor floor: floors.values()) {
+            floorViews.put(floor.getId(), new FloorShortResponse(floor, mapLevels.get(floor.getId())));
+        }
+
+        Map<Long, BoothCategory> categories = boothCategoryRepo.getMapByIds(new ArrayList<>(categoryIds));
+        Map<Long, BoothCategoryResponse> categoryViews = new HashMap<>();
+        for (BoothCategory category: categories.values()) {
+            categoryViews.put(category.getId(), new BoothCategoryResponse(category));
+        }
+
+        Map<Long, List<ReactStat>> statMap = reactStatRepo.getMapByObjectAndType(ObjectType.BOOTH.getValue(), boothIds);
+
+        List<BoothShortResponse> boothViews = new ArrayList<>(boothIds.size());
+        for (Long boothId: boothIds) {
+            Booth booth = (Booth)booths.get(boothId);
+            if (booth != null) {
+                FloorShortResponse floorShortResponse = floorViews.get(booth.getFloorId());
+                List<ReactStat> stats = statMap.get(boothId);
+                int totalOnline = 0;
+                Event event = eventMap.get(booth.getEventId());
+
+                if (event.getStatus() == EventStatus.ONGOING.getValue()) {
+                    if (floorShortResponse != null) {
+                        Point location = booth.getPoint();
+                        totalOnline = liveRepo.getTotalBoothLive(booth.getEventId(), booth.getFloorId(),
+                                floorShortResponse.getActualWidth(), floorShortResponse.getActualWidth(), location);
+                    }
+                }
+
+                boothViews.add(new BoothShortResponse(booth, floorShortResponse, stats, totalOnline, userId));
+            }
+        }
+
+        return boothViews;
+    }
+
+    public List<Long> getTopBoothByOnline(long eventId, int size) {
+        List<Long> boothIdsResult = new ArrayList<>();
+        List<Long> boothIds = indoorLocationRepo.getListId(eventId, IndoorLocationType.BOOTH.getValue());
+        List<Integer> lives = new ArrayList<>();
+        Map<Long, Floor> floorMap = floorRepo.getMapByEvent(eventId);
+        if (boothIds != null) {
+            for (long boothId : boothIds) {
+                Booth booth = (Booth)indoorLocationRepo.getById(boothId);
+                Floor floor = floorMap.get(booth.getFloorId());
+                int live = liveRepo.getTotalBoothLive(eventId, booth.getFloorId(), floor.getActualWidth(), floor.getActualHeight(), booth.getPoint());
+                for (int idx = 0; idx < size; idx ++) {
+                    if (live > lives.get(idx)) {
+                        lives.add(idx, live);
+                        boothIdsResult.add(idx, boothId);
+                        break;
+                    }
+                }
+            }
+        }
+        if (boothIdsResult.size() > size) {
+            boothIdsResult = boothIdsResult.subList(0, size);
+        }
+        return boothIdsResult;
+    }
+
+    public Map<String, Object> getTopBoothNearby(long eventId, long floorId, Point location, int from, int size, long userId) {
+        Map<String, Object> rs = new HashMap<>();
+        List<IndoorLocation> booths = indoorLocationRepo.getAllByType(0, floorId, IndoorLocationType.BOOTH.getValue(), true);
+        Floor floor = floorRepo.getById(floorId);
+        List<Long> boothIds = new ArrayList<>();
+        Map<Long, Double> distanceMap = new HashMap<>();
+        List<Double> distances = new ArrayList<>();
+        for (int idx = 0; idx < size + from + 1; idx++) {
+            distances.add(idx, Double.MAX_VALUE);
+        }
+        if (booths != null) {
+            for (IndoorLocation indoor : booths) {
+                Booth booth = (Booth)indoor;
+                double distance = calcDistance(location, booth.getPoint(), floor.getActualWidth(), floor.getActualHeight());
+                distanceMap.put(booth.getId(), distance);
+                for (int idx = 0; idx < size + from + 1; idx ++) {
+                    if (distance < distances.get(idx)) {
+                        distances.add(idx, distance);
+                        boothIds.add(idx, booth.getId());
+                        break;
+                    }
+                }
+            }
+        }
+
+        boolean hasMore = false;
+        if (boothIds.size() > from) {
+            if (boothIds.size() > size + from) {
+                hasMore = true;
+                boothIds = boothIds.subList(from, size + from);
+            } else {
+                boothIds = boothIds.subList(from, boothIds.size());
+            }
+        } else {
+            boothIds = Collections.emptyList();
+        }
+
+        List<BoothShortResponse> boothViews = getBoothByIdList(boothIds, userId);
+        rs.put("booths", boothViews);
+        rs.put("hasMore", hasMore);
+
+        return rs;
+    }
+
+    public double calcDistance(Point p, Point v1, Point v2, double floorWidth, double floorHeight) {
+        p = p.multiply(floorWidth, floorHeight);
+        v1 = v1.multiply(floorWidth, floorHeight);
+        v2 = v2.multiply(floorWidth, floorHeight);
+        double a = v2.getY() - v1.getY();
+        double b = -(v2.getX() - v1.getX());
+        double c = -(v2.getY() - v1.getY()) * v1.getX() + (v2.getX() - v1.getX()) * v1.getY();
+
+        return Math.abs(a * p.getX() + b * p.getY() + c) / Math.sqrt(a * a + b * b);
+    }
+
+    public double calcDistance(Point v1, Point v2, double floorWidth, double floorHeight) {
+        return v1.subtract(v2).multiply(floorWidth, floorHeight).length();
+    }
+
+    public BoothResponse getBoothDetail(long boothId, long userId) {
+        IndoorLocation location = indoorLocationRepo.getById(boothId);
+
+        if (location != null && location instanceof Booth) {
+            Booth booth = (Booth) location;
+            return buildBoothResponse(booth, userId);
+        } else {
+            return null;
+        }
+    }
+
+    public List<IndoorLocationResponse> getTopBoothInRange(long eventId, long floorId, int size, String quadKey, int tileWidth, int tileHeight, int type, long userId) {
+        TilePosition position = MapUtils.quadKeyToTileXY(quadKey);
+        List<IndoorLocationResponse> boothViews = Collections.emptyList();
+        if (position != null) {
+            MapLevel ml = mapLevelRepo.getByFloorAndLevel(floorId, position.getLevel());
+            if (ml != null) {
+                double top = (double) position.getTileY() / Math.pow(2, position.getLevel() - 1);
+                double left = (double) position.getTileX() / Math.pow(2, position.getLevel() - 1);
+                double width = (double) tileWidth * ml.getTilePcW();
+                double height = (double) tileHeight * ml.getTilePcH();
+                List<Long> boothIds = null;
+                if (type == 2) {
+                    boothIds = getTopBoothByOnlineInRange(eventId, floorId, size, left, top, width, height);
+                } else {
+                    MapLevel maxMapLevel = mapLevelRepo.getMaxLevel(floorId);
+                    int maxLevel = maxMapLevel.getLevel();
+                    boolean isGetFeature = ml.getLevel() < maxLevel * 0.75;
+                    boothIds = indoorLocationRepo.getListIdInRange(floorId, 0, left, top, width, height, isGetFeature);
+                }
+                if (boothIds.size() > 0) {
+                    boothViews = getIndoorLocationByIdList(boothIds, userId);
+                }
+            }
+        }
+
+        return boothViews;
+    }
+
+    public List<IndoorLocationResponse> getIndoorLocationByIdList(List<Long> locIds, long userId) {
+        Map<Long, IndoorLocation> locs = indoorLocationRepo.getMapByIds(locIds);
+
+        Set<Long> floorIds = new HashSet<>();
+        Set<Long> categoryIds = new HashSet<>();
+        List<Long> boothIds = new LinkedList<>();
+        List<Long> speakerIds = new LinkedList<>();
+        List<Long> eventIds = new LinkedList<>();
+        for (IndoorLocation loc: locs.values()) {
+            floorIds.add(loc.getFloorId());
+
+            if (loc instanceof Booth) {
+                Booth b = (Booth) loc;
+                boothIds.add(b.getId());
+                eventIds.add(b.getEventId());
+                categoryIds.add(b.getCategoryId());
+            } else if (loc instanceof Talk) {
+                Talk talk = (Talk)loc;
+                speakerIds.add(talk.getSpeakerId());
+            }
+        }
+
+        List<Long> floorIdList = new LinkedList<>(floorIds);
+
+        List<Floor> floors = floorRepo.getListByIds(floorIdList);
+        List<FloorShortResponse> floorResponses = getListFloor(floors);
+        Map<Long, FloorShortResponse> floorViews = new HashMap<>();
+        for (FloorShortResponse floor: floorResponses) {
+            floorViews.put(floor.getId(), floor);
+        }
+
+        List<BoothCategory> categories =  boothCategoryRepo.getListByIds(new LinkedList<>(categoryIds));
+        List<BoothCategoryResponse> boothCategoryResponses = buildBoothCategoryResponse(categories);
+        Map<Long, BoothCategoryResponse> categoryViews = new HashMap<>();
+        for (BoothCategoryResponse category: boothCategoryResponses) {
+            categoryViews.put(category.getId(), category);
+        }
+
+        Map<Long, List<ReactStat>> statMap = reactStatRepo.getMapByObjectAndType(ObjectType.BOOTH.getValue(), boothIds);
+        List<Speaker> speakers = speakerRepo.getListByIds(speakerIds);
+        List<SpeakerResponse> speakerResponses = new ArrayList<>(speakerIds.size());
+        for (Speaker speaker: speakers) {
+            speakerResponses.add(new SpeakerResponse(speaker));
+        }
+        Map<Long, SpeakerResponse> speakerResponseMap = new HashMap<>();
+        for (SpeakerResponse speakerResponse: speakerResponses) {
+            speakerResponseMap.put(speakerResponse.getId(), speakerResponse);
+        }
+
+        Map<Long, Event> eventMap = eventRepo.getMapFromIds(eventIds);
+
+        List<IndoorLocationResponse> locViews = new ArrayList<>(locIds.size());
+        for (Long locId: locIds) {
+            IndoorLocation loc = locs.get(locId);
+            if (loc != null) {
+                FloorShortResponse floorResponse = floorViews.get(loc.getFloorId());
+                locViews.add(buildIndoorLocationResponse(loc, floorResponse, eventMap, statMap, userId, speakerResponseMap));
+            }
+        }
+
+        return locViews;
+    }
+
+    public List<Long> getTopBoothByOnlineInRange(long eventId, long floorId, int size, double left, double top, double width, double height) {
+        List<Long> boothIdsResult = new ArrayList<>();
+        List<Long> boothIds = indoorLocationRepo.getListIdInRange(floorId, IndoorLocationType.BOOTH.getValue(), left, top, width, height);
+        Floor floor = floorRepo.getById(floorId);
+        List<Integer> lives = new ArrayList<>();
+        for (int idx = 0; idx < size; idx++) {
+            lives.add(idx, Integer.MIN_VALUE);
+        }
+        if (boothIds != null) {
+            for (long id : boothIds) {
+                Booth booth = (Booth)indoorLocationRepo.getById(id);
+                int live = liveRepo.getTotalBoothLive(eventId, floorId, floor.getActualWidth(), floor.getActualHeight(), booth.getPoint());
+                for (int idx = 0; idx < size; idx ++) {
+                    if (live > lives.get(idx)) {
+                        lives.add(idx, live);
+                        boothIdsResult.add(idx, booth.getId());
+                        break;
+                    }
+                }
+            }
+        }
+        if (boothIdsResult.size() > size) {
+            boothIdsResult = boothIdsResult.subList(0, size);
+        }
+        return boothIdsResult;
+    }
+
+    public BoothResponse buildBoothResponse(Booth booth, long userId) {
+        FloorShortResponse floorShortResponse = getFloorDetail(booth.getFloorId());
+        List<ReactStat> reactStats = reactStatRepo.getByObject(new ObjectRef(ObjectType.BOOTH.getValue(), booth.getId()));
+        int totalOnline = 0;
+        Event event = eventRepo.getById(booth.getEventId());
+
+        if (event.getStatus() == EventStatus.ONGOING.getValue()) {
+            if (floorShortResponse != null) {
+                totalOnline = liveRepo.getTotalBoothLive(booth.getEventId(), booth.getFloorId(),
+                        floorShortResponse.getActualWidth(), floorShortResponse.getActualWidth(), booth.getPoint());
+            }
+        }
+        List<BannerResponse> banners = bannerService.getListBanner(ObjectType.BOOTH.getValue(), booth.getId());
+
+        ProductCommentResponse commentResponse = null;
+        Comment lstComment = commentRepo.getLastComment(new ObjectRef(ObjectType.BOOTH.getValue(), booth.getId()));
+        if (lstComment != null) {
+            commentResponse = reactService.buildProductCommentResponse(userId, lstComment);
+        }
+
+        Rating myRate = ratingRepo.getByObjectAndUser(ObjectType.BOOTH.getValue(), booth.getId(), userId);
+        boolean isRated = false;
+        double myRatingPoint = 0;
+
+        if (myRate != null) {
+            isRated = true;
+            myRatingPoint = myRate.getPoint();
+        }
+        
+        EventShortResponse eventSR = new EventShortResponse();
+        eventSR.setId(event.getId());
+        eventSR.setName(event.getName());
+
+        BoothResponse boothView = new BoothResponse(booth, floorShortResponse, reactStats, totalOnline, userId,
+                banners, commentResponse, isRated, myRatingPoint, eventSR);
+
+        return boothView;
+    }
+
+    public List<BoothCategoryResponse> buildBoothCategoryResponse(List<BoothCategory> categories) {
+        List<BoothCategoryResponse> categoryResponses = new ArrayList<>(categories.size());
+        for (BoothCategory category: categories) {
+            categoryResponses.add(new BoothCategoryResponse(category));
+        }
+
+        return categoryResponses;
+    }
+
+    public IndoorLocationResponse buildIndoorLocationResponse(IndoorLocation loc, FloorShortResponse floorResponse,
+                                                              Map<Long, Event> eventMap,
+                                                              Map<Long, List<ReactStat>> reactStatMap,
+                                                              long userId, Map<Long, SpeakerResponse> speakerMap) {
+        if (loc instanceof Booth) {
+            Booth booth = (Booth)loc;
+            Event event = eventMap.get(booth.getEventId());
+            List<ReactStat> reactStats = reactStatMap.get(booth.getId());
+            int totalOnline = 0;
+            if (event.getStatus() == EventStatus.ONGOING.getValue()) {
+                if (floorResponse != null) {
+                    totalOnline = liveRepo.getTotalBoothLive(booth.getEventId(), booth.getFloorId(),
+                            floorResponse.getActualWidth(), floorResponse.getActualWidth(), booth.getPoint());
+                }
+            }
+            return new BoothShortResponse(booth, floorResponse, reactStats, totalOnline, userId);
+        } else if (loc instanceof Talk) {
+            Talk talk = (Talk)loc;
+            return new TalkResponse(talk, floorResponse, speakerMap.get(talk.getSpeakerId()));
+        } else {
+            return new IndoorLocationResponse(loc, floorResponse);
+        }
+    }
+
+    public Map<String, Object> getProductList(long boothId, long eventId, String query, boolean isFeature,
+                                               int from, int size, String imei, ProductSortOption boothSortOption, long userId) {
+        Map<String, Object> rs = new HashMap<>();
+        int page = getPage(from, size);
+        List<Long> productIds;
+        if (boothSortOption == ProductSortOption.AZ) {
+            productIds = elasticBoothProductRepo.page2Ids(elasticBoothProductRepo.findAZ(boothId, eventId, query, isFeature, page, size));
+        } else if (boothSortOption == ProductSortOption.ZA) {
+            productIds = elasticBoothProductRepo.page2Ids(elasticBoothProductRepo.findZA(boothId, eventId, query, isFeature, page, size));
+        } else {
+            productIds = elasticBoothProductRepo.page2Ids(elasticBoothProductRepo.findDefault(boothId, eventId, query, isFeature, page, size));
+        }
+
+        boolean hasMore = false;
+        if (productIds.size() >= size) {
+            hasMore = true;
+            productIds = productIds.subList(0, size);
+        }
+
+        List<BoothProductShortResponse> products = getProductByIdList(productIds, userId);
+
+        rs.put("products", products);
+        rs.put("hasMore", hasMore);
+
+        return rs;
+    }
+
+    public List<BoothProductShortResponse> getProductByIdList(List<Long> productIds, long userId) {
+        Map<Long, BoothProduct> products = boothProductRepo.getMapByIds(productIds);
+
+        Set<Long> boothIds = new HashSet<>();
+        for (BoothProduct product: products.values()) {
+            boothIds.add(product.getBoothId());
+        }
+
+        List<BoothShortResponse> booths = getBoothByIdList(new ArrayList<>(boothIds), userId);
+        Map<Long, BoothShortResponse> boothMap = new HashMap<>();
+        for (BoothShortResponse booth: booths) {
+            boothMap.put(booth.getId(), booth);
+        }
+
+        List<BoothProductShortResponse> productViews = new ArrayList<>(productIds.size());
+        for (Long productId: productIds) {
+            BoothProduct product = products.get(productId);
+            BoothProductShortResponse productView = new BoothProductShortResponse(product, boothMap.get(product.getBoothId()));
+
+            productViews.add(productView);
+        }
+
+        return productViews;
+    }
+
+    public BoothProductResponse getProductDetail(long productId, long userId) {
+        BoothProduct product = boothProductRepo.getById(productId);
+
+        if (product != null) {
+            List<ReactStat> reactStats = reactStatRepo.getByObject(new ObjectRef(ObjectType.PRODUCT.getValue(), product.getId()));
+
+            List<BoothShortResponse> boothResponses = getBoothByIdList(Arrays.asList(product.getBoothId()), userId);
+            BoothShortResponse boothResponse = null;
+            if (boothResponses != null && !boothResponses.isEmpty()) {
+                boothResponse = boothResponses.get(0);
+            }
+
+            ProductCommentResponse commentResponse = null;
+            Comment lstComment = commentRepo.getLastComment(new ObjectRef(ObjectType.PRODUCT.getValue(), product.getId()));
+            if (lstComment != null) {
+                commentResponse = reactService.buildProductCommentResponse(userId, lstComment);
+            }
+
+            Rating myRate = ratingRepo.getByObjectAndUser(ObjectType.PRODUCT.getValue(), product.getId(), userId);
+
+            if (boothResponses != null && !boothResponses.isEmpty()) {
+            	Event event = eventRepo.getById(product.getEventId());
+            	EventShortResponse eventSR = new EventShortResponse();
+            	eventSR.setId(event.getId());
+            	eventSR.setName(event.getName());
+            	
+                BoothProductResponse boothProductResponse = new BoothProductResponse(product, boothResponse, reactStats, userId, commentResponse, myRate, eventSR);
+                return boothProductResponse;
+            }
+        }
+
+        return null;
+    }
+    
+    public RouteListResponse findRoute(Point fromPt, long fromFloorId, long boothId, Point toPt, long toFloorId, long toBoothId) {
+    	if (boothId > 0) {
+    		IndoorLocation fromBooth = indoorLocationRepo.getById(boothId);
+    		fromPt = new Point(fromBooth.getPoint().getX(), fromBooth.getPoint().getY());
+    		fromFloorId = fromBooth.getFloorId();
+    	}
+    	if (toBoothId > 0) {
+    		IndoorLocation toBooth = indoorLocationRepo.getById(toBoothId);
+    		toPt = new Point(toBooth.getPoint().getX(), toBooth.getPoint().getY());
+    		toFloorId = toBooth.getFloorId();
+    	}
+//    	if (boothId > 0) {
+//    		IndoorLocation toBooth = indoorLocationRepo.getById(boothId);
+//    		toPt = new Point(toBooth.getPoint().getX(), toBooth.getPoint().getY());
+//    		toFloorId = toBooth.getFloorId();
+//    	}
+    	return findRoute(fromPt, fromFloorId, toPt, toFloorId);
+    }
+
+    public RouteListResponse findRoute(Point p, long floorId, long boothId) {
+        IndoorLocation booth = indoorLocationRepo.getById(boothId);
+        return findRoute(p, floorId, new Point(booth.getPoint().getX(), booth.getPoint().getY()), booth.getFloorId());
+    }
+
+    public RouteListResponse findRoute(Point fromPt, long fromFloorId, Point toPt, long toFloorId) {
+    	RouteListResponse routeListResponse = new RouteListResponse();
+        routeListResponse.setX(toPt.getX());
+        routeListResponse.setY(toPt.getY());
+        routeListResponse.setFloorId(toFloorId);
+    	try {
+	        Map<String, Object> rs = new HashMap<>();
+	        List<Route> routes = new LinkedList<>();
+	
+	        List<Floor> floors;
+	        List<Long> floorIds;
+	        if (fromFloorId != toFloorId) {
+	            floorIds = Arrays.asList(fromFloorId, toFloorId);
+	            floors = floorRepo.getListByIds(floorIds);
+	            Map<Long, Floor> floorMap = new HashMap<>();
+	            for (Floor floor: floors) {
+	                floorMap.put(floor.getId(), floor);
+	            }
+	            int direction = 0;
+	            int fromFloorNumber, toFloorNumber;
+	            if (floors.get(0).getNumber() < floors.get(1).getNumber()) {
+	                fromFloorNumber = floors.get(0).getNumber();
+	                toFloorNumber = floors.get(1).getNumber();
+	
+	                if (floors.get(0).getId() == fromFloorId) {
+	                    direction = FloorDirection.UP.getValue();
+	                } else {
+	                    direction = FloorDirection.DOWN.getValue();
+	                }
+	            } else {
+	                fromFloorNumber = floors.get(1).getNumber();
+	                toFloorNumber = floors.get(0).getNumber();
+	
+	                if (floors.get(0).getId() == fromFloorId) {
+	                    direction = FloorDirection.DOWN.getValue();
+	                } else {
+	                    direction = FloorDirection.UP.getValue();
+	                }
+	            }
+	            List<Elevator> elevators = elevatorRepo.getListBetweenFloor(floors.get(0).getEventId(), fromFloorNumber, toFloorNumber);
+	            Map<Long, NavigationPoint> curFloorNavPts = navigationPointRepo.getMapByFloorId(fromFloorId);
+	            Map<Long, NavigationPoint> boothFloorNavPts = navigationPointRepo.getMapByFloorId(toFloorId);
+	
+	            double minDistance = -1;
+	            long minElevatorId = -1;
+	            Map<Long, Double> minCurMinDists = null;
+	            Map<Long, Long> minCurPrevPts = null;
+	            Map<Long, Double> minBoothMinDists = null;
+	            Map<Long, Long> minBoothPrevPts = null;
+	            Map<Long, ElevatorLocation> minElevatorLocations = null;
+	
+	            if (!elevators.isEmpty()) {
+	                for (Elevator elevator: elevators) {
+	                    Map<Long, ElevatorLocation> elevatorLocations = indoorLocationRepo.getMapElevatorOnFloors(elevator.getId(), floorIds);
+	
+	                    if (elevatorLocations.get(fromFloorId) == null || !elevatorLocations.get(fromFloorId).isLocated()) {
+	                        continue;
+	                    }
+	
+	                    Counter counter = new Counter();
+	                    NavigationPoint curPoint = attachLocationToMap(fromPt, curFloorNavPts, counter, floorMap.get(fromFloorId), true);
+	                    Point fromElevatorLocation = elevatorLocations.get(fromFloorId).getPoint();
+	                    NavigationPoint curElevatorPoint = attachLocationToMap(new Point(fromElevatorLocation.getX(), fromElevatorLocation.getY()),
+	                            curFloorNavPts, counter, floorMap.get(fromFloorId), true);
+	
+	                    Map<Long, Double> curMinDists = new HashMap<>();
+	                    Map<Long, Long> curPrevPts = new HashMap<>();
+	                    boolean succ = findFloorRoute(curPoint.getId(), curElevatorPoint.getId(), curFloorNavPts, curMinDists, curPrevPts, floorMap.get(fromFloorId));
+	                    resetNavigationPoints(curFloorNavPts);
+	
+	                    if (!succ) {
+	                        continue;
+	                    }
+	
+	                    Point toElevatorLocation = elevatorLocations.get(toFloorId).getPoint();
+	                    NavigationPoint boothElevatorPoint = attachLocationToMap(new Point(toElevatorLocation.getX(), toElevatorLocation.getY()),
+	                            boothFloorNavPts, counter, floorMap.get(toFloorId), true);
+	                    NavigationPoint boothPoint = attachLocationToMap(new Point(toPt.getX(), toPt.getY()), boothFloorNavPts, counter, floorMap.get(toFloorId), true);
+	
+	                    Map<Long, Double> boothMinDists = new HashMap<>();
+	                    Map<Long, Long> boothPrevPts = new HashMap<>();
+	                    succ = findFloorRoute(boothElevatorPoint.getId(), boothPoint.getId(), boothFloorNavPts, boothMinDists, boothPrevPts, floorMap.get(toFloorId));
+	                    resetNavigationPoints(boothFloorNavPts);
+	
+	                    if (!succ) {
+	                        continue;
+	                    }
+	
+	                    if (minDistance <= 0 || minDistance > curMinDists.get(curElevatorPoint.getId()) + boothMinDists.get(boothPoint.getId())) {
+	                        minDistance = curMinDists.get(curElevatorPoint.getId()) + boothMinDists.get(boothPoint.getId());
+	                        minElevatorId = elevator.getId();
+	                        minCurMinDists = curMinDists;
+	                        minCurPrevPts = curPrevPts;
+	                        minBoothMinDists = boothMinDists;
+	                        minBoothPrevPts = boothPrevPts;
+	                        minElevatorLocations = elevatorLocations;
+	                    }
+	                }
+	
+	                if (minElevatorId > 0) {
+	                    Counter counter = new Counter();
+	                    NavigationPoint curPoint = attachLocationToMap(fromPt, curFloorNavPts, counter, floorMap.get(fromFloorId), true);
+	                    Point fromMinElevatorLocation = minElevatorLocations.get(fromFloorId).getPoint();
+	                    NavigationPoint curElevatorPoint = attachLocationToMap(new Point(fromMinElevatorLocation.getX(), fromMinElevatorLocation.getY()),
+	                            curFloorNavPts, counter, floorMap.get(fromFloorId), true);
+	                    NavigationPoint boothElevatorPoint = attachLocationToMap(new Point(minElevatorLocations.get(toFloorId).getPoint().getX(), minElevatorLocations.get(toFloorId).getPoint().getY()),
+	                            boothFloorNavPts, counter, floorMap.get(toFloorId), true);
+	                    NavigationPoint boothPoint = attachLocationToMap(new Point(toPt.getX(), toPt.getY()), boothFloorNavPts, counter, floorMap.get(toFloorId), true);
+	
+	                    FloorRoute curRoute = buildFloorRoute(curPoint.getId(), curElevatorPoint.getId(), minCurMinDists, minCurPrevPts, curFloorNavPts, floorMap.get(fromFloorId));
+	                    curRoute.setFloorId(fromFloorId);
+	                    curRoute.setDirection(direction);
+	                    curRoute.setTransitMode(TransitMode.ELEVATOR.getValue());
+	                    Route route = new Route();
+	                    route.addFloorRoute(curRoute);
+	
+	                    FloorRoute boothRoute = buildFloorRoute(boothElevatorPoint.getId(), boothPoint.getId(), minBoothMinDists, minBoothPrevPts, boothFloorNavPts, floorMap.get(toFloorId));
+	                    boothRoute.setFloorId(toFloorId);
+	                    route.addFloorRoute(boothRoute);
+	
+	                    routes.add(route);
+	                }
+	            }
+	
+	            if (Math.abs(fromFloorNumber - toFloorNumber) == 1) {
+	                List<Escalator> escalators = escalatorRepo.getListBetweenFloor(floors.get(0).getEventId(), fromFloorNumber, toFloorNumber);
+	                
+	                if (!escalators.isEmpty()) {
+	                    resetNavigationPoints(boothFloorNavPts);
+	                    resetNavigationPoints(curFloorNavPts);
+	
+	                    minDistance = -1;
+	                    minElevatorId = -1;
+	                    minCurMinDists = null;
+	                    minCurPrevPts = null;
+	                    minBoothMinDists = null;
+	                    minBoothPrevPts = null;
+	                    Map<Long, EscalatorLocation> minEscalatorLocations = null;
+	
+	                    for (Escalator escalator: escalators) {
+	                        if (escalator.getDirection() == EscalatorDirection.BOTH.getValue() ||
+	                                (direction == FloorDirection.UP.getValue() && escalator.getDirection() == EscalatorDirection.UP.getValue()) ||
+	                                (direction == FloorDirection.DOWN.getValue() && escalator.getDirection() == EscalatorDirection.DOWN.getValue())) {
+	                            Map<Long, EscalatorLocation> escalatorLocations = indoorLocationRepo.getMapEscalatorOnFloors(escalator.getId(), floorIds);
+	                            
+	                            if (escalatorLocations.get(fromFloorId) == null || !escalatorLocations.get(fromFloorId).isLocated()) {
+	    	                        continue;
+	    	                    }
+	                            
+	                            Counter counter = new Counter();
+	                            NavigationPoint curPoint = attachLocationToMap(fromPt, curFloorNavPts, counter, floorMap.get(fromFloorId), true);
+	                            Point fromEscalatorLocation = escalatorLocations.get(fromFloorId).getPoint();
+	                            NavigationPoint curElevatorPoint = attachLocationToMap(new Point(fromEscalatorLocation.getX(), fromEscalatorLocation.getY()),
+	                                    curFloorNavPts, counter, floorMap.get(fromFloorId), true);
+	
+	                            Map<Long, Double> curMinDists = new HashMap<>();
+	                            Map<Long, Long> curPrevPts = new HashMap<>();
+	                            boolean succ = findFloorRoute(curPoint.getId(), curElevatorPoint.getId(), curFloorNavPts, curMinDists, curPrevPts, floorMap.get(fromFloorId));
+	                            resetNavigationPoints(curFloorNavPts);
+	
+	                            if (!succ) {
+	                                continue;
+	                            }
+	
+	                            Point toEscalatorLocation = escalatorLocations.get(toFloorId).getPoint();
+	                            NavigationPoint boothElevatorPoint = attachLocationToMap(new Point(toEscalatorLocation.getX(), toEscalatorLocation.getY()),
+	                                    boothFloorNavPts, counter, floorMap.get(fromFloorId), true);
+	                            NavigationPoint boothPoint = attachLocationToMap(new Point(toPt.getX(), toPt.getY()), boothFloorNavPts, counter, floorMap.get(fromFloorId), true);
+	
+	                            Map<Long, Double> boothMinDists = new HashMap<>();
+	                            Map<Long, Long> boothPrevPts = new HashMap<>();
+	                            succ = findFloorRoute(boothElevatorPoint.getId(), boothPoint.getId(), boothFloorNavPts, boothMinDists, boothPrevPts, floorMap.get(toFloorId));
+	                            resetNavigationPoints(boothFloorNavPts);
+	
+	                            if (!succ) {
+	                                continue;
+	                            }
+	
+	                            if (minDistance <= 0 || minDistance > curMinDists.get(curElevatorPoint.getId()) + boothMinDists.get(boothPoint.getId())) {
+	                                minDistance = curMinDists.get(curElevatorPoint.getId()) + boothMinDists.get(boothPoint.getId());
+	                                minElevatorId = escalator.getId();
+	                                minCurMinDists = curMinDists;
+	                                minCurPrevPts = curPrevPts;
+	                                minBoothMinDists = boothMinDists;
+	                                minBoothPrevPts = boothPrevPts;
+	                                minEscalatorLocations = escalatorLocations;
+	                            }
+	                        }
+	
+	                        if (minElevatorId > 0) {
+	                            Counter counter = new Counter();
+	                            NavigationPoint curPoint = attachLocationToMap(fromPt, curFloorNavPts, counter, floorMap.get(fromFloorId), true);
+	                            Point fromMinEscalatorLocation = minEscalatorLocations.get(fromFloorId).getPoint();
+	                            NavigationPoint curElevatorPoint = attachLocationToMap(new Point(fromMinEscalatorLocation.getX(), fromMinEscalatorLocation.getY()),
+	                                    curFloorNavPts, counter, floorMap.get(fromFloorId), true);
+	                            Point toMinEscalatorLocation = minEscalatorLocations.get(toFloorId).getPoint();
+	                            NavigationPoint boothElevatorPoint = attachLocationToMap(new Point(toMinEscalatorLocation.getX(), toMinEscalatorLocation.getY()),
+	                                    boothFloorNavPts, counter, floorMap.get(fromFloorId), true);
+	                            NavigationPoint boothPoint = attachLocationToMap(new Point(toPt.getX(), toPt.getY()), boothFloorNavPts, counter, floorMap.get(fromFloorId), true);
+	
+	                            FloorRoute curRoute = buildFloorRoute(curPoint.getId(), curElevatorPoint.getId(), minCurMinDists, minCurPrevPts, curFloorNavPts, floorMap.get(fromFloorId));
+	                            curRoute.setFloorId(fromFloorId);
+	                            curRoute.setDirection(direction);
+	                            curRoute.setTransitMode(TransitMode.ESCALATOR.getValue());
+	                            Route route = new Route();
+	                            route.addFloorRoute(curRoute);
+	
+	                            FloorRoute boothRoute = buildFloorRoute(boothElevatorPoint.getId(), boothPoint.getId(), minBoothMinDists, minBoothPrevPts, boothFloorNavPts, floorMap.get(toFloorId));
+	                            boothRoute.setFloorId(toFloorId);
+	                            route.addFloorRoute(boothRoute);
+	
+	                            routes.add(route);
+	                        }
+	                    }
+	                }
+	            }
+	        } else {
+	            floors = Arrays.asList(floorRepo.getById(fromFloorId));
+	            floorIds = Arrays.asList(fromFloorId);
+	            Map<Long, NavigationPoint> navPts = navigationPointRepo.getMapByFloorId(fromFloorId);
+	
+	            Counter counter = new Counter();
+	            NavigationPoint curPoint = attachLocationToMap(fromPt, navPts, counter, floors.get(0), true);
+	            NavigationPoint boothPoint = attachLocationToMap(new Point(toPt.getX(), toPt.getY()), navPts, counter, floors.get(0), true);
+	            Map<Long, Double> minDists = new HashMap<>();
+	            Map<Long, Long> prevPts = new HashMap<>();
+	            boolean succ = findFloorRoute(curPoint.getId(), boothPoint.getId(), navPts, minDists, prevPts, floors.get(0));
+	
+	            if (succ) {
+	                FloorRoute floorRoute = buildFloorRoute(curPoint.getId(), boothPoint.getId(), minDists, prevPts, navPts, floors.get(0));
+	                floorRoute.setFloorId(fromFloorId);
+	                floorRoute.setDirection(FloorDirection.NONE.getValue());
+	                Route route = new Route();
+	                route.addFloorRoute(floorRoute);
+	
+	                routes.add(route);
+	            }
+	        }
+	
+	        if (routes.size() > 1) {
+	            Collections.sort(routes, new Comparator<Route>() {
+	                @Override
+	                public int compare(Route r1, Route r2) {
+	                    return (int)(r1.getDistance() - r2.getDistance());
+	                }
+	            });
+	        }
+	
+	//        if (buildUserView) {
+	            Map<Long, List<MapLevelResponse>> mapLevels = getMapLevelList(floorIds);
+	            Map<Long, FloorShortResponse> floorViewMap = new HashMap<>();
+	            for (Floor floor: floors) {
+	                floorViewMap.put(floor.getId(), new FloorShortResponse(floor, mapLevels.get(floor.getId()), false));
+	            }
+	
+	            List<RouteResponse> routeViews = new ArrayList<>(routes.size());
+	            for (Route route: routes) {
+	                routeViews.add(new RouteResponse(route, floorViewMap));
+	            }
+	
+	            rs.put("routes", routeViews);
+	            routeListResponse.setFloor(floorViewMap.get(toFloorId));
+	            if (!CollectionUtils.isEmpty(routeViews)) {
+	            	routeListResponse.setRoutes(routeViews);
+	            	routeListResponse.setFound(true);
+	            }
+    	} catch (Exception e) {
+    		logger.info("Exception: ", e);
+    	}
+    	return routeListResponse;
+//        } else {
+//            rs.put("routes", routes);
+//        }
+
+//        return rs;
+    }
+
+    public boolean findFloorRoute(long srcId, long destId, Map<Long, NavigationPoint> navPoints, Map<Long, Double> minDists, Map<Long, Long> prevPts, Floor floor) {
+        Set<Long> ptSet = new HashSet<>();
+
+        for (long pId: navPoints.keySet()) {
+            ptSet.add(pId);
+        }
+
+        minDists.put(srcId, 0d);
+
+        while (!ptSet.isEmpty()) {
+            double minDist = -1;
+            long minPt = -1000;
+            for (long pId: ptSet) {
+                if (minDists.containsKey(pId) && (minDist < 0 || minDist > minDists.get(pId))) {
+                    minDist = minDists.get(pId);
+                    minPt = pId;
+                }
+            }
+
+            ptSet.remove(minPt);
+
+            if (minPt == destId) {
+                break;
+            }
+
+            NavigationPoint navPt = navPoints.get(minPt);
+
+            for (long adjPtId: navPt.getAdjPoints().keySet()) {
+                if (ptSet.contains(adjPtId)) {
+                    NavigationPoint adjPt = navPoints.get(adjPtId);
+                    double alt = minDists.get(minPt) + navPt.getPoint().subtract(adjPt.getPoint()).multiply(floor.getActualWidth(), floor.getActualHeight()).length();
+
+                    if (minDists.get(adjPtId) == null || alt < minDists.get(adjPtId)) {
+                        minDists.put(adjPtId, alt);
+                        prevPts.put(adjPtId, minPt);
+                    }
+                }
+            }
+        }
+
+        if (ptSet.contains(destId)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public NavigationPoint attachLocationToMap(Point p, Map<Long, NavigationPoint> navPts, Counter counter, Floor floor, boolean project) {
+        double minDist = -1;
+        long ancPt1Id = 0, ancPt2Id = 0;
+        for (NavigationPoint navPt: navPts.values()) {
+            if (navPt.getAdjPoints() == null) {
+                continue;
+            }
+
+            for (long adjPtId: navPt.getAdjPoints().keySet()) {
+                if (navPt.getId() < adjPtId) {
+                    NavigationPoint adjPt = navPts.get(adjPtId);
+
+                    if (adjPt != null) {
+                        double dist = calcDistance(p, navPt.getPoint(), adjPt.getPoint(), floor.getActualWidth(), floor.getActualHeight());
+
+                        if (minDist < 0 || minDist > dist) {
+                            Point projPt = getProjectedPointOnLine(p, navPt.getPoint(), adjPt.getPoint());
+                            double angle = calcAngle(navPt.getPoint(), projPt, adjPt.getPoint());
+
+                            if (Math.abs(angle) < 0.0001 || Math.abs(angle - 2*Math.PI) < 0.0001) {
+                                minDist = dist;
+                                ancPt1Id = navPt.getId();
+                                ancPt2Id = adjPtId;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (minDist < 0) {
+            for (NavigationPoint navPt: navPts.values()) {
+                for (long adjPtId: navPt.getAdjPoints().keySet()) {
+                    if (navPt.getId() < adjPtId) {
+                        NavigationPoint adjPt = navPts.get(adjPtId);
+
+                        if (adjPt != null) {
+                            double dist = calcDistance(p, navPt.getPoint(), adjPt.getPoint(), floor.getActualWidth(), floor.getActualHeight());
+
+                            if (minDist < 0 || minDist > dist) {
+                                minDist = dist;
+                                ancPt1Id = navPt.getId();
+                                ancPt2Id = adjPtId;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        NavigationPoint ancPt1 = navPts.get(ancPt1Id);
+        NavigationPoint ancPt2 = navPts.get(ancPt2Id);
+        NavigationPoint curPt;
+        if (project) {
+            Point projPt = getProjectedPointOnLine(p, ancPt1.getPoint(), ancPt2.getPoint());
+
+            curPt = new NavigationPoint(counter.getNext(), 0, p, null);
+            NavigationPoint navProjPt = new NavigationPoint(counter.getNext(), 0, projPt, null);
+
+            Map<Long, Double> curAdjPts = new HashMap<>();
+            curAdjPts.put(navProjPt.getId(), p.length(projPt));
+            curPt.setAdjPoints(curAdjPts);
+
+            Map<Long, Double> projAdjPts = new HashMap<>();
+            Set<Long> intersect = new HashSet<>(ancPt1.getAdjPoints().keySet());
+            intersect.retainAll(ancPt2.getAdjPoints().keySet());
+            for (long intPtId: intersect) {
+                NavigationPoint intPt = navPts.get(intPtId);
+                double angle = calcAngle(ancPt1.getPoint(), intPt.getPoint(), ancPt2.getPoint());
+
+                if (Math.abs(angle) < 0.0001 || Math.abs(angle - Math.PI) < 0.0001 || Math.abs(angle - 2*Math.PI) < 0.0001) {
+                    double distance = intPt.getPoint().length(projPt);
+                    projAdjPts.put(intPtId, distance);
+                    intPt.getAdjPoints().put(navProjPt.getId(), distance);
+                }
+            }
+
+            projAdjPts.put(ancPt1Id, projPt.length(ancPt1.getPoint()));
+            projAdjPts.put(ancPt2Id, projPt.length(ancPt2.getPoint()));
+            projAdjPts.put(curPt.getId(), curAdjPts.get(navProjPt.getId()));
+            navProjPt.setAdjPoints(projAdjPts);
+
+            ancPt1.getAdjPoints().put(navProjPt.getId(), projAdjPts.get(ancPt1Id));
+            ancPt2.getAdjPoints().put(navProjPt.getId(), projAdjPts.get(ancPt2Id));
+
+            navPts.put(navProjPt.getId(), navProjPt);
+            navPts.put(curPt.getId(), curPt);
+        } else {
+            Map<Long, Double> curAdjPts = new HashMap<>();
+            curAdjPts.put(ancPt1Id, p.length(ancPt1.getPoint()));
+            curAdjPts.put(ancPt2Id, p.length(ancPt2.getPoint()));
+
+            curPt = new NavigationPoint(counter.getNext(), 0, p, curAdjPts);
+            ancPt1.getAdjPoints().put(curPt.getId(), curAdjPts.get(ancPt1Id));
+            ancPt2.getAdjPoints().put(curPt.getId(), curAdjPts.get(ancPt2Id));
+            navPts.put(curPt.getId(), curPt);
+        }
+
+        return curPt;
+    }
+
+    public FloorRoute buildFloorRoute(long srcId, long destId, Map<Long, Double> minDists, Map<Long, Long> prevPts, Map<Long, NavigationPoint> navPoints, Floor floor) {
+        List<Path> paths = new LinkedList<>();
+        long ptId = destId;
+        long nextId = 0;
+        do {
+            long prePtId = prevPts.get(ptId);
+            if (ptId == destId) {
+                nextId = ptId;
+                ptId = prePtId;
+                continue;
+            }
+
+//			if (nextId == destId) {
+//				if (navPoints.get(nextId).getPoint().subtract(navPoints.get(ptId).getPoint()).multiply(floor.getActualWidth(), floor.getActualHeight()).length() < 1) {
+//					nextId = ptId;
+//					ptId = prePtId;
+//					continue;
+//				}
+//			}
+
+            double angle = calcAngle(navPoints.get(prePtId).getPoint(), navPoints.get(ptId).getPoint(), navPoints.get(nextId).getPoint());
+
+            int direction = PathDirection.STRAIGHT.getValue();
+            if (angle >= Math.PI / 6 && angle < Math.PI / 3) {
+                direction = PathDirection.SLIGHT_LEFT.getValue();
+            } else if (angle >= Math.PI / 3 && angle < Math.PI) {
+                direction = PathDirection.LEFT.getValue();
+            } else if (angle <= Math.PI * 5 / 3 && angle >= Math.PI) {
+                direction = PathDirection.RIGHT.getValue();
+            } else if (angle > Math.PI * 5 / 3 && angle <= Math.PI * 11 / 6) {
+                direction = PathDirection.SLIGHT_RIGHT.getValue();
+            }
+
+            paths.add(0, new Path(navPoints.get(ptId).getPoint(),
+                    navPoints.get(nextId).getPoint(), direction,
+                    minDists.get(nextId) - minDists.get(ptId)));
+
+            nextId = ptId;
+            ptId = prePtId;
+        } while (ptId != srcId);
+
+//		if (navPoints.get(nextId).getPoint().subtract(navPoints.get(ptId).getPoint()).multiply(floor.getActualWidth(), floor.getActualHeight()).length() < 1) {
+//			paths.get(0).setDirection(PathDirection.STRAIGHT.getValue());
+//		} else {
+        paths.add(0, new Path(navPoints.get(ptId).getPoint(),
+                navPoints.get(nextId).getPoint(), PathDirection.STRAIGHT.getValue(),
+                minDists.get(nextId) - minDists.get(ptId)));
+//		}
+
+        return new FloorRoute(paths, minDists.get(destId));
+    }
+
+    public void resetNavigationPoints(Map<Long, NavigationPoint> navPoints) {
+        for (Iterator<Map.Entry<Long, NavigationPoint>> it = navPoints.entrySet().iterator(); it.hasNext();) {
+            Map.Entry<Long, NavigationPoint> entry = it.next();
+            if (entry.getKey() <= 0) {
+                it.remove();
+                continue;
+            }
+            
+            if (entry.getValue().getAdjPoints() != null) {
+	            for (Iterator<Map.Entry<Long, Double>> itAdj = entry.getValue().getAdjPoints().entrySet().iterator(); itAdj.hasNext();) {
+	                Map.Entry<Long, Double> entryAdj = itAdj.next();
+	                if (entryAdj.getKey() <= 0) {
+	                    itAdj.remove();
+	                }
+	            }
+            }
+        }
+    }
+
+    public RouteListResponse findNearestLocation(Point p, long floorId, int type) {
+        List<IndoorLocation> locations = indoorLocationRepo.getAllByType(0, floorId, type, true);
+        Floor floor = floorRepo.getById(floorId);
+        IndoorLocation nearestWc = null;
+        if (locations != null && !locations.isEmpty()) {
+            nearestWc = findNearestLocation(p, floorId, locations, floor);
+        } 
+        if (nearestWc == null) {
+            Floor lowerFloor = floorRepo.getByEventAndNumber(floor.getEventId(), floor.getNumber() - 1);
+            if (lowerFloor != null) {
+                locations = indoorLocationRepo.getAllByType(0, lowerFloor.getId(), type, true);
+
+                if (locations != null && !locations.isEmpty()) {
+                    nearestWc = findNearestLocation(p, floorId, locations, lowerFloor);
+                }
+            }
+        }
+        if (nearestWc == null) {
+        	Floor upperFloor = floorRepo.getByEventAndNumber(floor.getEventId(), floor.getNumber() + 1);
+            if (upperFloor != null) {
+                locations = indoorLocationRepo.getAllByType(0, upperFloor.getId(), type, true);
+
+                if (locations != null && !locations.isEmpty()) {
+                    nearestWc = findNearestLocation(p, floorId, locations, upperFloor);
+                }
+            }
+        }
+        RouteListResponse data;
+        if (nearestWc != null) {
+            data = findRoute(p, floorId, new Point(nearestWc.getPoint().getX(), nearestWc.getPoint().getY()), nearestWc.getFloorId());
+            FloorResponse floorView = getFloorDetail(nearestWc.getFloorId());
+            data.setX(nearestWc.getPoint().getX());
+            data.setY(nearestWc.getPoint().getY());
+            data.setFloorId(nearestWc.getFloorId());
+            data.setFloor(floorView);
+            data.setFound(true);
+            data.setIndoorObject(new IndoorLocationResponse(nearestWc, floorView));
+        } else {
+            data = new RouteListResponse(Collections.emptyList());
+        }
+        return data;
+    }
+
+    public IndoorLocation findNearestLocation(Point p, long floorId, List<IndoorLocation> locations, Floor floor) {
+        double minDist = -1;
+        IndoorLocation nearestWc = null;
+        for (IndoorLocation location: locations) {
+        	if (!location.isLocated()) {
+        		continue;
+        	}
+            double distance = calcDistance(p, new Point(location.getPoint().getX(), location.getPoint().getY()), floor.getActualWidth(), floor.getActualHeight());
+            if (minDist < 0 || minDist > distance) {
+                nearestWc = location;
+                minDist = distance;
+            }
+        }
+
+        return nearestWc;
+    }
+
+    public Point getProjectedPointOnLine(Point p, Point v1, Point v2) {
+        Point e1 = new Point(v2.getX() - v1.getX(), v2.getY() - v1.getY());
+        Point e2 = new Point(p.getX() - v1.getX(), p.getY() - v1.getY());
+        double valDp = e1.dotProduct(e2);
+
+        double len2 = e1.getX() * e1.getX() + e1.getY() * e1.getY();
+        return new Point(v1.getX() + (valDp * e1.getX()) / len2, v1.getY()
+                + (valDp * e1.getY()) / len2);
+    }
+
+    public double calcAngle(Point p0, Point p1, Point p2) {
+        Point v1 = p1.subtract(p0);
+        Point v2 = p2.subtract(p1);
+        double angle = Math.atan2(v1.getY(), v1.getX()) - Math.atan2(v2.getY(), v2.getX());
+        // 0 <= angle < 2PI
+        angle = angle % (2 * Math.PI);
+        if (angle < 0) {
+            angle += 2 * Math.PI;
+        }
+
+        return angle;
+    }
+
+    public Map<String, Object> getTalkList(String name, long eventId, int from, int count) {
+        Map<String, Object> rs = new HashMap<>();
+        boolean hasMore = false;
+        List<IndoorLocation> talks = indoorLocationRepo.getSliceByType(eventId, 0, name,
+                IndoorLocationType.TALK.getValue(), true, from, count + 1);
+        List<TalkResponse> talkViews = new LinkedList<>();
+        if (talks != null) {
+            if (talks.size() > count) {
+                hasMore = true;
+                talks = talks.subList(0, count);
+            }
+            talkViews = buildTalkResponseList(talks, 0l);
+        }
+        rs.put("talks", talkViews);
+        rs.put("hasMore", hasMore);
+
+        return rs;
+    }
+    
+    public Map<String, Object> getAgenda(long eventId, long userId, long viewUserId) {
+        Map<String, Object> rs = new HashMap<>();
+        List<IndoorLocation> talks = null;
+        if (userId > 0) {
+        	UserStat userStat = userStatRepo.getByUserId(userId, false);
+        	talks = userStat != null && userStat.getTalkIds() != null ? indoorLocationRepo.getListByIds(userStat.getTalkIds()) : null;
+        } else {
+        	talks = indoorLocationRepo.getAllByType(eventId, 0, IndoorLocationType.TALK.getValue(), false);
+        }
+        Map<Long, TalkResponse> talkMap = new HashMap<>();
+        List<TalkResponse> talkViews = buildTalkResponseList(talks, viewUserId);
+        if (talkViews != null) {
+        	talkViews.forEach(t -> talkMap.put(t.getId(), t));
+        }
+        
+        List<AgendaResponse> agendas = new LinkedList<>();
+        Event event = eventRepo.getById(eventId);
+        Calendar to = Calendar.getInstance();
+        to.setTimeInMillis(event.getEndTime());
+        Calendar date = Calendar.getInstance();
+        date.setTimeInMillis(event.getStartTime());
+        while (date.getTimeInMillis() < to.getTimeInMillis() || date.get(Calendar.DAY_OF_YEAR) <= to.get(Calendar.DAY_OF_YEAR)) {
+        	AgendaResponse agenda = new AgendaResponse();
+        	agenda.setDate(date.getTimeInMillis());
+        	if (!talkMap.isEmpty()) {
+        		List<TalkResponse> talkResponses = new LinkedList<>();
+        		for (TalkResponse talk: talkViews) {
+        			if (talkMap.containsKey(talk.getId())) {
+        				Calendar talkDate = Calendar.getInstance();
+        				talkDate.setTimeInMillis(talk.getStartTime());
+        				if (talkDate.get(Calendar.DAY_OF_YEAR) == date.get(Calendar.DAY_OF_YEAR)) {
+        					talkResponses.add(talk);
+        					talkMap.remove(talk.getId());
+        				}
+        			}
+        		}
+        		agenda.setTalks(talkResponses);
+        	}
+        	agendas.add(agenda);
+        	date.add(Calendar.DAY_OF_YEAR, 1);
+        }
+        rs.put("agendas", agendas);
+        return rs;
+    }
+    
+    public List<TalkResponse> buildTalkResponseList(List<IndoorLocation> talks, long viewUserId) {
+    	if (CollectionUtils.isEmpty(talks)) {
+    		return null;
+    	}
+    	List<TalkResponse> talkViews = new ArrayList<>(talks.size());
+        List<Long> speakerIds = new ArrayList<>(talks.size());
+
+        Set<Long> floorIds = new HashSet<>();
+        for (IndoorLocation talk: talks) {
+            Talk tk = (Talk) talk;
+            floorIds.add(tk.getFloorId());
+            speakerIds.add(tk.getSpeakerId());
+        }
+
+        List<Long> floorIdList = new LinkedList<>(floorIds);
+        Map<Long, List<MapLevelResponse>> mapLevels = getMapLevelList(floorIdList);
+
+        Map<Long, Floor> floors = floorRepo.getMapByIds(floorIdList);
+        Map<Long, FloorShortResponse> floorViews = new HashMap<>();
+        for (Floor floor: floors.values()) {
+            floorViews.put(floor.getId(), new FloorShortResponse(floor, mapLevels.get(floor.getId())));
+        }
+
+        Map<Long, Speaker> speakerMap = speakerRepo.getMapByIds(speakerIds);
+        Map<Long, SpeakerResponse> speakerResponseMap = new HashMap<>();
+        for (Speaker speaker: speakerMap.values()) {
+            speakerResponseMap.put(speaker.getId(), new SpeakerResponse(speaker));
+        }
+        
+        UserStat userStat = userStatRepo.getByUserId(viewUserId, false);
+        for (IndoorLocation tmp : talks) {
+            Talk talk = (Talk) tmp;
+            FloorShortResponse floorShortResponse = floorViews.get(talk.getFloorId());
+            SpeakerResponse speakerResponse = speakerResponseMap.get(talk.getSpeakerId());
+            TalkResponse talkView = new TalkResponse(talk, floorShortResponse, speakerResponse, userStat);
+            talkViews.add(talkView);
+        }
+        
+        return talkViews;
+    }
+    
+    public TalkResponse getTalkDetail(long talkId) {
+        IndoorLocation indoor = indoorLocationRepo.getById(talkId);
+        if (indoor instanceof Talk) {
+            Talk talk = (Talk) indoor;
+            Floor floor = floorRepo.getById(talk.getFloorId());
+            Speaker speaker = speakerRepo.getById(talk.getSpeakerId());
+            Map<Long, List<MapLevelResponse>> mapLevels = getMapLevelList(Arrays.asList(floor.getId()));
+            FloorShortResponse floorShortResponse = new FloorShortResponse(floor, mapLevels.get(floor.getId()));
+            SpeakerResponse speakerResponse = new SpeakerResponse(speaker);
+            return new TalkResponse(talk, floorShortResponse, speakerResponse);
+        }
+        return null;
+    }
+
+    public List<UserLocationResponse> getUserNearby(long userId, long floorId, String atlasId, Point loc) {
+        Floor floor = getFloor(floorId, atlasId);
+        if (floor == null) {
+        	return null;
+        }
+        double maxDistance = 100;
+        List<UserLocation> userLocations = liveRepo.getUserNearby(userId, floor.getEventId(), floor.getId(), floor.getActualWidth(), floor.getActualHeight(), loc, maxDistance);
+
+        return userService.buildUserLocationResponseList(userLocations, userId);
+    }
+
+    public void sendLiveLocation(IndoorLocationBody body) {
+        rabbitTemplate.convertAndSend(RabbitRoutingKey.REACT_LIVE, body);
+    }
+    
+    public Floor getFloor(long floorId, String atlasId) {
+    	if (floorId > 0) {
+    		return floorRepo.getById(floorId);
+    	}
+    	return floorRepo.getByAtlasId(atlasId);
+    }
+
+    public AdvertisementResponse getAdvertisement(long adId) {
+    	Advertisement adv = advertisementRepo.getById(adId);
+    	if (adv != null) {
+    		return new AdvertisementResponse(adv);
+    	}
+    	return null;
+    }
+    
+    public AdvertisementResponse getAdvertisement(ObjectRef objectRef) {
+    	Advertisement adv = advertisementRepo.getByObjectRef(objectRef);
+    	if (adv != null) {
+    		return new AdvertisementResponse(adv);
+    	}
+    	return null;
+    }
+}

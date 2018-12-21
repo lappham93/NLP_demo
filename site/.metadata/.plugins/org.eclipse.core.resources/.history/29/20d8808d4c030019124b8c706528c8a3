@@ -1,0 +1,173 @@
+package com.mit.event.repositories;
+
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.event.entities.Event;
+import com.mit.event.enums.EventStatus;
+import com.mit.map.entities.Coordinate;
+
+@Repository
+public class EventRepo extends TimeDocRepo<Event> {
+	
+	public int totalAll(String eventName, boolean onlyActive) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		if (!StringUtils.isEmpty(eventName)) {
+			criteria.and("name").regex(eventName, "i");
+		}
+		return (int) mongoOps.count(new Query(criteria), Event.class);
+	}
+	
+	public int totalAll(List<Integer> statusList, boolean onlyActive) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (!CollectionUtils.isEmpty(statusList)) {
+			criteria.and("status").in(statusList);
+		}
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		return (int) mongoOps.count(new Query(criteria), Event.class);
+	}
+	
+	public Event getById(long id) {
+		return mongoOps.findById(id, Event.class);
+	}
+	
+	public List<Event> getList(boolean onlyActive) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		Sort sort = new Sort(new Order(Direction.ASC, "name"));
+		return mongoOps.find(new Query(criteria).with(sort), Event.class);
+	}
+
+	public List<Event> getSlice(String eventName, boolean onlyActive, int from, int count) {
+		return getSlice(eventName, onlyActive, from, count, "updatedDate", false);
+	}
+
+	public List<Event> getSlice(String eventName, boolean onlyActive, int from, int count, String fieldSort, boolean isAsc) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		if (!StringUtils.isEmpty(eventName)) {
+			criteria.and("name").regex(eventName, "i");
+		}
+		Sort sort = new Sort(new Order(isAsc ? Direction.ASC : Direction.DESC, fieldSort));
+		return mongoOps.find(new Query(criteria).with(sort).skip(from).limit(count), Event.class);
+	}
+	
+	public List<Event> getListInAddress(long addressId) {
+		Criteria criteria = Criteria.where("addressId").is(addressId).and("isDeleted").is(false);
+		Sort sort = new Sort(new Order(Direction.ASC, "name"));
+		return mongoOps.find(new Query(criteria).with(sort), Event.class);
+	}
+	
+	public List<Event> getListFromIds(List<Long> ids) {
+		Criteria criteria = Criteria.where("id").in(ids).and("isDeleted").is(false);
+		Sort sort = new Sort(new Order(Direction.ASC, "name"));
+		return mongoOps.find(new Query(criteria).with(sort), Event.class);
+	}
+	
+	public List<Long> getListIds(int status, boolean onlyActive) {
+		Criteria criteria = Criteria.where("status").is(status).and("isDeleted").is(false);
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		List<Event> events = mongoOps.find(new Query(criteria), Event.class);
+		List<Long> ids = new LinkedList<>();
+		events.forEach(t -> ids.add(t.getId()));
+		return ids;
+	}
+	
+	public List<Event> getList(int status, boolean onlyActive) {
+		Criteria criteria = Criteria.where("status").is(status).and("isDeleted").is(false);
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		return mongoOps.find(new Query(criteria), Event.class);
+	}
+	
+	public Map<Long, Event> getMapFromIds(List<Long> ids) {
+		List<Event> events = getListFromIds(ids);
+		if (CollectionUtils.isEmpty(events)) {
+			return null;
+		}
+		Map<Long, Event> eventMap = new HashMap<>();
+		events.forEach(t -> eventMap.put(t.getId(), t));
+		return eventMap;
+	}
+	
+	public void updateStatus(long id, int status) {
+		Update update = new Update().set("status", status);
+		Query query = new Query(Criteria.where("id").is(id));
+		mongoOps.updateFirst(query, update, Event.class);
+	}
+	
+	public void updateStatus() {
+		Calendar now = Calendar.getInstance();
+		Update update = new Update().set("status", EventStatus.FINISHED.getValue());
+		Query query = new Query(Criteria.where("status").is(EventStatus.ONGOING.getValue())
+				.and("endTime").lt(now.getTimeInMillis()));
+		mongoOps.updateMulti(query, update, Event.class);
+		
+		update = new Update().set("status", EventStatus.ONGOING.getValue());
+		query = new Query(Criteria.where("status").is(EventStatus.UPCOMMING.getValue())
+				.and("startTime").lt(now.getTimeInMillis()));
+		mongoOps.updateMulti(query, update, Event.class);
+	}
+	
+	public void updateCoordinate(long id, Coordinate coordinate) {
+		Update update = new Update().set("coordinate", coordinate);
+		Query query = new Query(Criteria.where("id").is(id));
+		mongoOps.updateFirst(query, update, Event.class);
+	}
+	
+	public void updateCoordinateMulti(long addressId, Coordinate coordinate) {
+		Update update = new Update().set("coordinate", coordinate);
+		Query query = new Query(Criteria.where("addressId").is(addressId));
+		mongoOps.updateMulti(query, update, Event.class);
+	}
+	
+	public void delete(long id) {
+		Update update = new Update().set("isDeleted", true).set("status", EventStatus.DELETE.getValue());
+		Query query = new Query(Criteria.where("id").is(id));
+		mongoOps.updateFirst(query, update, Event.class);
+	}
+	
+	public void deleteInCategory(long categoryId) {
+		Update update = new Update().set("isDeleted", true).set("status", EventStatus.DELETE.getValue());
+		Query query = new Query(Criteria.where("categoryId").is(categoryId));
+		mongoOps.updateFirst(query, update, Event.class);
+	}
+	
+	public List<Long> getUpOnEventIds(Collection<Long> eventIds) {
+		Sort sort = new Sort(Direction.ASC, "startTime");
+		Criteria criteria = Criteria.where("id").in(eventIds).and("isActive").is(true).and("isDeleted").is(false).and("status").in(EventStatus.UPCOMMING.getValue(), EventStatus.ONGOING.getValue());
+		return object2Id(mongoOps.find(new Query(criteria).with(sort), entityClass));
+	}
+	
+	public List<Long> getUpOnEventIdsByCategory(Collection<Long> categoryIds) {
+		Criteria criteria = Criteria.where("category").in(categoryIds).and("isActive").is(true).and("isDeleted").is(false).and("status").in(EventStatus.UPCOMMING.getValue(), EventStatus.ONGOING.getValue());
+		return object2Id(mongoOps.find(new Query(criteria), entityClass));
+	}
+}

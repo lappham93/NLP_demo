@@ -1,0 +1,68 @@
+package com.mit.controllers;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ModelAttribute;
+
+import com.mit.atlas.entities.AtlasProfile;
+import com.mit.atlas.entities.AtlasUser;
+import com.mit.atlas.repositories.AtlasProfileRepo;
+import com.mit.atlas.repositories.AtlasUserRepo;
+import com.mit.session.entities.UserSession;
+import com.mit.sessions.AtlasSession;
+import com.mit.user.enums.AdminType;
+import com.mit.utils.ControllerUtils;
+import com.mit.utils.LinkBuilder;
+
+@ControllerAdvice
+public final class GlobalController {
+	@Value("${admin.prefix}")
+	private String adminPrefix;
+	@Value("${admin.title}")
+	private String adminTitle;
+	@Value("${admin.resources.path}")
+	private String resourcesPath;
+	@Value("${facebook.appId}")
+	private String facebookAppId;
+	@Value("${accountkit.api.version}")
+	private String apiVersion;
+	@Value("${accountkit.appSecret}")
+    private String appSecret;
+	@Autowired
+	private AtlasProfileRepo profileRepo;
+	@Autowired
+	private AtlasUserRepo userRepo;
+	
+	@ModelAttribute
+	public void addAttributes(Model model, HttpServletRequest req) {
+		try {
+			UserSession userSession = (UserSession)AtlasSession.getUserSession(req);
+			AtlasProfile adminProfile = profileRepo.getById(userSession.getUserId());
+			if (adminProfile != null) {
+				AtlasUser user = userRepo.getById(adminProfile.getId());
+				model.addAttribute("admin_username", user.getUserName());
+				model.addAttribute("admin_name", ControllerUtils.buildProfileName(adminProfile));
+//				model.addAttribute("admin_type", adminProfile.getAdminType());
+//				model.addAttribute("admin_role", Privilege.getPrivilege().get(adminProfile.getAdminType()).getRole());
+				model.addAttribute("sessionKey", AtlasSession.getSessionKey(req));
+				model.addAttribute("refreshToken", AtlasSession.getRefreshToken(req));
+			}
+		} catch (Exception e){}
+		
+		model.addAttribute("admin_prefix", adminPrefix);
+		model.addAttribute("admin_title", adminTitle);
+		model.addAttribute("upload_socket", LinkBuilder.buildUploadSocketLink());
+		
+		model.addAttribute("resources_path", resourcesPath);
+		model.addAttribute("facebook_appId", facebookAppId);
+		model.addAttribute("accountKit_api_version", apiVersion);
+		model.addAttribute("app_secret", apiVersion);
+		
+		model.addAttribute("system_admin_type", AdminType.SYSTEM_ADMIN.getValue());
+		model.addAttribute("region_manager_type", AdminType.REGION_MANAGER.getValue());
+	}
+}

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout">
+<head>
+</head>
+<body>
+	<div th:fragment="form_error">
+		<div th:if="${error_if}" class="alert alert-danger alert-styled-right alert-bordered" th:text="${error_msg}">    
+        </div>
+	</div>
+	
+	<div th:fragment="form_error_2">
+		<div class="alert alert-danger alert-styled-right alert-bordered form-error" style="display:none">    
+        </div>
+	</div>
+	
+	<div th:fragment="form_success">
+		<div th:if="${success_if}" class="alert alert-success alert-styled-right alert-arrow-right alert-bordered" th:text="${success_msg}">    
+        </div>
+	</div>
+	
+	<div th:fragment="form_success_2">
+		<div class="alert alert-success alert-styled-right alert-arrow-right alert-bordered form-success" style="display:none">    
+        </div>
+	</div>
+	
+	<div th:fragment="form_warning">
+		<div th:if="${warning_if}" class="alert alert-warning alert-styled-right form-warning" th:text="${warning_msg}">    
+        </div>
+	</div>
+	
+	<div th:fragment="form_warning_2">
+		<div class="alert alert-warning alert-styled-right form-warning" style="display:none">    
+        </div>
+	</div>
+	
+	<div th:fragment="dynamic-paging">
+		<div class="text-center bootpag-flat"></div>
+	</div>
+	
+	<div th:fragment="simple-paging">
+		<div th:if="${isPaging}" class="panel panel-body border-top-teal text-center">
+			<ul class="pager pager-linked text-right">
+				<li th:class="${pagingPrev == null || pagingPrev == ''} ? disabled"><a th:href="@{${admin_prefix + pagingPrev}}">&larr; Previous</a></li>
+				<li th:class="${pagingNext == null || pagingNext == ''} ? disabled"><a th:href="@{${admin_prefix + pagingNext}}">Next &rarr;</a></li>
+			</ul>
+		</div>
+	</div>
+	
+	<div th:fragment="form">
+		<form action="">
+			
+		</form>
+	</div>
+	
+	<div th:fragment="form_submit_button">
+		<div class="form-group">
+			<button class="btn bg-pink-400 btn-block" onclick=""> <i class="icon-circle-right2 position-right"></i></button>
+		</div>
+	</div>
+	
+	<div th:fragment="loader">
+		<div class="loader">
+			<i class="icon-spinner spinner"></i><span class="loader-text"></span>
+		</div>
+	</div>
+	
+	<div th:fragment="change_photo_modal">
+		<div id="editPhotoMdlId" class="modal fade" role="dialog">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal">&times;</button>
+						<h5 class="modal-title">Change Thumb</h5>
+					</div>
+					<div class="modal-body">
+						<form action="#" id="editPhotoFrmId" class="dropzone dropzone_single">
+							<div th:replace="fragments/fragments :: form_error_2"></div>
+							<div th:replace="fragments/fragments :: form_success_2"></div>
+							<div th:replace="fragments/fragments :: loader"></div>
+							<input type="file" id="photoEditIptId" class="filesCls" style="display:none"/>
+							<input type="hidden" id="idEditPhotoIptId" />
+							<button type="submit" id="editPhotoBtnId" class="btn bg-pink-400" style="display:none"> Add<i class="icon-circle-right2 position-right"></i></button>
+						</form>
+					</div>
+					
+					<div class="modal-footer">
+						<button type="button" class="btn btn-link" data-dismiss="modal">Close</button>
+						<button type="button" class="btn btn-primary" onclick="submitPhotoEdit()">Change</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div th:fragment="map-flow">
+		<div class="col-md-12 map-flow">
+			<div class="hidden-xs">
+				<div class="col-md-offset-1 col-md-2 map-flow-item" th:onclick="'window.location.replace(\'' + ${locations_add_url} + '\')'">
+					<div class="media-center media-top">
+						<a href="#" class="btn border-indigo-400 text-indigo-400 btn-flat btn-rounded btn-xs btn-icon"><i class="icon-location4"></i></a>
+					</div>
+		
+					<div class="media-center media-bottom">
+						<h5 class="text-semibold map-flow-item-title">
+							Create location &amp; add floor plan
+						</h5>
+					</div>
+				</div>
+				<div class="col-md-2" style="line-height: 4.5em; vertical-align: middle;">
+					<i class="icon-arrow-right7"></i>
+				</div>
+				<div class="col-md-2 map-flow-item" th:onclick="'window.open(\'' + 'https://play.google.com/store/apps' + '\')'">
+					<div class="media-center media-top">
+						<a href="#" class="btn border-indigo-400 text-indigo-400 btn-flat btn-rounded btn-xs btn-icon"><i class="icon-mobile"></i></a>
+					</div>
+		
+					<div class="media-center media-bottom">
+						<h5 class="text-semibold map-flow-item-title">
+							Map location
+						</h5>
+					</div>
+				</div>
+				<div class="col-md-2" style="line-height: 4.5em; vertical-align: middle;">
+					<i class="icon-arrow-right7"></i>
+				</div>
+				<div class="col-md-2 map-flow-item" th:onclick="'window.location.replace(\'' + ${apps_url} + '\')'">
+					<div class="media-center media-top">
+						<a href="#" class="btn border-indigo-400 text-indigo-400 btn-flat btn-rounded btn-xs btn-icon"><i class="icon-cog3"></i></a>
+					</div>
+		
+					<div class="media-center media-bottom">
+						<h5 class="text-semibold map-flow-item-title">
+							Build app
+						</h5>
+					</div>
+				</div>
+			</div>
+			
+			<div class="hidden-lg">
+					<div class="col-md-offset-1 col-md-2" th:onclick="'window.location.replace(\'' + ${locations_add_url} + '\')'">
+						<div class="media-left media-middle">
+							<a th:href="@{${locations_add_url}}" class="btn border-indigo-400 text-indigo-400 btn-flat btn-rounded btn-xs btn-icon"><i class="icon-location4"></i></a>
+						</div>
+			
+						<div class="media-left media-middle">
+							<h5 class="text-semibold no-margin">
+								Create location &amp; add floor plan
+							</h5>
+						</div>
+					</div>
+					<div class="col-md-2" style="margin: 20px 0px;">
+						<i class="icon-arrow-down7"></i>
+					</div>
+					<div class="col-md-2" th:onclick="'window.open(\'' + 'https://play.google.com/store/apps' + '\')'">
+						<div class="media-left media-middle">
+							<a href="#" class="btn border-indigo-400 text-indigo-400 btn-flat btn-rounded btn-xs btn-icon"><i class="icon-mobile"></i></a>
+						</div>
+			
+						<div class="media-left media-middle">
+							<h5 class="text-semibold no-margin">
+								Map location
+							</h5>
+						</div>
+					</div>
+					<div class="col-md-2" style="margin: 20px 0px;">
+						<i class="icon-arrow-down7"></i>
+					</div>
+					<div class="col-md-2" th:onclick="'window.location.replace(\'' + ${apps_url} + '\')'">
+						<div class="media-left media-middle">
+							<a href="#" class="btn border-indigo-400 text-indigo-400 btn-flat btn-rounded btn-xs btn-icon"><i class="icon-cog3"></i></a>
+						</div>
+			
+						<div class="media-left media-middle">
+							<h5 class="text-semibold no-margin">
+								Build app
+							</h5>
+						</div>
+					</div>
+				</div>
+		</div>
+		<div class="col-md-12 map-creator">
+			<p class="model-normal-text">Download our MapCreator application from your app store.</p>
+			<a href="https://play.google.com/store/apps" target="_blank">
+		      <img src="https://docs.indooratlas.com/assets/images/google-play-badge.png" alt="Google Playstore" />
+		    </a>
+		</div>
+	</div>
+</body>
+</html>

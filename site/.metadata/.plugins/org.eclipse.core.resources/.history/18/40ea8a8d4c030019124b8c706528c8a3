@@ -1,0 +1,77 @@
+package com.mit.blog.repositories;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import com.mit.blog.entities.Blog;
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.seq.repositories.SeqIdRepo;
+
+@Repository
+public class BlogRepo extends TimeDocRepo<Blog> {
+    @Autowired
+    MongoOperations mongoOps;
+
+    @Autowired
+    SeqIdRepo seqIdRepo;
+    
+    public int count(List<Long> categoryIds, boolean onlyActive) {
+    	Criteria criteria = Criteria.where("isDeleted").is(false);
+    	if (categoryIds != null) {
+    		criteria.and("categoryId").in(categoryIds);
+    	}
+    	if (onlyActive) {
+    		criteria.and("isActive").is(true);
+    	}
+    	return (int) mongoOps.count(new Query(criteria), Blog.class);
+    }
+    
+    public Blog getById(long id) {
+        return mongoOps.findById(id, Blog.class);
+    }
+    
+    public List<Blog> getSlice(List<Long> categoryIds, boolean onlyActive, int from, int count) {
+    	Criteria criteria = Criteria.where("isDeleted").is(false);
+    	if (categoryIds != null) {
+    		criteria.and("categoryId").in(categoryIds);
+    	}
+    	if (onlyActive) {
+    		criteria.and("isActive").is(true);
+    	}
+    	Sort sort = new Sort(new Order(Direction.DESC, "createdDate"));
+    	return mongoOps.find(new Query(criteria).with(sort).skip(from).limit(count), Blog.class);
+    }
+    
+    public List<Blog> getTopView(int count) {
+    	Criteria criteria = Criteria.where("isDeleted").is(false).and("isActive").is(true);
+    	Sort sort = new Sort(new Order(Direction.DESC, "views"));
+    	return mongoOps.find(new Query(criteria).with(sort).limit(count), Blog.class);
+    }
+    
+    public List<Blog> getListInCategory(long blogId, long categoryId, int count) {
+    	Criteria criteria = Criteria.where("categoryId").is(categoryId).and("isDeleted").is(false).and("isActive").is(true).and("id").ne(blogId);
+    	Sort sort = new Sort(new Order(Direction.DESC, "updatedDate"));
+    	return mongoOps.find(new Query(criteria).with(sort).limit(count), Blog.class);
+    }
+    
+    public void updateView(long id) {
+    	Update update = new Update().inc("views", 1);
+    	Query query = new Query(Criteria.where("id").is(id));
+    	mongoOps.updateFirst(query, update, Blog.class);
+    }
+    
+    public void deleteInCategory(long categoryId) {
+    	Update update = new Update().set("isDeleted", true);
+    	Query query = new Query(Criteria.where("categoryId").is(categoryId));
+    	mongoOps.updateMulti(query, update, Blog.class);
+    }
+}

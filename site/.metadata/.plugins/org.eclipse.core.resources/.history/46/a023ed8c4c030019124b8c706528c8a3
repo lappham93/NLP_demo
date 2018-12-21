@@ -1,0 +1,29 @@
+package com.mit.navigation.responses;
+
+/**
+ * Created by Lap Pham on 7/20/17.
+ */
+public class CheckEventResponse {
+    private long eventId;
+    private boolean isChecked;
+
+    public CheckEventResponse(long eventId) {
+        this.eventId = eventId;
+    }
+
+    public long getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(long eventId) {
+        this.eventId = eventId;
+    }
+
+    public boolean isChecked() {
+        return isChecked;
+    }
+
+    public void setChecked(boolean checked) {
+        isChecked = checked;
+    }
+}

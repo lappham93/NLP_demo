@@ -1,0 +1,137 @@
+package com.mit.address.bodies;
+
+import com.mit.address.entities.Address;
+import com.mit.map.entities.Coordinate;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel
+public class GardenAddressBody {
+	private String placeId;
+	private Coordinate coordinate;
+	private String fullAddress;
+	private String addressLine1;
+	private String addressLine2;
+	private String city;
+	private String state;
+	private String country;
+	private String countryCode;
+	private String zipCode;
+	private int type;
+
+	public Address toAddress() {
+		Address address = new Address();
+		address.setPlaceId(placeId);
+		address.setCoordinate(coordinate);
+		address.setFullAddress(fullAddress);
+		address.setAddressLine1(addressLine1);
+		address.setAddressLine2(addressLine2);
+		address.setCity(city);
+		address.setState(state);
+		address.setCountry(country);
+		address.setCountryCode(countryCode);
+		address.setZipCode(zipCode);
+		
+		return address;
+	}
+	
+	@ApiModelProperty
+	public String getFullAddress() {
+		return fullAddress;
+	}
+
+	public void setFullAddress(String fullAddress) {
+		this.fullAddress = fullAddress;
+	}
+
+	@ApiModelProperty(required = true)
+	public String getPlaceId() {
+		return placeId;
+	}
+
+	public void setPlaceId(String placeId) {
+		this.placeId = placeId;
+	}
+
+	@ApiModelProperty(required = true)
+	public Coordinate getCoordinate() {
+		return coordinate;
+	}
+
+	public void setCoordinate(Coordinate coordinate) {
+		this.coordinate = coordinate;
+	}
+
+	public String getCountryCode() {
+		return countryCode;
+	}
+
+	public void setCountryCode(String countryCode) {
+		this.countryCode = countryCode;
+	}
+
+	@ApiModelProperty(required = true)
+	public String getZipCode() {
+		return zipCode;
+	}
+
+	public void setZipCode(String zipCode) {
+		this.zipCode = zipCode;
+	}
+
+	@ApiModelProperty
+	public String getAddressLine1() {
+		return addressLine1;
+	}
+
+	public void setAddressLine1(String addressLine1) {
+		this.addressLine1 = addressLine1;
+	}
+
+	@ApiModelProperty
+	public String getAddressLine2() {
+		return addressLine2;
+	}
+
+	public void setAddressLine2(String addressLine2) {
+		this.addressLine2 = addressLine2;
+	}
+
+	@ApiModelProperty
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	@ApiModelProperty
+	public String getState() {
+		return state;
+	}
+
+	public void setState(String state) {
+		this.state = state;
+	}
+
+	@ApiModelProperty
+	public String getCountry() {
+		return country;
+	}
+
+	public void setCountry(String country) {
+		this.country = country;
+	}
+
+	@ApiModelProperty(required = true, value = "Home = 1, Other = 0")
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+}

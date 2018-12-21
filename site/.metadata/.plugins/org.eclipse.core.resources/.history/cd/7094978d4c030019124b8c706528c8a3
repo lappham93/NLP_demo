@@ -1,0 +1,52 @@
+package com.mit.beacon.repositories;
+
+import com.mit.beacon.entities.BeaconTP;
+import com.mit.common.repositories.ActiveTimeDocRepo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created by Lap Pham on 6/15/17.
+ */
+
+@Repository
+public class BeaconTPRepo extends ActiveTimeDocRepo<BeaconTP> {
+
+    @Autowired
+    protected MongoOperations mongoOps;
+
+    public int totalAll(long eventId, boolean onlyActive) {
+        Criteria criteria = new Criteria();
+        if (eventId > 0) {
+            criteria = criteria.and("eventId").is(eventId);
+        }
+        return totalAll(criteria, onlyActive);
+    }
+
+    public Map<Long, BeaconTP> getMapByFloorId(long floorId) {
+        Criteria criteria = Criteria.where("floorId").is(floorId);
+        List<BeaconTP> beacons = getList(criteria);
+        return list2Map(beacons);
+    }
+
+    public List<BeaconTP> getListByFloorId(long floorId) {
+        Criteria criteria = Criteria.where("floorId").is(floorId);
+        return getList(criteria);
+    }
+
+    public List<BeaconTP> getSlice(long eventId, int offset, int count) {
+        Criteria criteria = Criteria.where("eventId").is(eventId);
+        return getSlice(criteria, false, offset, count);
+    }
+
+    public boolean validateUUID(long eventId, String uId) {
+        Criteria criteria = Criteria.where("eventId").is(eventId).and("uId").is(uId).and("isDeleted").is(false);
+        return mongoOps.findOne(new Query(criteria), BeaconTP.class) == null;
+    }
+}

@@ -1,0 +1,159 @@
+package com.mit.stat.repositories;
+
+import com.mit.stat.entities.AppStat;
+import com.mit.stat.entities.RegionTimelineStat;
+import com.mit.stat.entities.RegionTimelineStatId;
+import com.mit.stat.enums.RegionType;
+import com.mongodb.BasicDBObject;
+import com.mongodb.BulkWriteResult;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.BulkOperations;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.convert.MongoConverter;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
+
+import java.lang.reflect.Field;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * Created by Lap Pham on 4/19/17.
+ */
+
+@Repository
+public class RegionTimelineStatRepo {
+    @Autowired
+    MongoOperations mongoOps;
+
+    private Update createIncUpdate(RegionTimelineStat stat) {
+        try {
+            BasicDBObject updateDbObject = new BasicDBObject();
+            updateDbObject.append("$set", new BasicDBObject("_class", stat.getClass().getName()).append("stats._class", stat.getStats().getClass().getName()));
+            Field[] fields = stat.getStats().getClass().getDeclaredFields();
+            for (Field field : fields) {
+                String typeName = field.getType().getSimpleName();
+                field.setAccessible(true);
+                if (typeName.equals("long")) {
+                    long value = field.getLong(stat.getStats());
+                    if (value > 0) {
+                        if (updateDbObject.get("$inc") != null) {
+                            BasicDBObject incDbObject = (BasicDBObject)updateDbObject.get("$inc");
+                            incDbObject.append("stats." + field.getName(), value);
+                        } else {
+                            updateDbObject.append("$inc", new BasicDBObject("stats." + field.getName(), value));
+                        }
+                    }
+                } else if (typeName.equals("Set")) {
+                    Set value = (Set) field.get(stat.getStats());
+                    if (!CollectionUtils.isEmpty(value)) {
+                        if (updateDbObject.get("$addToSet") != null) {
+                            BasicDBObject addToSetDbObject = (BasicDBObject)updateDbObject.get("$addToSet");
+                            addToSetDbObject.append("stats." + field.getName(), new BasicDBObject("$each", value.toArray()));
+                        } else {
+                            updateDbObject.append("$addToSet", new BasicDBObject("stats." + field.getName(), new BasicDBObject("$each", value.toArray())));
+                        }
+                    }
+                } else if (typeName.equals("List")) {
+                    List value = (List) field.get(stat.getStats());
+                    if (!CollectionUtils.isEmpty(value)) {
+                        if (updateDbObject.get("$push") != null) {
+                            BasicDBObject pushDbObject = (BasicDBObject) updateDbObject.get("$push");
+                            pushDbObject.append("stats." + field.getName(), new BasicDBObject("$each", value.toArray()));
+                        } else {
+                            updateDbObject.append("$push", new BasicDBObject("stats." + field.getName(), new BasicDBObject("$each", value.toArray())));
+                        }
+                    }
+                }
+            }
+            return Update.fromDBObject(updateDbObject);
+        } catch (Exception e) {
+
+        }
+
+        return null;
+    }
+
+    public void inc(RegionTimelineStat stat) {
+        BasicDBObject statIdDBObject = new BasicDBObject();
+        mongoOps.getConverter().write(stat.getId(), statIdDBObject);
+        statIdDBObject.remove("_class");
+        Query query = new Query(Criteria.where("_id").is(stat.getId()));
+        Update update = createIncUpdate(stat);
+        if (update != null) {
+            mongoOps.upsert(query, update, stat.getClass());
+        }
+    }
+
+    public int incBatch(List<RegionTimelineStat> stats) {
+        BulkOperations bulkOps = mongoOps.bulkOps(BulkOperations.BulkMode.UNORDERED, RegionTimelineStat.class);
+        MongoConverter mongoConverter = mongoOps.getConverter();
+
+        for (RegionTimelineStat stat: stats) {
+            BasicDBObject statIdDBObject = new BasicDBObject();
+            mongoConverter.write(stat.getId(), statIdDBObject);
+            statIdDBObject.remove("_class");
+            Query query = new Query(Criteria.where("_id").is(statIdDBObject));
+            Update update = createIncUpdate(stat);
+            if (update != null) {
+                bulkOps.upsert(query, update);
+            }
+        }
+
+        BulkWriteResult bulkWriteRs = bulkOps.execute();
+        return bulkWriteRs.getMatchedCount();
+    }
+
+    public RegionTimelineStat getById(RegionTimelineStatId id) {
+        return mongoOps.findById(id, RegionTimelineStat.class);
+    }
+
+    public List<AppStat> getListDemandStat(long objId, int objType, String countryCode, long stateId, long cityId, String zipCode,
+                                              int timelineType, Date fromDate, Date toDate) {
+        Criteria criteria = Criteria.where("id.statTime").gte(fromDate).lte(toDate).and("id.timelineType").is(timelineType)
+                .and("id.objType").is(objType);
+        if (objId > 0) {
+            criteria = criteria.and("id.objId").is(objId);
+        }
+        if (!StringUtils.isEmpty(zipCode)) {
+            criteria = criteria.and("id.regionId").is(zipCode).and("id.regionType").is(RegionType.ZIP_CODE.getValue());
+        } else if (cityId > 0) {
+            criteria = criteria.and("id.regionId").is(cityId).and("id.regionType").is(RegionType.CITY.getValue());
+        } else if (stateId > 0) {
+            criteria = criteria.and("id.regionId").is(stateId).and("id.regionType").is(RegionType.STATE.getValue());
+        } else {
+            criteria = criteria.and("id.regionId").is(countryCode).and("id.regionType").is(RegionType.COUNTRY.getValue());
+        }
+        Sort sort = new Sort(Sort.Direction.ASC, "id.statTime");
+
+        return mongoOps.find(new Query(criteria).with(sort).limit(10000), AppStat.class);
+    }
+
+    public List<AppStat> getListDemandStat(String countryCode, long stateId, long cityId, String zipCode,
+                                               int timelineType, Date fromDate, Date toDate) {
+        Criteria criteria = Criteria.where("id.statTime").gte(fromDate).lte(toDate).and("id.timelineType").is(timelineType);
+
+        if (!StringUtils.isEmpty(zipCode)) {
+            criteria = criteria.and("id.regionId").is(zipCode).and("id.regionType").is(RegionType.ZIP_CODE.getValue());
+        } else if (cityId > 0) {
+            criteria = criteria.and("id.regionId").is(cityId).and("id.regionType").is(RegionType.CITY.getValue());
+        } else if (stateId > 0) {
+            criteria = criteria.and("id.regionId").is(stateId).and("id.regionType").is(RegionType.STATE.getValue());
+        } else {
+            criteria = criteria.and("id.regionId").is(countryCode).and("id.regionType").is(RegionType.COUNTRY.getValue());
+        }
+        Sort sort = new Sort(Sort.Direction.ASC, "id.statTime");
+
+        return mongoOps.find(new Query(criteria).with(sort).limit(10000), AppStat.class);
+    }
+
+    public void save(RegionTimelineStat stat) {
+        mongoOps.save(stat);
+    }
+}

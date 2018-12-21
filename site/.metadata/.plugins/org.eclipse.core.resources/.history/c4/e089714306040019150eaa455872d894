@@ -1,0 +1,22 @@
+package com.mit.ai.services;
+
+import java.util.Random;
+
+import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.lucene.util.MathUtil;
+import org.springframework.stereotype.Service;
+
+import com.mit.ai.bodies.CommentBody;
+import com.mit.ai.responses.SentimentPredictResponse;
+import com.mit.utils.MathUtils;
+
+@Service
+public class SentimentService {
+	
+	public SentimentPredictResponse predict(CommentBody comment) {
+		SentimentPredictResponse	response = new SentimentPredictResponse();
+		response.setPositive(RandomUtils.nextBoolean());
+		return response;
+	}
+}

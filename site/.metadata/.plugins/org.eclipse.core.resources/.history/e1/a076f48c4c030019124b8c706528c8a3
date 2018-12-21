@@ -1,0 +1,206 @@
+package com.mit.navigation.repositories;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.navigation.entities.ElevatorLocation;
+import com.mit.navigation.entities.EscalatorLocation;
+import com.mit.navigation.entities.IndoorLocation;
+import com.mit.navigation.enums.IndoorLocationType;
+
+/**
+ * Created by Lap Pham on 4/4/17.
+ */
+
+@Repository
+public class IndoorLocationRepo extends TimeDocRepo<IndoorLocation> {
+	
+	public IndoorLocation getById(long id) {
+		return mongoOps.findById(id, IndoorLocation.class);
+	}
+	
+	public int totalAllByType(long eventId, String key, int type, boolean onlyActive) {
+		Criteria criteria = Criteria.where("type").is(type).and("isDeleted").is(false);
+		if (eventId > 0) {
+			criteria.and("eventId").is(eventId);
+		}
+		if (!org.springframework.util.StringUtils.isEmpty(key)) {
+			criteria.and("name").regex(key, "i");
+		}
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		return (int)mongoOps.count(new Query(criteria), IndoorLocation.class);
+	}
+	
+	public Map<Long, ElevatorLocation> getMapElevatorOnFloors(long elevatorId, List<Long> floorIds) {
+		Criteria criteria = Criteria.where("elevatorId").is(elevatorId).and("type").is(IndoorLocationType.ELEVATOR.getValue())
+				.and("floorId").in(floorIds).and("isDeleted").is(false).and("isActive").is(true);
+		List<IndoorLocation> elevators = mongoOps.find(new Query(criteria), IndoorLocation.class);
+		Map<Long, ElevatorLocation> elevatorMap = new HashMap<>();
+		if (!CollectionUtils.isEmpty(elevators)) {
+			elevators.forEach(t -> elevatorMap.put(t.getFloorId(), (ElevatorLocation)t));
+		}
+		return elevatorMap;
+	}
+	
+	public Map<Long, EscalatorLocation> getMapEscalatorOnFloors(long escalatorId, List<Long> floorIds) {
+		Criteria criteria = Criteria.where("escalatorId").is(escalatorId).and("type").is(IndoorLocationType.ESCALATOR.getValue())
+				.and("floorId").in(floorIds).and("isDeleted").is(false).and("isActive").is(true);
+		List<IndoorLocation> elevators = mongoOps.find(new Query(criteria), IndoorLocation.class);
+		Map<Long, EscalatorLocation> elevatorMap = new HashMap<>();
+		if (!CollectionUtils.isEmpty(elevators)) {
+			elevators.forEach(t -> elevatorMap.put(t.getFloorId(), (EscalatorLocation)t));
+		}
+		return elevatorMap;
+	}
+	
+	public List<IndoorLocation> getListLocationOfElevator(long elevatorId) {
+		Criteria criteria = Criteria.where("elevatorId").is(elevatorId).and("type").is(IndoorLocationType.ELEVATOR.getValue())
+				.and("isDeleted").is(false).and("isActive").is(true);
+		return mongoOps.find(new Query(criteria), IndoorLocation.class);
+	}
+	
+	public List<IndoorLocation> getListLocationOfEscalator(long escalatorId) {
+		Criteria criteria = Criteria.where("escalatorId").is(escalatorId).and("type").is(IndoorLocationType.ESCALATOR.getValue())
+				.and("isDeleted").is(false).and("isActive").is(true);
+		return mongoOps.find(new Query(criteria), IndoorLocation.class);
+	}
+	
+	public List<IndoorLocation> getAllByType(long eventId, long floorId, int type, boolean onlyActive) {
+		Criteria criteria = Criteria.where("type").is(type).and("isDeleted").is(false);
+		if (eventId > 0) {
+			criteria.and("eventId").is(eventId);
+		}
+		if (floorId > 0) {
+			criteria.and("floorId").is(floorId);
+		}
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		return mongoOps.find(new Query(criteria), IndoorLocation.class);
+	}
+	
+	public List<IndoorLocation> getSliceByType(long eventId, long floorId, String key, int type, boolean onlyActive, int from, int count) {
+		Criteria criteria = Criteria.where("type").is(type).and("isDeleted").is(false);
+		if (eventId > 0) {
+			criteria.and("eventId").is(eventId);
+		}
+		if (floorId > 0) {
+			criteria.and("floorId").is(floorId);
+		}
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		if (!StringUtils.isEmpty(key)) {
+			criteria.and("name").regex(key, "i");
+		}
+		Sort sort = new Sort(new Order(Direction.DESC, "updatedDate"));
+		return mongoOps.find(new Query(criteria).with(sort).skip(from).limit(count), IndoorLocation.class);
+	}
+	
+	public List<Long> getListId(long eventId, int type) {
+		List<IndoorLocation> locations = getAllByType(eventId, 0, type, true);
+		List<Long> ids = new LinkedList<>();
+		if (!CollectionUtils.isEmpty(locations)) {
+			locations.forEach(t -> ids.add(t.getId()));
+		}
+		return ids;
+	}
+	
+	public List<IndoorLocation> getListInRange(long floorId, int type, double left, double top, double width, double height, boolean isFeature) {
+		Criteria criteria = Criteria.where("floorId").is(floorId)
+				.and("point.x").gte(left).lte(left + width)
+				.and("point.y").gte(top).lte(top + height)
+				.and("isActive").is(true).and("isDeleted").is(false);
+		if (isFeature) {
+			criteria = criteria.and("isFeature").is(true);
+		}
+		if (type > 0) {
+			criteria.and("type").is(type);
+		}
+		return mongoOps.find(new Query(criteria), IndoorLocation.class);
+	}
+	
+	public List<IndoorLocation> getListAdvertisedInRange(long floorId, int type, double left, double top, double width, double height) {
+		Criteria criteria = Criteria.where("isAdvertised").is(true)
+				.and("floorId").is(floorId)
+				.and("point.x").gte(left).lte(left + width)
+				.and("point.y").gte(top).lte(top + height)
+				.and("isActive").is(true).and("isDeleted").is(false);
+		if (type > 0) {
+			criteria.and("type").is(type);
+		}
+		return mongoOps.find(new Query(criteria), IndoorLocation.class);
+	}
+
+	public List<Long> getListIdInRange(long floorId, int type, double left, double top, double width, double height, boolean isFeature) {
+		List<IndoorLocation> locations = getListInRange(floorId, type, left, top, width, height, isFeature);
+		return list2Ids(locations);
+	}
+
+	public List<IndoorLocation> getListInRange(long floorId, int type, double left, double top, double width, double height) {
+		return getListInRange(floorId, type, left, top, width, height, false);
+	}
+	
+	public List<Long> getListIdInRange(long floorId, int type, double left, double top, double width, double height) {
+		List<IndoorLocation> locations = getListInRange(floorId, type, left, top, width, height);
+		return list2Ids(locations);
+	}
+	
+	public Map<Long, IndoorLocation> getMapByIds(List<Long> ids) {
+		Criteria criteria = Criteria.where("id").in(ids);
+		List<IndoorLocation> elevators = mongoOps.find(new Query(criteria), IndoorLocation.class);
+		Map<Long, IndoorLocation> elevatorMap = new HashMap<>();
+		if (!CollectionUtils.isEmpty(elevators)) {
+			elevators.forEach(t -> elevatorMap.put(t.getId(), t));
+		}
+		return elevatorMap;
+	}
+	
+	public void delete(long id) {
+		Update update = new Update().set("isDeleted", true).set("status", 0);
+		mongoOps.updateFirst(new Query(Criteria.where("id").is(id)), update, IndoorLocation.class);
+	}
+	
+	public void deleteManyByFloorAndType(long floorId, int type) {
+		Update update = new Update().set("isDeleted", false).set("status", 1);
+		mongoOps.updateMulti(new Query(Criteria.where("floorId").is(floorId).and("type").is(type)), update, IndoorLocation.class);
+	}
+
+	public List<Long> list2Ids(List<IndoorLocation> locations) {
+		List<Long> ids = new LinkedList<>();
+		if (!CollectionUtils.isEmpty(locations)) {
+			locations.forEach(t -> ids.add(t.getId()));
+		}
+		return ids;
+	}
+	
+	public void updateBoothAdvertised(long boothId, boolean isAdvertised) {
+		Update update = new Update().set("isAdvertised", isAdvertised);
+		mongoOps.updateFirst(new Query(Criteria.where("id").is(boothId)), update, IndoorLocation.class);
+	}
+	
+	public void removeAllOnFloor(long floorId) {
+//		Criteria criteria = Criteria.where("floorId").is(floorId).and("type").in(Arrays.asList(IndoorLocationType.ELEVATOR.getValue(), IndoorLocationType.ESCALATOR.getValue()));
+//		mongoOps.remove(new Query(criteria), entityClass);
+		
+		Criteria criteria = Criteria.where("floorId").is(floorId);
+		Update update = new Update().set("isLocated", false);
+		mongoOps.updateMulti(new Query(criteria), update, entityClass);
+	}
+
+}

@@ -1,0 +1,27 @@
+package com.mit.controllers;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ModelAttribute;
+
+import com.mit.atlas.entities.AtlasProfile;
+import com.mit.atlas.entities.AtlasUser;
+import com.mit.atlas.repositories.AtlasProfileRepo;
+import com.mit.atlas.repositories.AtlasUserRepo;
+import com.mit.session.entities.UserSession;
+import com.mit.sessions.AtlasSession;
+import com.mit.user.enums.AdminType;
+import com.mit.utils.ControllerUtils;
+import com.mit.utils.LinkBuilder;
+
+@ControllerAdvice
+public final class GlobalController {	
+	@ModelAttribute
+	public void addAttributes(Model model, HttpServletRequest req) {
+		
+	}
+}

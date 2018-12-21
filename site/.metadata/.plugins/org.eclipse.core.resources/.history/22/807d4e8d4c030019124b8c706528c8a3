@@ -1,0 +1,294 @@
+package com.mit.map.services;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteWatchdog;
+import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.mit.asset.entities.PhotoInfo;
+import com.mit.asset.services.PhotoService;
+import com.mit.common.enums.ObjectType;
+import com.mit.mphoto.thrift.TMPhotoResult;
+import com.mit.navigation.entities.Floor;
+import com.mit.navigation.entities.MapLevel;
+import com.mit.navigation.entities.MapTile;
+import com.mit.navigation.repositories.FloorRepo;
+import com.mit.navigation.repositories.MapLevelRepo;
+import com.mit.navigation.repositories.MapTileRepo;
+import com.mit.navigation.utils.MapUtils;
+import com.mit.utils.JsonUtils;
+import com.mit.utils.LinkBuilder;
+
+@Service
+public class MapService {
+	private Logger logger = LoggerFactory.getLogger(MapService.class);
+	private String EXT = "png";
+
+	@Value("${admin.map.size.min:128}")
+	private int MAP_MIN_SIZE;
+	@Value("${admin.map.unit.min:128}")
+	private int MAP_UNIT_MIN_SIZE;
+	@Value("${admin.map.folder:./file/map}")
+	private String MAP_FOLDER;
+
+	@Autowired
+	private PhotoService photoService;
+	@Autowired
+	private MapLevelRepo mapLevelRepo;
+	@Autowired 
+	private MapTileRepo mapTileRepo;
+	@Autowired
+	private FloorRepo floorRepo;
+	
+	public void mbChangeFloorPhoto(long photoId, long floorId, boolean isSave) {
+		mbChangeFloorPhoto(photoId, floorRepo.getById(floorId), isSave);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void mbChangeFloorPhoto(long photoId, Floor floor, boolean isSave) {
+		try {
+			if (floor != null && floor.getMapbox() != null && floor.getMapbox().getGeojson() != null) {
+				String photoLink =  LinkBuilder.buildPhotoLink(photoId, ObjectType.MAP.getLowerName());
+				Map<String, Object> geoJson = JsonUtils.Instance.getMapObject(floor.getMapbox().getGeojson());
+				Map<String, Object> sources = (Map<String, Object>) geoJson.get("sources");
+				Map<String, Object> overlay = (Map<String, Object>) sources.get("ik-overlay");
+				overlay.put("url", photoLink);
+				floor.getMapbox().setGeojson(JsonUtils.Instance.toJson(geoJson));
+				
+				Map<String, Object> geoJsonFull = JsonUtils.Instance.getMapObject(floor.getMapbox().getGeojsonFull());
+				sources = (Map<String, Object>) geoJsonFull.get("sources");
+				overlay = (Map<String, Object>) sources.get("ik-overlay");
+				overlay.put("url", photoLink);
+				floor.getMapbox().setGeojsonFull(JsonUtils.Instance.toJson(geoJsonFull));
+				
+				if (isSave) {
+					floorRepo.save(floor);
+				}
+			}
+		} catch (Exception e) {
+		}
+	}
+	
+	public void changeMap(long floorId) {
+		mapLevelRepo.deleteByFloorId(floorId);
+	}
+	
+	public int getLevel(int width, int height) {
+		int minWH = Math.min(width, height);
+        if (minWH < MAP_MIN_SIZE) {
+            return - 1;
+        }
+		return (int) (Math.log10(minWH / MAP_UNIT_MIN_SIZE) / Math.log10(2));
+	}
+	
+	public void splitAndSaveImgToMapLevelTile(long eventId, long floorId, int level, PhotoInfo photoInfo) {
+        try {
+        	logger.info("Start split map");
+        	long photoId = photoInfo.getPhotoId();
+            // xử lý cây phân cấp theo chiến lược theo chiều rộng.
+            Map<Integer, List<String>> mapImgLevel = splitImgRecurrence(photoInfo, level);
+            System.out.println("mapImgLevel.size: " + mapImgLevel.size());
+            if (mapImgLevel != null && !mapImgLevel.isEmpty()) {
+                Map<Integer, Map<Integer, String>> mapTreeLevel = genTableFileLevel(photoId, level);
+                for (int i = 0; i <= level; i++) {
+                	int currentLevel = i + 1;
+                    List<String> currLevel = mapImgLevel.get(i);
+                    double tilePcW = 1.0 / (Math.pow(2, i));
+                    double tilePcH = 1.0 / (Math.pow(2, i));
+                    int tilePxW = (int) (photoInfo.getWidth() / (Math.pow(2, level)));
+                    int tilePxH = (int) (photoInfo.getHeight() / (Math.pow(2, level)));
+
+                    if (i == 0) {
+                        MapLevel ml = new MapLevel(eventId, floorId, currentLevel, tilePcW, tilePcH, tilePxW, tilePxH);
+                        mapLevelRepo.save(ml);
+                        int tileX = 0; 
+                        int tileY = 0;
+                        String quadkey = MapUtils.tileXYToQuadKey(tileX, tileY, currentLevel);
+                        MapTile mt = new MapTile(quadkey, ml.getId(), tileX, tileY, photoId);
+                        mapTileRepo.save(mt);
+                    } else if (currLevel != null && !currLevel.isEmpty()) {
+                        MapLevel ml = new MapLevel(eventId, floorId, currentLevel, tilePcW, tilePcH, tilePxW, tilePxH);
+                        mapLevelRepo.save(ml);
+                        Map<Integer, String> mapPathLevel = mapTreeLevel.get(i);
+                        int nxy = (int) Math.pow(2, i);
+                        for (int k = 0; k < mapPathLevel.size(); k++) {
+                            String path = mapPathLevel.get(k);
+                            File pf = new File(path);
+                            if (pf.isFile() && pf.canRead()) {
+                                long idp = photoService.saveFilePhoto(pf, ObjectType.MAP);
+                                System.out.println("Save file[" + k + "]: " + pf.getAbsolutePath());
+                                if (idp > 0) {
+                                	int tileX = k % nxy;
+                                	int tileY = k / nxy;
+                                	String quadkey = MapUtils.tileXYToQuadKey(tileX, tileY, currentLevel);
+                                    MapTile mt = new MapTile(quadkey, ml.getId(), tileX, tileY, idp);
+                                    mapTileRepo.save(mt);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("splitImgToMapLevelTile ", e);
+        }
+    }
+
+	private Map<Integer, Map<Integer, String>> genTableFileLevel(long photoId, int level) {
+		Map<Integer, Map<Integer, String>> rs = new HashMap<>();
+		if (level > 0) {
+			Map<Integer, Map<Integer, String>> mapTree = new HashMap<>();
+			// add level 0.
+			// Map<Integer, String> map0 = new HashMap<>();
+			// map0.put(0, "");
+			// mapTree.put(0, map0);
+
+			// add level 1.
+			Map<Integer, String> mape = new HashMap<>();
+			for (int i = 0; i < 4; i++) {
+				mape.put(i, "_" + i);
+			}
+			mapTree.put(1, mape);
+
+			for (int i = 2; i <= level; i++) {
+				Map<Integer, String> prev = mapTree.get(i - 1);
+				Map<Integer, String> curr = new HashMap<>();
+				int cn = (int) Math.pow(2, i);
+				int pn = (int) Math.pow(2, i - 1);
+				for (int j = 0; j < prev.size(); j++) {
+					int pdong = j / pn;
+					int pcot = j % pn;
+					String code = prev.get(j);
+					Map<Integer, String> mapj = new HashMap<>();
+					for (int k = 0; k < 4; k++) {
+						mapj.put(k, code + "_" + k);
+						// Tịnh tiến dòng và cột từ level thấp lên level cao.
+						// Sau đó cộng thêm chỉ số dòng và cột local 2x2.
+						int cdong = ((pdong * cn) / pn) + (k / 2);
+						int ccot = ((pcot * cn) / pn) + (k % 2);
+						// Tính chỉ mục của table chạy từ 0 --> 2^i - 1
+						int cindex = (cdong * cn) + ccot;
+						// System.out.println("cindex: " + cindex);
+						curr.put(cindex, code + "_" + k);
+					}
+				}
+				mapTree.put(i, curr);
+			}
+			for (int i : mapTree.keySet()) {
+				Map<Integer, String> mapi = mapTree.get(i);
+				for (int j : mapi.keySet()) {
+					String s = mapi.get(j);
+					s = buildPhotoFolderPath(photoId) + "/" + photoId + s + "." + EXT;
+					mapi.put(j, s);
+				}
+				mapTree.put(i, mapi);
+			}
+			rs = mapTree;
+		}
+		return rs;
+	}
+
+	private Map<Integer, List<String>> splitImgRecurrence(PhotoInfo photoInfo, int level) {
+		Map<Integer, List<String>> rs = new HashMap<>();
+		try {
+			long photoId = photoInfo.getPhotoId();
+			TMPhotoResult photoFile = photoService.getPhoto(photoId, ObjectType.MAP);
+			File folder = new File(MAP_FOLDER);
+			if (!folder.exists()) {
+				folder.mkdirs();
+			}
+			String pathFile = buildPhotoFolderPath(photoId) + "/" + photoId + "." + EXT;
+			File origin = new File(pathFile);
+			FileUtils.writeByteArrayToFile(origin, photoFile.getValue().getData());
+			logger.info("File size (byte): " + photoFile.getValue().getData().length);
+			rs.put(0, Arrays.asList(pathFile));
+
+			for (int i = 1; i <= level; i++) {
+				List<String> prevLevel = rs.get(i - 1);
+				List<String> currLevel = new ArrayList<>();
+				for (String path : prevLevel) {
+					List<String> pathtmp = splitImg(path);
+					currLevel.addAll(pathtmp);
+				}
+				rs.put(i, currLevel);
+			}
+			logger.info("Number of level: " + level);
+		} catch (Exception e) {
+			logger.error("splitImgRecurrence ", e);
+		}
+		return rs;
+	}
+
+	private List<String> splitImg(String pathFile) {
+		List<String> rs = new ArrayList<>();
+		try {
+			if (pathFile != null && !pathFile.isEmpty()) {
+				File origin = new File(pathFile);
+				File wdir = origin.getParentFile();
+
+				if (origin.isFile() && origin.canRead()) {
+					String fullname = origin.getName();
+					String filename = fullname.substring(0, fullname.indexOf("."));
+					String ext = fullname.substring(fullname.indexOf(".") + 1, fullname.length());
+					String dirname = wdir + File.separator + filename;
+					// File gendir = new File(dirname);
+					// gendir.mkdirs();
+
+					String cmd = "convert " + pathFile + " -crop 50%x50% +repage " + dirname + "_%d." + ext;
+					logger.info("Run command split: " + cmd);
+					exeProcess(cmd);
+
+					for (int i = 0; i < 4; i++) {
+						String pathtmp = dirname + "_" + i + "." + ext;
+						rs.add(pathtmp);
+					}
+				}
+			}
+		} catch (Exception e) {
+			logger.error("Split error ", e);
+		}
+		return rs;
+	}
+
+	private String exeProcess(String command) {
+		try {
+			logger.info("Start run command");
+			CommandLine cmdLine = CommandLine.parse(command);
+			DefaultExecutor executor = new DefaultExecutor();
+			ExecuteWatchdog watchdog = new ExecuteWatchdog(60 * 1000); // timeout
+																		// 60s
+																		// to
+																		// kill
+																		// process.
+			executor.setWatchdog(watchdog);
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			executor.setStreamHandler(new PumpStreamHandler(out));
+			int[] exitValues = { 0, 1 };
+			executor.setExitValues(exitValues);
+			executor.execute(cmdLine);
+			return out.toString();
+		} catch (Exception e) {
+			logger.error("CommandLineUtil.exeProcess: " + e, e);
+		}
+		return "";
+	}
+	
+	private String buildPhotoFolderPath(long photoId) {
+		return MAP_FOLDER + "/" + photoId;
+	}
+	
+}

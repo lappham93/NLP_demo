@@ -1,0 +1,422 @@
+package com.mit.react.entities;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.common.enums.ObjectType;
+
+@Document(collection = "user_stat")
+public class UserStat {
+	@Indexed(unique = true)
+	private long userId;
+	private List<Long> bizIds;
+	private List<Long> serviceIds;
+	private List<Long> promotionIds;
+	private List<Long> productIds;
+	private List<Long> hffuIds;
+	private List<Long> feedHideIds;
+	private List<Long> followUserIds;
+	private List<Long> userFollowIds;
+	private List<UserPromotion> userPromotions;
+	private List<Long> eventIds;
+	private List<Long> boothIds;
+	private Set<Long> requests;
+	private Set<Long> requesteds;
+	private Set<Long> connectUserIds;
+	private Set<Long> goingIds;
+	private Set<Long> checkedInIds;
+	private Set<Long> eventCategoryIds;
+	private List<Long> talkIds;
+	private double eventDistanceFilter;
+	private Set<Long> eventCategoryFilter;
+	
+	public <T> List<T> reverseList(List<T> lst) {
+		if (lst == null) {
+			return null;
+		}
+		List<T> result = new LinkedList<>();
+		for (T t: lst) {
+			result.add(0, t);
+		}
+		return result;
+	}
+	
+	public List<Long> getList(ObjectType type) {
+		if (type == ObjectType.EVENT) {
+			return reverseList(eventIds);
+		}
+		if (type == ObjectType.BOOTH) {
+			return reverseList(boothIds);
+		}
+		if (type == ObjectType.PRODUCT) {
+			return reverseList(productIds);
+		}
+		return null;
+	}
+	
+	public void addToList(long id, ObjectType type) {
+		if (type == ObjectType.EVENT) {
+			addToEventIds(id);
+		} else if (type == ObjectType.BOOTH) {
+			addToBoothIds(id);
+		} else if (type == ObjectType.PRODUCT) {
+			addToProductIds(id);
+		} else if (type == ObjectType.TALK) {
+			addToTalkIds(id);
+		}
+	}
+	
+	public void removeFromList(long id, ObjectType type) {
+		if (type == ObjectType.EVENT) {
+			removeFromEventIds(id);
+		} else if (type == ObjectType.BOOTH) {
+			removeFromBoothIds(id);
+		} else if (type == ObjectType.PRODUCT) {
+			removeFromProductIds(id);
+		} else if (type == ObjectType.TALK) {
+			removeFromTalkIds(id);
+		}
+	}
+
+	public void addToEventIds(long id) {
+		if (eventIds == null) {
+			eventIds = new ArrayList<>();
+		}
+		if (!eventIds.contains(id)) {
+			eventIds.add(0, id);
+		}
+	}
+	
+	public void removeFromEventIds(long id) {
+		if (eventIds != null) {
+			eventIds.remove(id);
+		}
+	}
+	
+	public void addToBoothIds(long id) {
+		if (boothIds == null) {
+			boothIds = new ArrayList<>();
+		}
+		if (!boothIds.contains(id)) {
+			boothIds.add(0, id);
+		}
+	}
+	
+	public void removeFromBoothIds(long id) {
+		if (boothIds != null) {
+			boothIds.remove(id);
+		}
+	}
+	
+	public void addToBizIds(long id) {
+		if (bizIds == null) {
+			bizIds = new ArrayList<>();
+		}
+		if (!bizIds.contains(id)) {
+			bizIds.add(0, id);
+		}
+	}
+
+	public void removeFromBizIds(long id) {
+		if (bizIds != null) {
+			bizIds.remove(id);
+		}
+	}
+
+	public void addToServiceIds(long id) {
+		if (serviceIds == null) {
+			serviceIds = new ArrayList<>();
+		}
+		if (!serviceIds.contains(id)) {
+			serviceIds.add(0, id);
+		}
+	}
+
+	public void removeFromServiceIds(long id) {
+		if (serviceIds != null) {
+			serviceIds.remove(id);
+		}
+	}
+
+	public void addToPromotionIds(long id) {
+		if (promotionIds == null) {
+			promotionIds = new ArrayList<>();
+		}
+		if (!promotionIds.contains(id)) {
+			promotionIds.add(0, id);
+		}
+	}
+
+	public void removeFromPromotionIds(long id) {
+		if (promotionIds != null) {
+			promotionIds.remove(id);
+		}
+	}
+
+	public void addToProductIds(long id) {
+		if (productIds == null) {
+			productIds = new ArrayList<>();
+		}
+		if (!productIds.contains(id)) {
+			productIds.add(0, id);
+		}
+	}
+
+	public void removeFromProductIds(long id) {
+		if (productIds != null) {
+			productIds.remove(id);
+		}
+	}
+	
+	public void addToTalkIds(long id) {
+		if (talkIds == null) {
+			talkIds = new LinkedList<>();
+		}
+		if (!talkIds.contains(id)) {
+			talkIds.add(0, id);
+		}
+	}
+
+	public void removeFromTalkIds(long id) {
+		if (talkIds != null) {
+			talkIds.remove(id);
+		}
+	}
+
+	public void addToFeedHideIds(long id) {
+		if (feedHideIds == null) {
+			feedHideIds = new ArrayList<>();
+		}
+		if (!feedHideIds.contains(id)) {
+			feedHideIds.add(0, id);
+		}
+	}
+
+	public void removeFromFeedHideIds(long id) {
+		if (feedHideIds != null) {
+			feedHideIds.remove(id);
+		}
+	}
+
+	public void addToHffuIds(long id) {
+		if (hffuIds == null) {
+			hffuIds = new ArrayList<>();
+		}
+		if (!hffuIds.contains(id)) {
+			hffuIds.add(0, id);
+		}
+		removeFromFollowUserIds(id);
+	}
+
+	public void removeFromHffuIds(long id) {
+		if (hffuIds != null) {
+			hffuIds.remove(id);
+		}
+	}
+
+	public void addToFollowUserIds(long id) {
+		if (followUserIds == null) {
+			followUserIds = new ArrayList<>();
+		}
+		if (!followUserIds.contains(id)) {
+			followUserIds.add(0, id);
+		}
+		removeFromHffuIds(id);
+	}
+
+	public void removeFromFollowUserIds(long id) {
+		if (followUserIds != null) {
+			followUserIds.remove(id);
+		}
+	}
+
+	public void addToUserFollowIds(long id) {
+		if (userFollowIds == null) {
+			userFollowIds = new ArrayList<>();
+		}
+		if (!userFollowIds.contains(id)) {
+			userFollowIds.add(0, id);
+		}
+	}
+
+	public void removeFromUserFollowIds(long id) {
+		if (userFollowIds != null) {
+			userFollowIds.remove(id);
+		}
+	}
+
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	public List<Long> getBizIds() {
+		return bizIds;
+	}
+
+	public void setBizIds(List<Long> bizIds) {
+		this.bizIds = bizIds;
+	}
+
+	public List<Long> getServiceIds() {
+		return serviceIds;
+	}
+
+	public void setServiceIds(List<Long> serviceIds) {
+		this.serviceIds = serviceIds;
+	}
+
+	public List<Long> getPromotionIds() {
+		return promotionIds;
+	}
+
+	public void setPromotionIds(List<Long> promotionIds) {
+		this.promotionIds = promotionIds;
+	}
+
+	public List<Long> getProductIds() {
+		return productIds;
+	}
+
+	public void setProductIds(List<Long> productIds) {
+		this.productIds = productIds;
+	}
+
+	public List<Long> getHffuIds() {
+		return hffuIds;
+	}
+
+	public void setHffuIds(List<Long> hffuIds) {
+		this.hffuIds = hffuIds;
+	}
+
+	public List<Long> getFeedHideIds() {
+		return feedHideIds;
+	}
+
+	public void setFeedHideIds(List<Long> feedHideIds) {
+		this.feedHideIds = feedHideIds;
+	}
+
+	public List<Long> getFollowUserIds() {
+		return followUserIds;
+	}
+
+	public void setFollowUserIds(List<Long> followUserIds) {
+		this.followUserIds = followUserIds;
+	}
+
+	public List<Long> getUserFollowIds() {
+		return userFollowIds;
+	}
+
+	public void setUserFollowIds(List<Long> userFollowIds) {
+		this.userFollowIds = userFollowIds;
+	}
+
+	public List<UserPromotion> getUserPromotions() {
+		return userPromotions;
+	}
+
+	public void setUserPromotions(List<UserPromotion> userPromotions) {
+		this.userPromotions = userPromotions;
+	}
+
+	public List<Long> getEventIds() {
+		return eventIds;
+	}
+
+	public void setEventIds(List<Long> eventIds) {
+		this.eventIds = eventIds;
+	}
+
+	public List<Long> getBoothIds() {
+		return boothIds;
+	}
+
+	public void setBoothIds(List<Long> boothIds) {
+		this.boothIds = boothIds;
+	}
+
+	public Set<Long> getRequests() {
+		return requests;
+	}
+
+	public void setRequests(Set<Long> requests) {
+		this.requests = requests;
+	}
+
+	public Set<Long> getConnectUserIds() {
+		return connectUserIds;
+	}
+
+	public void setConnectUserIds(Set<Long> connectUserIds) {
+		this.connectUserIds = connectUserIds;
+	}
+
+	public Set<Long> getGoingIds() {
+		return goingIds;
+	}
+
+	public void setGoingIds(Set<Long> goingIds) {
+		this.goingIds = goingIds;
+	}
+
+	public Set<Long> getCheckedInIds() {
+		return checkedInIds;
+	}
+
+	public void setCheckedInIds(Set<Long> checkedInIds) {
+		this.checkedInIds = checkedInIds;
+	}
+
+	public Set<Long> getEventCategoryIds() {
+		return eventCategoryIds;
+	}
+
+	public void setEventCategoryIds(Set<Long> eventCategoryIds) {
+		this.eventCategoryIds = eventCategoryIds;
+	}
+
+	public Set<Long> getRequesteds() {
+		return requesteds;
+	}
+
+	public void setRequesteds(Set<Long> requesteds) {
+		this.requesteds = requesteds;
+	}
+
+	public List<Long> getTalkIds() {
+		return talkIds;
+	}
+
+	public void setTalkIds(List<Long> talkIds) {
+		this.talkIds = talkIds;
+	}
+
+	public double getEventDistanceFilter() {
+		return eventDistanceFilter;
+	}
+
+	public void setEventDistanceFilter(double eventDistanceFilter) {
+		this.eventDistanceFilter = eventDistanceFilter;
+	}
+
+	public Set<Long> getEventCategoryFilter() {
+		return eventCategoryFilter;
+	}
+
+	public void setEventCategoryFilter(Set<Long> eventCategoryFilter) {
+		this.eventCategoryFilter = eventCategoryFilter;
+	}
+
+
+}

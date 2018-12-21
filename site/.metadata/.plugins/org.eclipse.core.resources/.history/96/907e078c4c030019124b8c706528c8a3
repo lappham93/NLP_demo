@@ -1,0 +1,33 @@
+package com.mit.sensor.bodies;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+/**
+ * Created by Hung on 1/19/2018.
+ */
+public class IntStepCounterBody {
+    @JsonProperty("elapsed_time")
+    private double elapsedTime;
+    private int value;
+
+    public IntStepCounterBody(StepCounterBody body) {
+        this.elapsedTime = body.getElapsedTime();
+        this.value = body.getValue();
+    }
+
+    public double getElapsedTime() {
+        return elapsedTime;
+    }
+
+    public void setElapsedTime(double elapsedTime) {
+        this.elapsedTime = elapsedTime;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public void setValue(int value) {
+        this.value = value;
+    }
+}

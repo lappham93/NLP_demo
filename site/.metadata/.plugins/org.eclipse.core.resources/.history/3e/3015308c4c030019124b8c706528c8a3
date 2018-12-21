@@ -1,0 +1,173 @@
+package com.mit.react.responses;
+
+import java.util.List;
+
+import org.springframework.util.CollectionUtils;
+
+import com.mit.react.entities.Comment;
+import com.mit.react.entities.ReactStat;
+import com.mit.react.entities.UserStat;
+import com.mit.react.enums.CommentType;
+import com.mit.react.enums.ReactType;
+import com.mit.social.responses.FeedPhotoResponse;
+import com.mit.user.responses.ProfileShortResponse;
+
+/**
+ * Created by Lap Pham on 2/24/17.
+ */
+public class CommentResponse {
+	private long id;
+	private int type;
+	private ProfileShortResponse user;
+	private String text;
+	private String sticker;
+	private FeedPhotoResponse photoCmt;
+	private int totalChild;
+	private CommentResponse lstChild;
+	private boolean isLiked;
+	private int totalLike;
+	private boolean isFollowed;
+	private boolean isConnected;
+	private long createTime;
+	private long updateTime;
+
+	public CommentResponse(long viewUserId, Comment comment, ProfileShortResponse profile, FeedPhotoResponse photoCmt,
+			CommentResponse lstChild, List<ReactStat> reactStats, UserStat userStat) {
+		this.id = comment.getId();
+		type = CommentType.getCommentType(comment).getValue();
+		this.user = profile;
+		this.text = comment.getText();
+		this.sticker = comment.getSticker();
+		this.photoCmt = photoCmt;
+		this.lstChild = lstChild;
+		if (!CollectionUtils.isEmpty(reactStats)) {
+			for (ReactStat reactStat : reactStats) {
+				if (reactStat.getReactType() == ReactType.LIKE.getValue()) {
+					this.isLiked = reactStat.getUserIds() != null && reactStat.getUserIds().contains(viewUserId);
+					this.totalLike = reactStat.getTotal();
+				} else if (reactStat.getReactType() == ReactType.COMMENT.getValue()) {
+					this.totalChild = reactStat.getTotal();
+				}
+			}
+		}
+		this.isFollowed = userStat != null && userStat.getUserFollowIds() != null
+				&& userStat.getUserFollowIds().contains(viewUserId);
+		this.isConnected = userStat != null && userStat.getConnectUserIds() != null
+				&& userStat.getConnectUserIds().contains(viewUserId);
+		this.createTime = comment.getCreatedDate().getTime();
+		this.updateTime = comment.getUpdatedDate().getTime();
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	public ProfileShortResponse getUser() {
+		return user;
+	}
+
+	public void setUser(ProfileShortResponse user) {
+		this.user = user;
+	}
+
+	public String getText() {
+		return text;
+	}
+
+	public void setText(String text) {
+		this.text = text;
+	}
+
+	public String getSticker() {
+		return sticker;
+	}
+
+	public void setSticker(String sticker) {
+		this.sticker = sticker;
+	}
+
+	public FeedPhotoResponse getPhotoCmt() {
+		return photoCmt;
+	}
+
+	public void setPhotoCmt(FeedPhotoResponse photoCmt) {
+		this.photoCmt = photoCmt;
+	}
+
+	public int getTotalChild() {
+		return totalChild;
+	}
+
+	public void setTotalChild(int totalChild) {
+		this.totalChild = totalChild;
+	}
+
+	public int getTotalLike() {
+		return totalLike;
+	}
+
+	public void setTotalLike(int totalLike) {
+		this.totalLike = totalLike;
+	}
+
+	public CommentResponse getLstChild() {
+		return lstChild;
+	}
+
+	public void setLstChild(CommentResponse lstChild) {
+		this.lstChild = lstChild;
+	}
+
+	public boolean isLiked() {
+		return isLiked;
+	}
+
+	public void setLiked(boolean isLiked) {
+		this.isLiked = isLiked;
+	}
+
+	public boolean isFollowed() {
+		return isFollowed;
+	}
+
+	public void setFollowed(boolean isFollowed) {
+		this.isFollowed = isFollowed;
+	}
+
+	public long getCreateTime() {
+		return createTime;
+	}
+
+	public void setCreateTime(long createTime) {
+		this.createTime = createTime;
+	}
+
+	public long getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(long updateTime) {
+		this.updateTime = updateTime;
+	}
+
+	public boolean isConnected() {
+		return isConnected;
+	}
+
+	public void setConnected(boolean isConnected) {
+		this.isConnected = isConnected;
+	}
+
+}

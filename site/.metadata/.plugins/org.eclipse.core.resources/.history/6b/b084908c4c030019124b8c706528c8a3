@@ -1,0 +1,18 @@
+package com.mit.notification.enums;
+
+/**
+ * Created by Lap Pham on 4/4/17.
+ */
+public enum NewsType {
+	WEB(1), EVENT(2), BOOTH(3), WELCOME(4), PRODUCT(5), MESSAGE(6), SOCIAL(7), CHAT(8), ADVERTISEMENT(9), CONNECT(10);
+
+    private int value;
+
+    NewsType(int value) {
+        this.value = value;
+    }
+
+    public int getValue() {
+        return value;
+    }
+}

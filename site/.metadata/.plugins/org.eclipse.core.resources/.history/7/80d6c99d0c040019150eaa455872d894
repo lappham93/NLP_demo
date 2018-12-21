@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout">
+<head>
+	<meta charset="utf-8"/>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+	<title th:text="${admin_title}">NLP</title>
+	<link rel="icon" type="image/x-icon" th:href="@{${resources_path} + '/images/app-logo.png'}" />
+	<link th:href="${resources_path} + '/css/app/common.css?20181219'" rel="stylesheet" type="text/css"/>
+	<link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet'/>
+	
+	
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		App = {};
+		App.sitePrefix = [[${site_prefix}]];
+		/*]]>*/
+	</script>
+</head>
+
+<body>
+	<div class="container col-sm-12">
+     	<div layout:fragment="body">BODY CONTENT</div>
+   	</div>
+</body>
+</html>

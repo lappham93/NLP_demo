@@ -1,0 +1,9 @@
+var accessToken = 'pk.eyJ1IjoibGFwcGhhbSIsImEiOiJjam16dG53MHQxYzRkM2tvMWl0bmlwaDJzIn0.Uk6ImyUqGicN4hPpPobhnw';
+$(function(){
+	mapboxgl.accessToken = accessToken;
+	
+	var map = new mapboxgl.Map({
+	    container: 'mapId',
+	    style: 'mapbox://styles/mapbox/satellite-v9'
+	});
+})

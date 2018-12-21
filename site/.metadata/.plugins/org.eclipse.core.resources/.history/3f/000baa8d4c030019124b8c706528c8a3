@@ -1,0 +1,26 @@
+package com.mit.banner.entities;
+
+import com.mit.banner.enums.BannerType;
+
+public class EventBanner extends Banner {
+	public static int TYPE = BannerType.EVENT.getValue();
+	private long eventId;
+	
+	public EventBanner() {
+		super(TYPE);
+	}
+	
+	public EventBanner(long eventId) {
+		super(TYPE);
+		this.eventId = eventId;
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+}

@@ -1,0 +1,61 @@
+package com.mit.address.repositories;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import com.mit.address.entities.EventAddress;
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.seq.repositories.SeqIdRepo;
+
+@Repository
+public class EventAddressRepo extends TimeDocRepo<EventAddress>{
+	@Autowired
+	MongoOperations mongoOps;
+
+	@Autowired
+	SeqIdRepo seqIdRepo;
+
+	public int totalAll(boolean onlyActive) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		return (int)mongoOps.count(new Query(criteria), EventAddress.class);
+	}
+	
+	public EventAddress getById(long id) {
+		return mongoOps.findById(id, EventAddress.class);
+	}
+	
+	public List<EventAddress> getList(boolean onlyActive) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		return mongoOps.find(new Query(criteria), EventAddress.class);
+	}
+	
+	public List<EventAddress> getSlice(boolean onlyActive, int from, int count) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		Sort sort = new Sort(new Order(Direction.DESC, "updatedDate"));
+		return mongoOps.find(new Query(criteria).with(sort).skip(from).limit(count), EventAddress.class);
+	}
+	
+	public void delete(long id) {
+		Update update = new Update().set("isDeleted", true);
+		mongoOps.updateFirst(new Query(Criteria.where("id").is(id)), update, EventAddress.class);
+	}
+
+}

@@ -1,0 +1,442 @@
+package com.mit.event.services;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.address.entities.EventAddress;
+import com.mit.address.repositories.EventAddressRepo;
+import com.mit.address.responses.EventAddressResponse;
+import com.mit.banner.responses.BannerResponse;
+import com.mit.banner.services.BannerService;
+import com.mit.common.entities.ObjectRef;
+import com.mit.common.enums.ObjectType;
+import com.mit.event.entities.Event;
+import com.mit.event.entities.EventCategory;
+import com.mit.event.enums.EventFilter;
+import com.mit.event.enums.EventStatus;
+import com.mit.event.repositories.EventCategoryRepo;
+import com.mit.event.repositories.EventRepo;
+import com.mit.event.responses.EventCategoryResponse;
+import com.mit.event.responses.EventOnlineResponse;
+import com.mit.event.responses.EventResponse;
+import com.mit.event.responses.EventShortResponse;
+import com.mit.event.responses.MyCalendarResponse;
+import com.mit.http.exception.SequenceException;
+import com.mit.navigation.enums.SortOption;
+import com.mit.navigation.repositories.ElasticEventRepo;
+import com.mit.react.entities.ReactStat;
+import com.mit.react.entities.UserStat;
+import com.mit.react.repositories.LiveRepo;
+import com.mit.react.repositories.ReactStatRepo;
+import com.mit.react.repositories.UserStatRepo;
+import com.mit.user.bodies.UserSettingBody;
+import com.mit.user.responses.ProfileSettingResponse;
+import com.mit.utils.JsonUtils;
+
+/**
+ * Created by Lap Pham on 6/15/17.
+ */
+
+@Service
+public class EventService {
+
+    @Autowired
+    private EventRepo eventRepo;
+    @Autowired
+    private ElasticEventRepo elasticEventRepo;
+    @Autowired
+    private EventAddressRepo eventAddressRepo;
+    @Autowired
+    private EventCategoryRepo eventCategoryRepo;
+    @Autowired
+    private ReactStatRepo reactStatRepo;
+    @Autowired
+    private LiveRepo liveRepo;
+    @Autowired
+    private BannerService bannerService;
+    @Autowired
+    private UserStatRepo userStatRepo;
+    
+    public List<EventShortResponse> getListEvent(List<Long> eventIds, long userId, double lon, double lat) {
+    	if (CollectionUtils.isEmpty(eventIds)) {
+    		return null;
+    	}
+        List<EventShortResponse> eventResponses = new ArrayList<>(eventIds.size());
+        Map<Long, Event> eventMap = eventRepo.getMapByIds(eventIds);
+        List<Long> eventAddressIds = new ArrayList<>(eventIds.size());
+        List<Long> eventCategoryIds = new ArrayList<>(eventIds.size());
+        for (Event event: eventMap.values()) {
+            eventAddressIds.add(event.getAddressId());
+            eventCategoryIds.addAll(event.getCategoryIds());
+        }
+        List<EventAddress> eventAddresses = eventAddressRepo.getListByIds(eventAddressIds);
+        List<EventCategory> eventCategories = eventCategoryRepo.getListByIds(eventCategoryIds);
+
+        Map<Long, EventAddressResponse> eventAddressResponseMap = buildMapEventAddressResponse(eventAddresses);
+        Map<Long, EventCategoryResponse> eventCategoryResponseMap = buildMapEventCategoryResponse(eventCategories);
+
+        Map<Long, List<ReactStat>> reactStatMap = reactStatRepo.getMapByObjectAndType(ObjectType.EVENT.getValue(), eventIds);
+
+        for (long eventId: eventIds) {
+            Event event = eventMap.get(eventId);
+            EventAddressResponse eventAddressResponse = eventAddressResponseMap.get(event.getAddressId());
+            List<EventCategoryResponse> eventCategoryResponses = new LinkedList<>();
+            for (long categoryId: event.getCategoryIds()) {
+            	EventCategoryResponse eventCategoryResponse = eventCategoryResponseMap.get(categoryId);
+            	eventCategoryResponses.add(eventCategoryResponse);
+            }
+            List<ReactStat> reactStats = reactStatMap.get(eventId);
+            int totalLive = 0;
+            if (event.getStatus() == EventStatus.ONGOING.getValue()) {
+                totalLive = liveRepo.getTotalEventLive(eventId);
+            }
+
+            EventShortResponse eventResponse = new EventShortResponse(event, eventCategoryResponses, eventAddressResponse, reactStats, userId, lon, lat, totalLive);
+            eventResponses.add(eventResponse);
+        }
+       
+        return eventResponses;
+    }
+
+    public Map<String, Object> getListEvent(List<Integer> types, List<Long> categoryIds, int status, String place, String query, double distance, double lat, double lon, int from, int count, int type, long userId, int sortOption, long fromTime, long toTime) {
+        Map<String, Object> rs = new HashMap<>();
+        List<Long> eventIds = null;
+        
+//        if (!CollectionUtils.isEmpty(categoryIds)) {
+//        	UserStat us = userStatRepo.getByUserId(userId, false);
+//        	if (us != null && us.getEventCategoryIds() != null) {
+//        		categoryIds = new LinkedList<>();
+//        		categoryIds.addAll(us.getEventCategoryIds());
+//        	}
+//        }
+        //heuristic get
+//        long period = 24*3600*1000;
+        List<Long> hrtEventIds = new ArrayList<>();
+//        if (status == 0 || status == EventStatus.UPCOMMING.getValue()) {
+//            hrtEventIds.addAll(elasticEventRepo.page2Ids(elasticEventRepo.findInPeriod(categoryIds, EventStatus.UPCOMMING.getValue(), place, query, distance, lat, lon, 0, 2, period, null)));
+//        }
+//        if (status == 0 || status == EventStatus.ONGOING.getValue()) {
+//            hrtEventIds.addAll(elasticEventRepo.page2Ids(elasticEventRepo.findInPeriod(categoryIds, EventStatus.ONGOING.getValue(), place, query, distance, lat, lon, 0, 2, period, null)));
+//        }
+        
+        //get normal event
+        int page = getPage(from, count);
+        if (type == EventFilter.FEATURE.getValue()) {
+            eventIds = elasticEventRepo.page2Ids(elasticEventRepo.findFeature(types, categoryIds, status, place, query, lat, lon, page, count, hrtEventIds, sortOption, fromTime, toTime));
+        } else if (type == EventFilter.NEARBY.getValue()) {
+            eventIds = elasticEventRepo.page2Ids(elasticEventRepo.findNearby(types, categoryIds, status, place, query, distance, lat, lon, page, count, hrtEventIds, sortOption, fromTime, toTime));
+        } else {
+            eventIds = elasticEventRepo.page2Ids(elasticEventRepo.findDefault(types, categoryIds, status, place, query, distance, lat, lon, page, count, hrtEventIds, sortOption, fromTime, toTime));
+        }
+
+        //get finished events
+//        List<Long> finishedIds = null;
+//        if (type == EventFilter.DEFAULT.getValue() && status == 0 && (eventIds == null || eventIds.size() < count)) {
+//            int unfinishedEvent = eventRepo.totalAll(Arrays.asList(EventStatus.ONGOING.getValue(), EventStatus.UPCOMMING.getValue()), true);
+//            int fCount = count;
+//            int fPage = from <= unfinishedEvent ? 0 : getPage(from - unfinishedEvent, fCount);
+//            finishedIds = elasticEventRepo.page2Ids(elasticEventRepo.findDefault(categoryIds, EventStatus.FINISHED.getValue(), place, query, lat, lon, fPage, fCount, null, sortOption));
+//        }
+
+        boolean hasMore = false;
+        if (eventIds != null && eventIds.size() >= count) {
+            hasMore = true;
+        }
+//        if (finishedIds != null && finishedIds.size() >= count) {
+//            hasMore = true;
+//        }
+        if (page == 0) {
+            if (!hrtEventIds.isEmpty()) {
+                eventIds.addAll(0, hrtEventIds);
+            }
+        }
+//        if (finishedIds != null) {
+//        	eventIds.addAll(finishedIds);
+//        }
+        System.out.println(JsonUtils.Instance.toJson(eventIds));
+        List<EventShortResponse> eventViews = getListEvent(eventIds, userId, lon, lat);
+
+        rs.put("hasMore", hasMore);
+        rs.put("events", eventViews);
+        return rs;
+    }
+
+    public Map<String, Object> getEventDetail(long eventId, long userId, double lon, double lat) {
+        Map<String, Object> rs = new HashMap<>();
+        int err = 0;
+        Event event = eventRepo.getById(eventId);
+        if (event != null) {
+            EventAddressResponse eventAddressResponse = new EventAddressResponse(eventAddressRepo.getById(event.getAddressId()));
+            List<EventCategoryResponse> eventCategoryResponses = buildListEventCategoryResponse(eventCategoryRepo.getListByIds(event.getCategoryIds()));
+//            ReactStat reactStat = reactStatRepo.getByObjectAndType(new ObjectRef(ObjectType.EVENT.getValue(), eventId), ReactType.FOLLOW.getValue());
+            List<ReactStat> reactStats = reactStatRepo.getByObject(new ObjectRef(ObjectType.EVENT.getValue(), eventId));
+            int totalLive = 0;
+            if (event.getStatus() == EventStatus.ONGOING.getValue()) {
+                totalLive = liveRepo.getTotalEventLive(eventId);
+            }
+            boolean isBeingOnline = liveRepo.beingEventOnline(userId, event.getId());
+            List<BannerResponse> banners = bannerService.getListBanner(ObjectType.EVENT.getValue(), eventId);
+            rs.put("event", new EventResponse(event, eventCategoryResponses, eventAddressResponse, reactStats, userId, lon, lat, totalLive, banners, isBeingOnline));
+        } else {
+            err = -1;
+        }
+        rs.put("err", err);
+
+        return rs;
+    }
+
+    public EventOnlineResponse scanEvent(long userId, double lon, double lat) {
+        Map<String, Object> rs = new HashMap<>();
+        double distance = 500.0;
+        List<Long> eventIds = elasticEventRepo.page2Ids(elasticEventRepo.findNearby(null, null, EventStatus.ONGOING.getValue(), "", "", distance, lat, lon, 0, 1, null, SortOption.DISTANCE.getValue(), 0, 0));
+        boolean beingOnline = false;
+        EventShortResponse eventResponse = null;
+        if (eventIds != null && eventIds.size() > 0) {
+            Event event = eventRepo.getById(eventIds.get(0));
+            eventResponse = buildEventShortResponse(event, userId, lon, lat);
+            beingOnline = true;
+        }
+
+        return new EventOnlineResponse(eventResponse, beingOnline);
+    }
+
+    public EventShortResponse buildEventShortResponse(Event event, long userId, double lon, double lat) {
+        EventAddressResponse eventAddressResponse = new EventAddressResponse(eventAddressRepo.getById(event.getAddressId()));
+        List<EventCategoryResponse> eventCategoryResponses = buildListEventCategoryResponse(eventCategoryRepo.getListByIds(event.getCategoryIds()));
+        List<ReactStat> reactStats = reactStatRepo.getByObject(new ObjectRef(ObjectType.EVENT.getValue(), event.getId()));
+        int totalLive = 0;
+        if (event.getStatus() == EventStatus.ONGOING.getValue()) {
+            totalLive = liveRepo.getTotalEventLive(event.getId());
+        }
+        return new EventShortResponse(event, eventCategoryResponses, eventAddressResponse, reactStats, userId, lon, lat, totalLive);
+    }
+
+    public Map<Long, EventAddressResponse> buildMapEventAddressResponse(List<EventAddress> eventAddresses) {
+        Map<Long, EventAddressResponse> eventCategoryResponseMap = new HashMap<>();
+        for (EventAddress eventAddress: eventAddresses) {
+            eventCategoryResponseMap.put(eventAddress.getId(), new EventAddressResponse(eventAddress));
+        }
+        return eventCategoryResponseMap;
+    }
+
+    public List<EventAddressResponse> buildListEventAddressResponse(List<EventAddress> eventAddresses) {
+        List<EventAddressResponse> eventCategoryResponses = new ArrayList<>(eventAddresses.size());
+        for (EventAddress eventAddress: eventAddresses) {
+            eventCategoryResponses.add(new EventAddressResponse(eventAddress));
+        }
+        return eventCategoryResponses;
+    }
+
+    public Map<Long, EventCategoryResponse> buildMapEventCategoryResponse(List<EventCategory> eventCategories) {
+        Map<Long, EventCategoryResponse> eventCategoryResponseMap = new HashMap<>();
+        for (EventCategory eventCategory: eventCategories) {
+            eventCategoryResponseMap.put(eventCategory.getId(), new EventCategoryResponse(eventCategory));
+        }
+        return eventCategoryResponseMap;
+    }
+
+    public List<EventCategoryResponse> buildListEventCategoryResponse(List<EventCategory> eventCategories) {
+        List<EventCategoryResponse> eventCategoryResponseMap = new ArrayList<>(eventCategories.size());
+        for (EventCategory eventCategory: eventCategories) {
+            eventCategoryResponseMap.add(new EventCategoryResponse(eventCategory));
+        }
+        return eventCategoryResponseMap;
+    }
+    
+    public void updateEventStatus() {
+    	eventRepo.updateStatus();
+    	List<Long> ongoingIds = eventRepo.getListIds(EventStatus.ONGOING.getValue(), true);
+    	if (!CollectionUtils.isEmpty(ongoingIds)) {
+    		elasticEventRepo.updateStatus(ongoingIds, EventStatus.ONGOING.getValue());
+    	}
+    	List<Long> finishIds = eventRepo.getListIds(EventStatus.FINISHED.getValue(), true);
+    	if (!CollectionUtils.isEmpty(finishIds)) {
+    		elasticEventRepo.updateStatus(finishIds, EventStatus.FINISHED.getValue());
+    	}
+    }
+    
+    public int getPage(int from, int count) {
+    	if (from % count == 0) {
+    		return from/count;
+    	}
+    	return from/count + 1;
+    }
+    
+    public Map<String, Object> getCheckedInEvent(long userId, int count, int from, double lon, double lat) {
+    	Map<String, Object> rs = new HashMap<>();
+    	UserStat userStat = userStatRepo.getByUserId(userId, false);
+    	boolean hasMore = false;
+    	List<EventShortResponse> events = null;
+    	if (userStat != null && userStat.getCheckedInIds() != null) {
+    		List<Long> ids = new LinkedList<>();
+    		for (long id: userStat.getCheckedInIds()) {
+    			ids.add(0, id);
+    		}
+			int total = ids.size();
+			if (from < total) {
+				if (total > from + count) {
+					hasMore = true;
+					ids = ids.subList(from, from + count);
+				} else {
+					ids = ids.subList(from, total);
+				}
+			} else {
+				ids = null;
+			}
+			if (!CollectionUtils.isEmpty(ids)) {
+				events = getListEvent(ids, userId, lon, lat);
+			}
+    	}
+    	rs.put("events", events);
+    	rs.put("hasMore", hasMore);
+    	return rs;
+    }
+    
+    public Map<String, Object> getGoingEvent(long userId, int count, int from, double lon, double lat) {
+    	Map<String, Object> rs = new HashMap<>();
+    	UserStat userStat = userStatRepo.getByUserId(userId, false);
+    	boolean hasMore = false;
+    	List<EventShortResponse> events = null;
+    	if (userStat != null && userStat.getGoingIds() != null) {
+    		List<Long> upOnIds = eventRepo.getUpOnEventIds(userStat.getGoingIds());
+    		List<Long> ids = new LinkedList<>();
+    		for (long id: userStat.getGoingIds()) {
+    			if (upOnIds.contains(id)) {
+    				ids.add(0, id);
+    			}
+    		}
+			int total = ids.size();
+			if (from < total) {
+				if (total > from + count) {
+					hasMore = true;
+					ids = ids.subList(from, from + count);
+				} else {
+					ids = ids.subList(from, total);
+				}
+			} else {
+				ids = null;
+			}
+			if (!CollectionUtils.isEmpty(ids)) {
+				events = getListEvent(ids, userId, lon, lat);
+			}
+    	}
+    	rs.put("events", events);
+    	rs.put("hasMore", hasMore);
+    	return rs;
+    }
+    
+    public int setUserEventCategory(long userId, List<Long> categoryIds) {
+    	userStatRepo.setEventCategory(userId, categoryIds);
+    	return 0;
+    }
+    
+    public ProfileSettingResponse changeUserSetting(long userId, UserSettingBody setting) throws SequenceException {
+    	userStatRepo.setFilter(userId, setting.getEventCategoryIds(), setting.getEventDistanceFilter());
+    	UserStat us = userStatRepo.getByUserId(userId, false);
+    	return new ProfileSettingResponse(us);
+    }
+    
+    public List<EventCategoryResponse> getEventCategory(long userId, boolean onlyFollow) {
+    	UserStat userStat = userStatRepo.getByUserId(userId, true);
+    	List<EventCategoryResponse> cateRsps = new LinkedList<>();
+    	List<EventCategory> cates = eventCategoryRepo.getList();
+    	if (cates != null) {
+    		for (EventCategory cate: cates) {
+    			boolean isFollowed = userStat.getEventCategoryIds() != null && userStat.getEventCategoryIds().contains(cate.getId());
+    			boolean isFiltered = userStat.getEventCategoryFilter() != null && userStat.getEventCategoryFilter().contains(cate.getId());
+    			if (!onlyFollow || isFollowed) {
+    				cateRsps.add(new EventCategoryResponse(cate, isFollowed, isFiltered));
+    			}
+    		}
+    	}
+    	
+    	return cateRsps;		
+    }
+    
+    public List<EventCategoryResponse> getEventCategoryInDiscovery(long userId, int count) {
+    	UserStat userStat = userStatRepo.getByUserId(userId, true);
+    	List<EventCategoryResponse> cateRsps = new LinkedList<>();
+    	List<EventCategory> cates = eventCategoryRepo.getDiscovery(count);
+    	if (cates != null) {
+    		for (EventCategory cate: cates) {
+    			boolean isFollowed = userStat.getEventCategoryIds() != null && userStat.getEventCategoryIds().contains(cate.getId());
+    			boolean isFiltered = userStat.getEventCategoryFilter() != null && userStat.getEventCategoryFilter().contains(cate.getId());
+				cateRsps.add(new EventCategoryResponse(cate, isFollowed, isFiltered));
+    		}
+    	}
+    	
+    	return cateRsps;		
+    }
+    
+    public Map<String, Object> getMyCalendar(long userId, double lon, double lat, int totalDisplayPhoto) {
+    	Map<String, Object> rs = new HashMap<>();
+    	UserStat userStat = userStatRepo.getByUserId(userId, false);
+    	MyCalendarResponse calendar = new MyCalendarResponse();
+    	if (userStat != null && userStat.getGoingIds() != null) {
+    		List<Long> ids = eventRepo.getUpOnEventIds(userStat.getGoingIds());
+			if (!CollectionUtils.isEmpty(ids)) {
+				List<EventShortResponse> events = getListEvent(ids, userId, lon, lat);
+				if (events != null) {
+					calendar.setTotal(events.size());
+					if (events.size() > 0) {
+						calendar.setEvent(events.get(0));
+						List<String> photos = new ArrayList<>(totalDisplayPhoto);
+						for (int i = 0; i < totalDisplayPhoto && i < events.size(); i++) {
+							photos.add(events.get(i).getPhoto());
+						}
+						calendar.setPhotos(photos);
+					}
+				}
+			}
+    	}
+    	rs.put("calendar", calendar);
+    	return rs;
+    }
+    
+    public Map<String, Object> getMyCalendar(long userId, double lon, double lat, int totalDisplayPhoto, Map<Long, EventShortResponse> eventMap) {
+    	Map<String, Object> rs = new HashMap<>();
+    	UserStat userStat = userStatRepo.getByUserId(userId, false);
+    	MyCalendarResponse calendar = new MyCalendarResponse();
+    	if (userStat != null && userStat.getGoingIds() != null) {
+    		List<Long> ids = eventRepo.getUpOnEventIds(userStat.getGoingIds());
+			if (!CollectionUtils.isEmpty(ids) && !CollectionUtils.isEmpty(eventMap)) {
+				List<EventShortResponse> events = new LinkedList<>();
+				for (long id: ids) {
+					if (eventMap.containsKey(id)) {
+						events.add(eventMap.get(id));
+					}
+				}
+				calendar.setTotal(events.size());
+				if (events.size() > 0) {
+					calendar.setEvent(events.get(0));
+					List<String> photos = new ArrayList<>(totalDisplayPhoto);
+					for (int i = 0; i < totalDisplayPhoto && i < events.size(); i++) {
+						photos.add(events.get(i).getPhoto());
+					}
+					calendar.setPhotos(photos);
+				}
+			}
+    	}
+    	rs.put("calendar", calendar);
+    	return rs;
+    }
+    
+    public Map<Long, EventShortResponse> getUpCommingEvent() {
+    	Map<Long, EventShortResponse> eventMap = new HashMap<>();
+    	List<Event> events = eventRepo.getList(EventStatus.UPCOMMING.getValue(), true);
+    	if (events != null) {
+    		for (Event event: events) {
+    			eventMap.put(event.getId(), buildEventShortResponse(event, 0, 0, 0));
+    		}
+    	}
+    	return eventMap;
+    }
+    
+}

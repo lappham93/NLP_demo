@@ -1,0 +1,37 @@
+package com.mit.banner.entities;
+
+import com.mit.banner.enums.BannerType;
+
+public class BoothBanner extends Banner {
+	public static int TYPE = BannerType.BOOTH.getValue();
+	
+	private long eventId;
+	private long boothId;
+	
+	public BoothBanner() {
+		super(TYPE);
+	}
+	
+	public BoothBanner(long eventId, long boothId) {
+		super(TYPE);
+		this.eventId = eventId;
+		this.boothId = boothId;
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+	public long getBoothId() {
+		return boothId;
+	}
+
+	public void setBoothId(long boothId) {
+		this.boothId = boothId;
+	}
+
+}

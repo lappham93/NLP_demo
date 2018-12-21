@@ -1,0 +1,32 @@
+package com.mit.controllers;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.mit.atlas.entities.AtlasProfile;
+import com.mit.session.SessionManagerImpl;
+import com.mit.sessions.AtlasSession;
+
+@Controller
+@RequestMapping(value = "/logout")
+public class LogoutController {
+	@Autowired
+	private SessionManagerImpl sessionManagerImp;
+	
+	@RequestMapping(method = RequestMethod.GET)
+	public ModelAndView logout(HttpServletRequest req, Model model) {
+		ModelAndView rs = new ModelAndView();
+		String sessionKey = AtlasSession.getSessionKey(req);
+		AtlasSession.removeSession(req);
+		sessionManagerImp.expireSession(sessionKey, AtlasProfile.class);
+		rs.setViewName("redirect:" + (String)model.asMap().get("admin_prefix") + "/login");
+		return rs;
+	}
+
+}

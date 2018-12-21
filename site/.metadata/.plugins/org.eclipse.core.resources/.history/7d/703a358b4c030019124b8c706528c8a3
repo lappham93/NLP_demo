@@ -1,0 +1,242 @@
+package com.mit.user.responses;
+
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.mit.address.entities.Address;
+import com.mit.common.enums.ObjectType;
+import com.mit.event.responses.EventCategoryResponse;
+import com.mit.event.responses.MyCalendarResponse;
+import com.mit.map.entities.Point;
+import com.mit.react.entities.UserStat;
+import com.mit.session.entities.ProfileCache;
+import com.mit.user.entities.Profile;
+import com.mit.utils.LinkBuilder;
+
+/**
+ * Created by Lap Pham on 2/24/17.
+ */
+public class ProfileShortResponse {
+    private long id;
+    private String avatar;
+    private String displayName;
+    private boolean isFollowed;
+    private boolean isConnected;
+    private boolean isRequested;
+    private boolean isBeRequested;
+	private String homeTown;
+	private long avatarPhoto;
+	private Point location;
+	private String company;
+	private String designation;
+	private Address address;
+	private String title;
+	private MyCalendarResponse calendar;
+	private List<EventCategoryResponse> interestedCategories;
+	private ProfileSettingResponse profileSetting;
+	private int status;
+	
+	public ProfileShortResponse() {
+		super();
+	}
+
+    public ProfileShortResponse(long id) {
+        this.id = id;
+    }
+
+    public ProfileShortResponse(Profile profile) {
+    	this.id = profile.getId();
+		this.avatar = LinkBuilder.buildPhotoLink(profile.getAvatar(), ObjectType.USER.getLowerName());
+		this.displayName = profile.getFirstName() + " " + profile.getLastName();
+		this.homeTown = profile.getAddress() != null ? profile.getAddress().getCity() : "";
+		this.company = profile.getCompany();
+		this.designation = profile.getDesignation();
+		this.title = !StringUtils.isEmpty(this.designation) && !StringUtils.isEmpty(this.company) ?
+				String.format("%s at %s", this.designation, this.company) : "";
+		this.address = profile.getAddress();
+		this.status = profile.getStatus();
+    }
+
+    public ProfileShortResponse(long userId, ProfileCache profile) {
+        this.id = userId;
+        this.avatar = LinkBuilder.buildPhotoLink(profile.getAvatar(), ObjectType.USER.getLowerName());
+        this.displayName = profile.getDisplayName();
+        this.homeTown = "";
+        this.avatarPhoto = profile.getAvatar();
+    }
+    
+    public ProfileShortResponse(Profile profile, boolean isFollowed, boolean isConnected, boolean isRequested, boolean isBeRequested, Point location) {
+    	this(profile);
+    	this.isConnected = isConnected;
+    	this.isFollowed = isFollowed;
+    	this.isRequested = isRequested;
+    	this.isBeRequested = isBeRequested;
+    	this.location = location;
+    }
+    
+    public ProfileShortResponse(Profile profile, UserStat userStat, Point location, long viewUserId) {
+    	this(profile, userStat != null && userStat.getUserFollowIds() != null && userStat.getUserFollowIds().contains(viewUserId), 
+    			userStat != null && userStat.getConnectUserIds() != null && userStat.getConnectUserIds().contains(viewUserId), 
+				userStat != null && userStat.getRequesteds() != null && userStat.getRequesteds().contains(viewUserId),
+    			userStat != null && userStat.getRequests() != null && userStat.getRequests().contains(viewUserId), location);
+    }
+    
+    public ProfileShortResponse(Profile profile, UserStat userStat, Point location, long viewUserId, MyCalendarResponse calendar) {
+    	this(profile, userStat, location, viewUserId);
+    	this.calendar = calendar;
+    }
+    
+    public ProfileShortResponse(Profile profile, UserStat userStat, Point location, long viewUserId, MyCalendarResponse calendar, List<EventCategoryResponse> interestedCategories) {
+    	this(profile, userStat, location, viewUserId);
+    	this.calendar = calendar;
+    	this.interestedCategories = interestedCategories;
+    }
+    
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
+    public boolean isFollowed() {
+		return isFollowed;
+	}
+
+	public void setFollowed(boolean isFollowed) {
+		this.isFollowed = isFollowed;
+	}
+
+	public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+	public String getHomeTown() {
+		return homeTown;
+	}
+
+	public void setHomeTown(String homeTown) {
+		this.homeTown = homeTown;
+	}
+
+	@JsonIgnore
+    public long getAvatarPhoto() {
+        return avatarPhoto;
+    }
+
+    public void setAvatarPhoto(long avatarPhoto) {
+        this.avatarPhoto = avatarPhoto;
+    }
+
+	public Point getLocation() {
+		return location;
+	}
+
+	public void setLocation(Point location) {
+		this.location = location;
+	}
+
+	public boolean isConnected() {
+		return isConnected;
+	}
+
+	public void setConnected(boolean isConnected) {
+		this.isConnected = isConnected;
+	}
+
+	public boolean isRequested() {
+		return isRequested;
+	}
+
+	public void setRequested(boolean isRequested) {
+		this.isRequested = isRequested;
+	}
+
+	public String getCompany() {
+		return company;
+	}
+
+	public void setCompany(String company) {
+		this.company = company;
+	}
+
+	public String getDesignation() {
+		return designation;
+	}
+
+	public void setDesignation(String designation) {
+		this.designation = designation;
+	}
+
+	public boolean isBeRequested() {
+		return isBeRequested;
+	}
+
+	public void setBeRequested(boolean isBeRequested) {
+		this.isBeRequested = isBeRequested;
+	}
+
+	public Address getAddress() {
+		return address;
+	}
+
+	public void setAddress(Address address) {
+		this.address = address;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public MyCalendarResponse getCalendar() {
+		return calendar;
+	}
+
+	public void setCalendar(MyCalendarResponse calendar) {
+		this.calendar = calendar;
+	}
+
+	public List<EventCategoryResponse> getInterestedCategories() {
+		return interestedCategories;
+	}
+
+	public void setInterestedCategories(List<EventCategoryResponse> interestedCategories) {
+		this.interestedCategories = interestedCategories;
+	}
+
+	public ProfileSettingResponse getProfileSetting() {
+		return profileSetting;
+	}
+
+	public void setProfileSetting(ProfileSettingResponse profileSetting) {
+		this.profileSetting = profileSetting;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+    
+}

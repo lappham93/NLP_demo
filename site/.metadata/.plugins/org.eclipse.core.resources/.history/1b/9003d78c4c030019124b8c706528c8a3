@@ -1,0 +1,55 @@
+package com.mit.navigation.responses;
+
+import com.mit.navigation.entities.WayPoint;
+
+/**
+ * Created by Hung on 8/25/2017.
+ */
+public class WayPointResponse {
+    private long id;
+    private long floorId;
+    private double x;
+    private double y;
+
+    public WayPointResponse() {
+    }
+
+    public WayPointResponse(WayPoint wayPoint) {
+        this.id = wayPoint.getId();
+        this.floorId = wayPoint.getFloorId();
+        this.x = wayPoint.getPoint().getX();
+        this.y = wayPoint.getPoint().getY();
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public long getFloorId() {
+        return floorId;
+    }
+
+    public void setFloorId(long floorId) {
+        this.floorId = floorId;
+    }
+
+    public double getX() {
+        return x;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setY(double y) {
+        this.y = y;
+    }
+}

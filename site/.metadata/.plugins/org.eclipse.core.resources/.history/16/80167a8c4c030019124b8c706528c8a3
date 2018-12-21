@@ -1,0 +1,724 @@
+package com.mit.notification.services;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.app.enums.AppType;
+import com.mit.common.entities.ObjectRef;
+import com.mit.common.enums.ObjectType;
+import com.mit.event.entities.Advertisement;
+import com.mit.event.repositories.AdvertisementRepo;
+import com.mit.map.entities.Point;
+import com.mit.message.responses.MessageResponse;
+import com.mit.navigation.entities.Booth;
+import com.mit.navigation.entities.Floor;
+import com.mit.navigation.entities.IndoorLocation;
+import com.mit.navigation.enums.IndoorLocationType;
+import com.mit.navigation.repositories.IndoorLocationRepo;
+import com.mit.notification.bodies.MultiTargetNotification;
+import com.mit.notification.bodies.SingleTargetNotification;
+import com.mit.notification.bodies.ViewNewsBody;
+import com.mit.notification.entities.AdvertisementNews;
+import com.mit.notification.entities.BoothNews;
+import com.mit.notification.entities.ChatNews;
+import com.mit.notification.entities.ConnectNews;
+import com.mit.notification.entities.EventNews;
+import com.mit.notification.entities.MessageNews;
+import com.mit.notification.entities.News;
+import com.mit.notification.entities.ProductNews;
+import com.mit.notification.entities.SocialNews;
+import com.mit.notification.entities.UserNews;
+import com.mit.notification.entities.UserNewsItem;
+import com.mit.notification.entities.WebNews;
+import com.mit.notification.enums.SocialNewsType;
+import com.mit.notification.repositories.NewsRepo;
+import com.mit.notification.repositories.UserNewsRepo;
+import com.mit.notification.responses.AdvertisementNewsResponse;
+import com.mit.notification.responses.BoothNewsResponse;
+import com.mit.notification.responses.ConnectNewsResponse;
+import com.mit.notification.responses.EventNewsResponse;
+import com.mit.notification.responses.MessageNewsResponse;
+import com.mit.notification.responses.NewsResponse;
+import com.mit.notification.responses.ProductNewsResponse;
+import com.mit.notification.responses.SocialNewsResponse;
+import com.mit.notification.responses.UserNewsItemResponse;
+import com.mit.notification.responses.UserNewsResponse;
+import com.mit.notification.responses.WebNewsResponse;
+import com.mit.rabbitmq.RabbitRoutingKey;
+import com.mit.react.entities.Comment;
+import com.mit.react.entities.UserStat;
+import com.mit.react.repositories.CommentRepo;
+import com.mit.react.repositories.UserStatRepo;
+import com.mit.social.bodies.NotifyFeedBody;
+import com.mit.social.entities.Feed;
+import com.mit.social.entities.FeedNotification;
+import com.mit.social.entities.FeedUserSubscription;
+import com.mit.social.entities.PhotoFeed;
+import com.mit.social.repositories.FeedNotificationRepo;
+import com.mit.social.repositories.FeedRepo;
+import com.mit.user.entities.Profile;
+import com.mit.user.repositories.ProfileRepo;
+import com.mit.utils.JsonUtils;
+
+/**
+ * Created by Lap Pham on 4/5/17.
+ */
+
+@Service
+public class NewsService {
+
+    private final Logger logger = LoggerFactory.getLogger(NewsService.class);
+
+    @Autowired
+    private UserNewsRepo userNewsRepo;
+    @Autowired
+    private NewsRepo newsRepo;
+    @Autowired
+    private RabbitMessagingTemplate rabbitMessagingTemplate;
+    @Autowired
+    private FeedNotificationRepo feedNotificationRepo;
+    @Autowired
+    private UserStatRepo userStatRepo;
+    @Autowired
+    private ProfileRepo profileRepo;
+    @Autowired
+    private FeedRepo feedRepo;
+    @Autowired
+    private FeedUserSubscription feedUserSubscription;
+    @Autowired
+    private CommentRepo commentRepo;
+    @Autowired
+    private IndoorLocationRepo indoorRepo;
+    @Autowired
+    private AdvertisementRepo advRepo;
+
+    public Map<String, Object> getListNews(long userId, int from, int count) {
+        Map<String, Object> rs = new HashMap<>();
+
+        UserNews userNews = userNewsRepo.getById(userId, from, count + 1);
+
+        boolean hasMore = false;
+
+        List<UserNewsItemResponse> newsResponses;
+        if (userNews != null && !CollectionUtils.isEmpty(userNews.getItems())) {
+            if (userNews.getItems().size() > count) {
+                userNews.setItems(userNews.getItems().subList(0, count));
+                hasMore = true;
+            }
+
+            List<Long> newsIds = new ArrayList<>(userNews.getItems().size());
+            for (UserNewsItem item: userNews.getItems()) {
+                newsIds.add(item.getId());
+            }
+            Map<Long, News> newsMap = newsRepo.getMapByIds(newsIds);
+
+            List<Long> userIds = new ArrayList<>();
+            List<Long> feedIds = new ArrayList<>();
+            for (News news: newsMap.values()) {
+                if (news instanceof SocialNews) {
+                    SocialNews socialNews = (SocialNews)news;
+
+                    for (long fromUserId : socialNews.getFromUserIds()) {
+                        userIds.add(fromUserId);
+                        feedIds.add(socialNews.getFeedId());
+                    }
+                }
+            }
+
+            Map<Long, Profile> profileMap = profileRepo.getMapByIds(userIds);
+            Map<Long, Feed> feedMap = feedRepo.getMapByIds(feedIds);
+
+            for (News news: newsMap.values()) {
+                if (news instanceof SocialNews) {
+                    SocialNews socialNews = (SocialNews)news;
+
+                    socialNews.setProfile(profileMap.get(socialNews.getFromUserIds().get(0)));
+                    socialNews.setFeed(feedMap.get(socialNews.getFeedId()));
+                }
+            }
+
+            newsResponses = new ArrayList<>(userNews.getItems().size());
+            for (UserNewsItem userNewsItem: userNews.getItems()) {
+                News news = newsMap.get(userNewsItem.getId());
+
+                if (news != null) {
+                    newsResponses.add(new UserNewsItemResponse(userNewsItem, buildResponse(news, profileMap)));
+                }
+            }
+
+            userNewsRepo.resetNewCount(userId);
+        } else {
+            newsResponses = Collections.emptyList();
+        }
+
+        UserNewsResponse userNewsResponse = new UserNewsResponse(newsResponses, userNewsRepo.getNewCount(userId));
+        rs.put("news", userNewsResponse);
+        rs.put("hasMore", hasMore);
+
+        return rs;
+    }
+
+    public Map<String, Object> getListProviderNews(long userId, int from, int count) {
+        Map<String, Object> rs = new HashMap<>();
+
+        UserNews userNews = userNewsRepo.getProviderById(userId, from, count + 1);
+
+        boolean hasMore = false;
+
+        List<UserNewsItemResponse> newsResponses;
+        if (userNews != null && !CollectionUtils.isEmpty(userNews.getProviderItems())) {
+            if (userNews.getProviderItems().size() > count) {
+                userNews.setProviderItems(userNews.getProviderItems().subList(0, count));
+                hasMore = true;
+            }
+
+            List<Long> newsIds = new ArrayList<>(userNews.getProviderItems().size());
+            for (UserNewsItem item: userNews.getProviderItems()) {
+                newsIds.add(item.getId());
+            }
+            Map<Long, News> newsMap = newsRepo.getMapByIds(newsIds);
+
+            List<Long> userIds = new ArrayList<>();
+            List<Long> feedIds = new ArrayList<>();
+            for (News news: newsMap.values()) {
+                if (news instanceof SocialNews) {
+                    SocialNews socialNews = (SocialNews)news;
+
+                    for (long fromUserId : socialNews.getFromUserIds()) {
+                        userIds.add(fromUserId);
+                        feedIds.add(socialNews.getFeedId());
+                    }
+                }
+            }
+
+            Map<Long, Profile> profileMap = profileRepo.getMapByIds(userIds);
+            Map<Long, Feed> feedMap = feedRepo.getMapByIds(feedIds);
+
+            for (News news: newsMap.values()) {
+                if (news instanceof SocialNews) {
+                    SocialNews socialNews = (SocialNews)news;
+
+                    socialNews.setProfile(profileMap.get(socialNews.getFromUserIds().get(0)));
+                    socialNews.setFeed(feedMap.get(socialNews.getFeedId()));
+                }
+            }
+
+            newsResponses = new ArrayList<>(userNews.getProviderItems().size());
+            for (UserNewsItem userNewsItem: userNews.getProviderItems()) {
+                News news = newsMap.get(userNewsItem.getId());
+
+                if (news != null) {
+                    newsResponses.add(new UserNewsItemResponse(userNewsItem, buildResponse(news, profileMap)));
+                }
+            }
+
+            userNewsRepo.resetProviderNewCount(userId);
+        } else {
+            newsResponses = Collections.emptyList();
+        }
+
+        UserNewsResponse userNewsResponse = new UserNewsResponse(newsResponses, userNewsRepo.getNewCount(userId));
+        rs.put("news", userNewsResponse);
+        rs.put("hasMore", hasMore);
+
+        return rs;
+    }
+
+    public UserNewsItemResponse getNews(long userId, long id) {
+        UserNews userNews = userNewsRepo.getByNewsId(userId, id);
+
+        if (userNews != null && !CollectionUtils.isEmpty(userNews.getItems())) {
+            News news = newsRepo.getById(id);
+            Map<Long, Profile> profileMap = Collections.emptyMap();
+            if (news instanceof SocialNews) {
+                SocialNews socialNews = (SocialNews)news;
+                List<Long> userIds = new ArrayList<>();
+                for(long fromUserId: socialNews.getFromUserIds()) {
+                    userIds.add(fromUserId);
+                }
+                profileMap = profileRepo.getMapByIds(userIds);
+                socialNews.setProfile(profileMap.get(socialNews.getFromUserIds().get(0)));
+                socialNews.setFeed(feedRepo.getById(socialNews.getFeedId()));
+            }
+            return new UserNewsItemResponse(userNews.getItems().get(0), buildResponse(news, profileMap));
+        }
+
+        return null;
+    }
+
+    public UserNewsItemResponse getProviderNews(long userId, long id) {
+        UserNews userNews = userNewsRepo.getProviderByNewsId(userId, id);
+
+        if (userNews != null && !CollectionUtils.isEmpty(userNews.getProviderItems())) {
+            News news = newsRepo.getById(id);
+            Map<Long, Profile> profileMap = Collections.emptyMap();
+            if (news instanceof SocialNews) {
+                SocialNews socialNews = (SocialNews)news;
+                List<Long> userIds = new ArrayList<>();
+                for(long fromUserId: socialNews.getFromUserIds()) {
+                    userIds.add(fromUserId);
+                }
+                profileMap = profileRepo.getMapByIds(userIds);
+                socialNews.setProfile(profileMap.get(socialNews.getFromUserIds().get(0)));
+                socialNews.setFeed(feedRepo.getById(socialNews.getFeedId()));
+            }
+            return new UserNewsItemResponse(userNews.getProviderItems().get(0), buildResponse(news, profileMap));
+        }
+
+        return null;
+    }
+
+    public void viewNews(ViewNewsBody body) {
+        if (!CollectionUtils.isEmpty(body.getIds())) {
+            rabbitMessagingTemplate.convertAndSend(RabbitRoutingKey.NEWS_VIEW, body);
+        }
+    }
+
+    public void updateView(ViewNewsBody body) {
+        if (!CollectionUtils.isEmpty(body.getIds())) {
+            userNewsRepo.updateView(body.getUserId(), body.getIds());
+        }
+    }
+
+    public void viewProviderNews(ViewNewsBody body) {
+        if (!CollectionUtils.isEmpty(body.getIds())) {
+            rabbitMessagingTemplate.convertAndSend(RabbitRoutingKey.NEWS_PROVIDER_VIEW, body);
+        }
+    }
+
+    public void updateProviderView(ViewNewsBody body) {
+        if (!CollectionUtils.isEmpty(body.getIds())) {
+            userNewsRepo.updateProviderView(body.getUserId(), body.getIds());
+        }
+    }
+
+    public int getNewCount(long userId) {
+        return userNewsRepo.getNewCount(userId);
+    }
+
+    public int getProviderNewCount(long userId) {
+        return userNewsRepo.getProviderNewCount(userId);
+    }
+
+    public NewsResponse buildResponse(News news, Map<Long, Profile> profileMap) {
+        if (news instanceof MessageNews) {
+            return new MessageNewsResponse((MessageNews)news);
+        } else if (news instanceof WebNews) {
+            return new WebNewsResponse((WebNews)news);
+        } else if (news instanceof SocialNews) {
+            return new SocialNewsResponse((SocialNews)news, profileMap);
+        } else if (news instanceof EventNews) {
+        	return new EventNewsResponse((EventNews)news);
+        } else if (news instanceof BoothNews) {
+        	return new BoothNewsResponse((BoothNews) news);
+        } else if (news instanceof ProductNews) {
+        	return new ProductNewsResponse((ProductNews) news);
+        } else if (news instanceof AdvertisementNews) {
+        	return new AdvertisementNewsResponse((AdvertisementNews) news);
+        } else if (news instanceof ConnectNews) {
+        	return new ConnectNewsResponse((ConnectNews) news);
+        }
+
+        return new NewsResponse(news);
+    }
+    
+    public void notifyFeed(long feedId, long photoId, long commentId, long userId, int socialNewsType, boolean isSubFeed) {
+        Set<Long> revNotUserIds = new HashSet<>();
+        if (socialNewsType == SocialNewsType.LIKE_FEED.getValue() ||
+                socialNewsType == SocialNewsType.COMMENT.getValue()) {      
+            int objectType = isSubFeed ? ObjectType.SUBFEED.getValue() : ObjectType.FEED.getValue();
+            long objectId = isSubFeed ? photoId : feedId;
+            ObjectRef objectRef = new ObjectRef(objectType, objectId);
+            FeedNotification fn = feedNotificationRepo.getByObjectRef(objectRef);
+            if (fn != null) {
+                revNotUserIds.add(fn.getUserId());
+                if (socialNewsType == SocialNewsType.COMMENT.getValue() && fn.getOtherUserIds() != null) {
+                    revNotUserIds.addAll(fn.getOtherUserIds());
+                }
+            }
+        } else if (socialNewsType == SocialNewsType.POST_FEED.getValue()) {
+            UserStat us = userStatRepo.getByUserId(userId, false);
+            if (us != null) {
+            	if (us.getUserFollowIds() != null) {
+            		revNotUserIds.addAll(us.getUserFollowIds());
+            	}
+            	if (us.getConnectUserIds() != null) {
+            		revNotUserIds.addAll(us.getConnectUserIds());
+            	}
+            }
+        } else {
+            ObjectRef objectRef = new ObjectRef(ObjectType.COMMENT.getValue(), commentId);
+            FeedNotification fn = feedNotificationRepo.getByObjectRef(objectRef);
+            if (fn != null) {
+                revNotUserIds.add(fn.getUserId());
+                if (socialNewsType == SocialNewsType.REPLY.getValue() && fn.getOtherUserIds() != null) {
+                    revNotUserIds.addAll(fn.getOtherUserIds());
+                }
+            }
+        }
+        for (long revUser : revNotUserIds) {
+            if (revUser != userId) {
+                if (socialNewsType != SocialNewsType.COMMENT.getValue()
+                        || !feedUserSubscription.checkUser(isSubFeed ? photoId : feedId, isSubFeed, revUser)) {
+//                        || !SSCommentFeedUserRedis.Instance.checkUserOnlineCommentFeed(isSubFeed ? photoId : feedId, ECommentType.FEED, (int)revUser)) {
+                    SocialNews news = newsRepo.getSocialNews(revUser, feedId, photoId, socialNewsType, commentId);
+
+                    if (news == null) {
+                        news = new SocialNews();
+                        news.setUserId(revUser);
+                        news.setFeedId(feedId);
+                        news.setActive(true);
+                        news.setPhotoId(photoId);
+                        news.setFromUserIds(Arrays.asList(userId));
+                        news.setSocialNewsType(socialNewsType);
+                        news.setCmtId(commentId);
+                    } else {
+                        news.addFromUser(userId);
+                    }
+                    try {
+                        newsRepo.save(news);
+                        UserNewsItem userNewsItem = new UserNewsItem();
+                        userNewsItem.setId(news.getId());
+                        userNewsItem.setCreatedDate(news.getCreatedDate());
+
+                        userNewsRepo.addItemSocial(revUser, userNewsItem);
+
+                        Profile profile = profileRepo.getById(news.getFromUserIds().get(0));
+                        news.setProfile(profile);
+                        Feed feed = feedRepo.getById(news.getFeedId());
+                        news.setFeed(feed);
+                        SingleTargetNotification notification = news.buildSingleTargetNotification(revUser, AppType.CLIENT.getValue());
+                        logger.info(JsonUtils.Instance.toJson(notification));
+                        rabbitMessagingTemplate.convertAndSend(RabbitRoutingKey.NOTIFY_SINGLE, notification);
+                        logger.info("Notif social :" );
+                    } catch (Exception ex) {
+                    	logger.info("Error social :", ex);
+                    }
+                }
+            }
+        }
+    }
+    
+    public FeedNotification createFeedNotification(long userId, ObjectRef objectRef) {
+    	FeedNotification feedNotification = new FeedNotification();
+    	feedNotification.setObjectRef(objectRef);
+    	feedNotification.setUserId(userId);
+    	return feedNotification;
+    }
+    
+    public void postFeed(long feedId, long userId) {
+    	NotifyFeedBody body = NotifyFeedBody.postFeed(feedId, userId);
+    	rabbitMessagingTemplate.convertAndSend(RabbitRoutingKey.FEED_NOTIFY, body);
+    }
+    
+    public void notifyFeedPosting(long feedId, long userId) {
+    	try {
+	    	Feed feed = feedRepo.getById(feedId);
+	    	if (feed != null) {
+	    		FeedNotification fn = createFeedNotification(userId, new ObjectRef(ObjectType.FEED.getValue(), feedId));
+	    		feedNotificationRepo.save(fn);
+	    	}
+	    	
+	    	if (feed.isSubFeed()) {
+				for (long photoId : ((PhotoFeed) feed).getPhotos()) {
+					FeedNotification fn = createFeedNotification(userId, new ObjectRef(ObjectType.SUBFEED.getValue(), photoId));
+					feedNotificationRepo.save(fn);
+				}
+	    	}
+	    	notifyFeed(feedId, 0L, 0L, userId, SocialNewsType.POST_FEED.getValue(), false);
+    	} catch (Exception e) {
+    	}
+    }
+    
+    public void comment(ObjectRef objectRef, long commentId, long userId) {
+    	NotifyFeedBody body = NotifyFeedBody.comment(objectRef, commentId, userId);
+    	rabbitMessagingTemplate.convertAndSend(RabbitRoutingKey.FEED_NOTIFY, body);
+    }
+    
+    public void notifyComment(ObjectRef objectRef, long commentId, long userId) {
+    	try {
+			FeedNotification fn = feedNotificationRepo.getByObjectRef(objectRef);
+			if (fn != null) {
+				fn.addOtherUserId(userId);
+				feedNotificationRepo.save(fn);
+			}
+			
+			FeedNotification cn = createFeedNotification(userId, new ObjectRef(ObjectType.COMMENT.getValue(), commentId));
+			feedNotificationRepo.save(cn);
+			//notify
+			long feedId = 0L, photoId = 0L, parentCmtId = 0L;
+			int socialNewsType = SocialNewsType.COMMENT.getValue();
+			boolean isSubFeed = false;
+			if (objectRef.getType() == ObjectType.FEED.getValue()) {
+				feedId = objectRef.getId();
+			} else if (objectRef.getType() == ObjectType.SUBFEED.getValue()) {
+				photoId =  objectRef.getId();
+				isSubFeed = true;
+			} else if (objectRef.getType() == ObjectType.COMMENT.getValue()) {
+				Comment parentCmt = commentRepo.getById(objectRef.getId());
+				if (parentCmt.getObjectRef().getType() == ObjectType.FEED.getValue()) {
+					feedId = parentCmt.getObjectRef().getId();
+				} else if (parentCmt.getObjectRef().getType() == ObjectType.SUBFEED.getValue()) {
+					photoId = parentCmt.getObjectRef().getId();
+				}
+				socialNewsType = SocialNewsType.REPLY.getValue();
+				parentCmtId = objectRef.getId();
+			}
+			if (photoId > 0) {
+				Feed feed = feedRepo.getByPhotoId(photoId);
+				feedId = feed.getId();
+			}
+			notifyFeed(feedId, photoId, parentCmtId, userId, socialNewsType, isSubFeed);
+	    	logger.info("Comment Notif: feedId=" + feedId + " photoId=" + photoId + " parentCmtId=" + parentCmtId + " userId="  + userId + " socialNewsType=" + socialNewsType + " isSubFeed=" + isSubFeed);
+    	} catch (Exception e){
+    		logger.info("Error ", e);
+    	}
+	}
+    
+    public void like(ObjectRef objectRef, long userId) {
+    	NotifyFeedBody body = NotifyFeedBody.like(objectRef, userId);
+    	rabbitMessagingTemplate.convertAndSend(RabbitRoutingKey.FEED_NOTIFY, body);
+    }
+    
+    public void notifyLike(ObjectRef objectRef, long userId) {
+    	long feedId = 0L, photoId = 0L, commentId = 0L;
+    	boolean isSubFeed = false;
+    	int socialNewsType = SocialNewsType.LIKE_FEED.getValue();
+    	if (objectRef.getType() == ObjectType.FEED.getValue()) {
+    		feedId = objectRef.getId();
+    	} else if (objectRef.getType() == ObjectType.SUBFEED.getValue()) {
+    		photoId = objectRef.getId();
+    		isSubFeed = true;
+    	} else if (objectRef.getType() == ObjectType.COMMENT.getValue()) {
+    		commentId = objectRef.getId();
+    		Comment comment = commentRepo.getById(objectRef.getId());
+			if (comment.getObjectRef().getType() == ObjectType.FEED.getValue()) {
+				feedId = comment.getObjectRef().getId();
+				socialNewsType = SocialNewsType.LIKE_COMMENT.getValue();
+			} else if (comment.getObjectRef().getType() == ObjectType.SUBFEED.getValue()) {
+				photoId = comment.getObjectRef().getId();
+				socialNewsType = SocialNewsType.LIKE_COMMENT.getValue();
+			} else if (comment.getObjectRef().getType() == ObjectType.COMMENT.getValue()) {
+				Comment parentComment = commentRepo.getById(comment.getObjectRef().getId());
+				if (parentComment.getObjectRef().getType() == ObjectType.FEED.getValue()) {
+					feedId = parentComment.getObjectRef().getId();
+				} else if (parentComment.getObjectRef().getType() == ObjectType.SUBFEED.getValue()) {
+					photoId = parentComment.getObjectRef().getId();
+				}
+				socialNewsType = SocialNewsType.LIKE_REPLY.getValue();
+			}
+    	}
+    	if (photoId > 0) {
+    		Feed feed = feedRepo.getByPhotoId(photoId);
+			feedId = feed.getId();
+    	}
+    	notifyFeed(feedId, photoId, commentId, userId, socialNewsType, isSubFeed);
+    	logger.info("Liked Notif: feedId=" + feedId + " photoId=" + photoId + " commentId=" + commentId + " userId="  + userId + " socialNewsType=" + socialNewsType + " isSubFeed=" + isSubFeed);
+    }
+    
+    public void notifyWeb(String url, String msg, long thumb, List<Long> userIds, int ...appTypes) {
+    	WebNews news = new WebNews();
+        news.setUrl(url);
+        news.setMsg(msg);
+        news.setThumb(thumb);
+        news.setActive(true);
+        try {
+            newsRepo.save(news);
+            UserNewsItem userNews = new UserNewsItem();
+            userNews.setId(news.getId());
+            userNews.setCreatedDate(news.getCreatedDate());
+            for (int appType: appTypes) {
+            	if (appType == AppType.CLIENT.getValue()) {
+            		userNewsRepo.addItemToUserList(userIds, userNews);
+            	} else if (appType == AppType.PROVIDER.getValue()) {
+            		userNewsRepo.addProviderItemToUserList(userIds, userNews);
+            	}
+            	MultiTargetNotification notification = news.buildMultiDestNotification(userIds, appType);
+            	rabbitMessagingTemplate.convertAndSend(RabbitRoutingKey.NOTIFY_MULTI, notification);
+            }
+        } catch (Exception ex) {
+            logger.info("error notify web", ex);
+        }
+    }
+    
+    public void notifyChatMessage(MessageResponse message) {
+        ChatNews news = new ChatNews();
+        news.setMsg("You have a new message from " + message.getFromUser().getDisplayName());
+        news.setThumb(message.getFromUser().getAvatarPhoto());
+        news.setFromUserId(message.getFromUser().getId());
+        news.setActive(true);
+        try {
+            SingleTargetNotification notification = news.buildSingleTargetNotification(message.getToUser().getId(), AppType.CLIENT.getValue());
+            rabbitMessagingTemplate.convertAndSend(RabbitRoutingKey.NOTIFY_SINGLE, notification);
+        } catch (Exception ex) {
+            logger.info("error notify chat message", ex);
+        }
+    }
+    
+    public void notifyEvent(long eventId, String msg, long thumb, List<Long> userIds) {
+    	EventNews news = new EventNews();
+        news.setEventId(eventId);
+        news.setMsg(msg);
+        news.setThumb(thumb);
+        news.setActive(true);
+        try {
+            newsRepo.save(news);
+            UserNewsItem userNews = new UserNewsItem();
+            userNews.setId(news.getId());
+            userNews.setCreatedDate(news.getCreatedDate());
+    		userNewsRepo.addItemToUserList(userIds, userNews);
+        	MultiTargetNotification notification = news.buildMultiDestNotification(userIds, AppType.CLIENT.getValue());
+        	rabbitMessagingTemplate.convertAndSend(RabbitRoutingKey.NOTIFY_MULTI, notification);
+        	logger.info("notify event: sent message");
+        } catch (Exception ex) {
+            logger.info("error notify event", ex);
+        }
+    }
+    
+    public void notifyBooth(long boothId, String msg, long thumb, List<Long> userIds) {
+    	BoothNews news = new BoothNews();
+        news.setBoothId(boothId);
+        news.setMsg(msg);
+        news.setThumb(thumb);
+        news.setActive(true);
+        try {
+            newsRepo.save(news);
+            UserNewsItem userNews = new UserNewsItem();
+            userNews.setId(news.getId());
+            userNews.setCreatedDate(news.getCreatedDate());
+    		userNewsRepo.addItemToUserList(userIds, userNews);
+        	MultiTargetNotification notification = news.buildMultiDestNotification(userIds, AppType.CLIENT.getValue());
+        	rabbitMessagingTemplate.convertAndSend(RabbitRoutingKey.NOTIFY_MULTI, notification);
+        	logger.info("notify booth: sent message");
+        } catch (Exception ex) {
+            logger.info("error notify booth", ex);
+        }
+    }
+    
+    public void notifyProduct(long productId, String msg, long thumb, List<Long> userIds) {
+    	ProductNews news = new ProductNews();
+        news.setProductId(productId);
+        news.setMsg(msg);
+        news.setThumb(thumb);
+        news.setActive(true);
+        try {
+            newsRepo.save(news);
+            UserNewsItem userNews = new UserNewsItem();
+            userNews.setId(news.getId());
+            userNews.setCreatedDate(news.getCreatedDate());
+    		userNewsRepo.addItemToUserList(userIds, userNews);
+        	MultiTargetNotification notification = news.buildMultiDestNotification(userIds, AppType.CLIENT.getValue());
+        	rabbitMessagingTemplate.convertAndSend(RabbitRoutingKey.NOTIFY_MULTI, notification);
+        	logger.info("notify product: sent message");
+        } catch (Exception ex) {
+            logger.info("error notify product", ex);
+        }
+    }
+    
+    public void notifyAdvertisement(long boothId, String msg, List<Long> userIds) {
+    	Advertisement adv = advRepo.getByObjectRef(new ObjectRef(ObjectType.BOOTH.getValue(), boothId));
+    	if (adv == null || !adv.isActive()) {
+    		return;
+    	}
+    	Booth booth = (Booth) indoorRepo.getById(boothId);
+    	notifyAdvertisement(adv.getId(), msg, booth.getPhoto(), userIds);
+    }
+    
+    public void notifyAdvertisement(long advertisementId, String msg, long thumb, List<Long> userIds) {
+    	AdvertisementNews news = new AdvertisementNews();
+        news.setAdvertisementId(advertisementId);
+        news.setMsg(msg);
+        news.setThumb(thumb);
+        news.setActive(true);
+        try {
+            newsRepo.save(news);
+            UserNewsItem userNews = new UserNewsItem();
+            userNews.setId(news.getId());
+            userNews.setCreatedDate(news.getCreatedDate());
+    		userNewsRepo.addItemToUserList(userIds, userNews);
+        	MultiTargetNotification notification = news.buildMultiDestNotification(userIds, AppType.CLIENT.getValue());
+        	rabbitMessagingTemplate.convertAndSend(RabbitRoutingKey.NOTIFY_MULTI, notification);
+        	logger.info("notify advertisement: sent message");
+        } catch (Exception ex) {
+            logger.info("error advertisement booth", ex);
+        }
+    }
+    
+    public void notifyNearestBooths(long userId, Point userLoc, Floor floor) {
+    	double distance = 5.0;
+    	double indoorDisWidth = distance / floor.getActualWidth();
+    	double indoorDisHeight = distance / floor.getActualHeight();
+    	List<IndoorLocation> indoors = indoorRepo.getListAdvertisedInRange(floor.getId(), IndoorLocationType.BOOTH.getValue(), userLoc.getX() - indoorDisWidth, userLoc.getY() - indoorDisHeight, 2 * indoorDisWidth, 2 * indoorDisHeight);
+    	if (!CollectionUtils.isEmpty(indoors)) {
+    		UserNews userNews = userNewsRepo.getById(userId, 0, 10);
+    		for (IndoorLocation indoor: indoors) {
+    			Booth booth = (Booth)indoor; 
+    			Advertisement adv = advRepo.getByObjectRef(new ObjectRef(ObjectType.BOOTH.getValue(), booth.getId()));
+    			if (isNotified(userNews, booth, adv)) {
+    				notifyAdvertisement(adv.getId(), booth.getName(), booth.getPhoto(), Arrays.asList(userId));
+    			}
+    		}
+    	}
+    }
+    
+    public boolean isNotified(UserNews userNews, Booth booth, Advertisement adv) {
+    	if (adv == null || !adv.isActive()) {
+    		return false;
+    	}
+    	if (userNews == null || CollectionUtils.isEmpty(userNews.getItems())) {
+    		return true;
+    	}
+    	List<Long> newsIds = new LinkedList<>();
+    	userNews.getItems().forEach(t -> newsIds.add(t.getId()));
+    	List<News> newsLst = newsRepo.getByIds(newsIds);
+    	if (CollectionUtils.isEmpty(newsLst)) {
+    		return true;
+    	}
+    	long currentTime = System.currentTimeMillis();
+    	for (News news: newsLst) {
+    		if (!(news instanceof AdvertisementNews)) {
+    			continue;
+    		}
+    		AdvertisementNews advNews = (AdvertisementNews)news;
+    		if (advNews.getAdvertisementId() == adv.getId() && currentTime - advNews.getCreatedDate().getTime() < 30*60E3) {
+    			return false;
+    		}
+    	}
+    	return true;
+    }
+    
+    public void notifyConnect(long userId, int status, String msg, long thumb, long toUserId) {
+    	ConnectNews news = new ConnectNews();
+        news.setUserId(userId);
+        news.setStatus(status);
+        news.setMsg(msg);
+        news.setThumb(thumb);
+        news.setActive(true);
+        try {
+            newsRepo.save(news);
+            UserNewsItem userNews = new UserNewsItem();
+            userNews.setId(news.getId());
+            userNews.setCreatedDate(news.getCreatedDate());
+    		userNewsRepo.addItem(toUserId, userNews);
+        	SingleTargetNotification notification = news.buildSingleTargetNotification(toUserId, AppType.CLIENT.getValue());
+        	rabbitMessagingTemplate.convertAndSend(RabbitRoutingKey.NOTIFY_SINGLE, notification);
+        	logger.info("notify connect: sent message");
+        } catch (Exception ex) {
+            logger.info("error notify connect", ex);
+        }
+    }
+}

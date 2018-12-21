@@ -1,0 +1,32 @@
+site.title=NLP Demo
+site.prefix=/nlp/demo
+site.resources=/static
+site.resources.path=${site.prefix}${site.resources}
+site.paging.pageSize=10
+
+# HTTP encoding (HttpEncodingProperties)
+spring.http.encoding.charset=UTF-8
+spring.http.encoding.enabled=true
+spring.http.encoding.force=true
+spring.thymeleaf.cache=false
+#spring.thymeleaf.prefix=file:///${user.dir}/homber-site/src/main/resources/templates/
+#spring.resources.static-locations=file:///${user.dir}/homber-site/src/main/resources/static/
+#spring.resources.cache-period=0
+spring.http.multipart.max-file-size=30MB
+spring.http.multipart.max-request-size=30MB
+
+server.jetty.uri-encoding = UTF-8
+server.port=10701
+#server.ssl.key-store=classpath:keystore.jks
+#server.ssl.key-store-password=secret
+#server.ssl.key-password=another-secret
+server.session.persistent=true
+
+
+spring.data.mongodb.host=167.99.238.29
+spring.data.mongodb.port=27017
+spring.data.mongodb.database=nlp
+spring.data.mongodb.authentication-database=site
+spring.data.mongodb.username=nlp
+spring.data.mongodb.password=nlp2018
+spring.messages.basename = messages

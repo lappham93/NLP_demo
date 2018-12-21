@@ -1,0 +1,86 @@
+package com.mit.suggest.responses;
+
+public class SearchInMapResponse {
+	private long id;
+	private int type;
+	private long eventId;
+	private long floorId;
+	private double x;
+	private double y;
+	private String photo;
+	private String name;
+	private String desc;
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	public String getPhoto() {
+		return photo;
+	}
+
+	public void setPhoto(String photo) {
+		this.photo = photo;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDesc() {
+		return desc;
+	}
+
+	public long getFloorId() {
+		return floorId;
+	}
+
+	public void setFloorId(long floorId) {
+		this.floorId = floorId;
+	}
+
+	public void setDesc(String desc) {
+		this.desc = desc;
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+	public double getX() {
+		return x;
+	}
+
+	public void setX(double x) {
+		this.x = x;
+	}
+
+	public double getY() {
+		return y;
+	}
+
+	public void setY(double y) {
+		this.y = y;
+	}
+
+}

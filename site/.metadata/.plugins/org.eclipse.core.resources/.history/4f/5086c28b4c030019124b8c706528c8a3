@@ -1,0 +1,64 @@
+package com.mit.social.repositories;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.seq.repositories.SeqIdRepo;
+import com.mit.social.entities.Quote;
+
+@Repository
+public class QuoteRepo extends TimeDocRepo<Quote>{
+    @Autowired
+    MongoOperations mongoOps;
+
+    @Autowired
+    SeqIdRepo seqIdRepo;
+    
+    public int count(int status) {
+    	Criteria criteria = Criteria.where("isDeleted").is(false);
+    	if (status > 0) {
+    		criteria.and("status").is(status);
+    	}
+    	return (int)mongoOps.count(new Query(criteria), Quote.class);
+    }
+    
+    public int countOfUser(long userId) {
+    	Criteria criteria = Criteria.where("userId").is(userId).and("status").gt(0);
+    	return (int)mongoOps.count(new Query(criteria), Quote.class);
+    }
+    
+    public Quote getById(long id) {
+        return mongoOps.findById(id, Quote.class);
+    }
+    
+    public List<Quote> getSlice(int status, int from, int count) {
+    	Criteria criteria = Criteria.where("isDeleted").is(false);
+    	if (status > 0) {
+    		criteria.and("status").is(status);
+    	}
+    	Sort sort = new Sort(Direction.DESC, "updatedDate");
+    	return mongoOps.find(new Query(criteria).with(sort).skip(from).limit(count), Quote.class);
+    }
+    
+    public void updateStatus(long id, int status) {
+    	Update update = new Update().set("status", status);
+    	Query query = new Query(Criteria.where("id").is(id));
+    	mongoOps.updateFirst(query, update, Quote.class);
+    }
+    
+    public void delete(long id) {
+    	Update update = new Update().set("isActive", false).set("isDeleted", true);
+    	Query query = new Query(Criteria.where("id").is(id));
+    	mongoOps.updateFirst(query, update, Quote.class);
+    }
+    
+}

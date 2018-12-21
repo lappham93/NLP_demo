@@ -1,0 +1,27 @@
+package com.mit.sensor.bodies;
+
+import java.util.List;
+
+/**
+ * Created by Hung on 12/3/2017.
+ */
+public class SensorBody {
+    private double elapsedTime;
+    private List<Float> values;
+
+    public double getElapsedTime() {
+        return elapsedTime;
+    }
+
+    public void setElapsedTime(double elapsedTime) {
+        this.elapsedTime = elapsedTime;
+    }
+
+    public List<Float> getValues() {
+        return values;
+    }
+
+    public void setValues(List<Float> values) {
+        this.values = values;
+    }
+}

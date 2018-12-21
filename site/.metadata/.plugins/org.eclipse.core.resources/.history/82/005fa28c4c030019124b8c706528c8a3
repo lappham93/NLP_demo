@@ -1,0 +1,50 @@
+package com.mit.notification.entities;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import com.mit.notification.enums.NewsType;
+
+public class EventNews extends News {
+	public static final int TYPE = NewsType.EVENT.getValue();
+
+	private long eventId;
+	private String msg;
+	private long thumb;
+
+	public EventNews() {
+		super(TYPE);
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+	@Override
+	public String getMsg() {
+		return msg;
+	}
+
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+
+	public long getThumb() {
+		return thumb;
+	}
+
+	public void setThumb(long thumb) {
+		this.thumb = thumb;
+	}
+
+	@Override
+	public Map<String, String> getData() {
+		Map<String, String> data = new HashMap<>();
+		data.put("eventId", eventId + "");
+		return data;
+	}
+}

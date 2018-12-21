@@ -1,0 +1,52 @@
+package com.mit.social.entities;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.react.entities.React;
+
+@Document(collection = "feed_notification")
+public class FeedNotification extends React<Long> {
+
+	@Id
+	private long id;
+	private long userId;
+	private Set<Long> otherUserIds;
+
+	public void addOtherUserId(long otherUserId) {
+		if (otherUserId != userId) {
+			if (otherUserIds == null) {
+				otherUserIds = new HashSet<>();
+			}
+			otherUserIds.add(otherUserId);
+		}
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	public Set<Long> getOtherUserIds() {
+		return otherUserIds;
+	}
+
+	public void setOtherUserIds(Set<Long> otherUserIds) {
+		this.otherUserIds = otherUserIds;
+	}
+
+}

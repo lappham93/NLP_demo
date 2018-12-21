@@ -1,0 +1,73 @@
+package com.mit.services;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.atlas.entities.AtlasAPIKey;
+import com.mit.atlas.entities.AtlasApp;
+import com.mit.atlas.repositories.AtlasAPIKeyRepo;
+import com.mit.atlas.repositories.AtlasAppRepo;
+import com.mit.responses.AtlasAPIKeyResponse;
+import com.mit.responses.AtlasAppResponse;
+
+@Service
+public class AtlasAppService {
+	@Autowired
+	AtlasAppRepo appRepo;
+	@Autowired
+	AtlasAPIKeyRepo apiRepo;
+
+	public List<AtlasAppResponse> getListAppByUser(long userId) {
+		return buildAppResponse(appRepo.getListByUser(userId));
+	}
+
+	public List<AtlasAPIKeyResponse> getListApiKeyByApp(long appId) {
+		return buildAPIKeyResponse(apiRepo.getListByApp(appId));
+	}
+
+	public AtlasAppResponse buildAppResponse(AtlasApp app) {
+		if (app == null) {
+			return null;
+		}
+		return new AtlasAppResponse(app, getListApiKeyByApp(app.getId()));
+	}
+
+	public List<AtlasAppResponse> buildAppResponse(List<AtlasApp> apps) {
+		if (CollectionUtils.isEmpty(apps)) {
+			return null;
+		}
+		List<AtlasAppResponse> appResponses = new LinkedList<>();
+		for (AtlasApp app : apps) {
+			AtlasAppResponse appResponse = buildAppResponse(app);
+			if (appResponse != null) {
+				appResponses.add(appResponse);
+			}
+		}
+		return appResponses;
+	}
+
+	public AtlasAPIKeyResponse buildAPIKeyResponse(AtlasAPIKey apiKey) {
+		if (apiKey == null) {
+			return null;
+		}
+		return new AtlasAPIKeyResponse(apiKey);
+	}
+
+	public List<AtlasAPIKeyResponse> buildAPIKeyResponse(List<AtlasAPIKey> apiKeys) {
+		if (CollectionUtils.isEmpty(apiKeys)) {
+			return null;
+		}
+		List<AtlasAPIKeyResponse> appResponses = new LinkedList<>();
+		for (AtlasAPIKey apiKey : apiKeys) {
+			AtlasAPIKeyResponse appResponse = buildAPIKeyResponse(apiKey);
+			if (appResponse != null) {
+				appResponses.add(appResponse);
+			}
+		}
+		return appResponses;
+	}
+}

@@ -1,0 +1,28 @@
+package com.mit.event.enums;
+
+/**
+ * Created by Hung on 6/18/2017.
+ */
+public enum EventFilter {
+    FEATURE(0), DEFAULT(1), NEARBY(2);
+
+    EventFilter(int value) {
+        this.value = value;
+    }
+
+    private int value;
+
+    public int getValue() {
+        return value;
+    }
+
+    public static EventFilter getSort(int value) {
+        for (EventFilter status: values()) {
+            if(status.getValue() == value) {
+                return status;
+            }
+        }
+
+        return null;
+    }
+}

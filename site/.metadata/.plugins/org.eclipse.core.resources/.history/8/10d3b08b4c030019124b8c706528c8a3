@@ -1,0 +1,68 @@
+package com.mit.stat.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Created by Hung on 4/19/2017.
+ */
+
+@Document(collection = "zip_code_stat")
+public class ZipCodeStat {
+    @Id
+    private String id;
+    private Set<Long> activeProviderIds;
+    private Set<Long> activeClientIds;
+    private ZipCodeStatTotal statTotal;
+    private Map<Long, ZipCodeStatTotal> serviceStatTotals;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public Set<Long> getActiveProviderIds() {
+        if (activeProviderIds == null) {
+            return Collections.emptySet();
+        }
+        return activeProviderIds;
+    }
+
+    public void setActiveProviderIds(Set<Long> activeProviderIds) {
+        this.activeProviderIds = activeProviderIds;
+    }
+
+    public Set<Long> getActiveClientIds() {
+        if (activeClientIds == null) {
+            return Collections.emptySet();
+        }
+        return activeClientIds;
+    }
+
+    public void setActiveClientIds(Set<Long> activeClientIds) {
+        this.activeClientIds = activeClientIds;
+    }
+
+    public Map<Long, ZipCodeStatTotal> getServiceStatTotals() {
+        return serviceStatTotals;
+    }
+
+    public void setServiceStatTotals(Map<Long, ZipCodeStatTotal> serviceStatTotals) {
+        this.serviceStatTotals = serviceStatTotals;
+    }
+
+    public ZipCodeStatTotal getStatTotal() {
+        return statTotal;
+    }
+
+    public void setStatTotal(ZipCodeStatTotal statTotal) {
+        this.statTotal = statTotal;
+    }
+}

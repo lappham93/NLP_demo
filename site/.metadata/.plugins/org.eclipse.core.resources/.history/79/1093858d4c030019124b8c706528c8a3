@@ -1,0 +1,209 @@
+package com.mit.event.entities;
+
+import java.util.Calendar;
+import java.util.List;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.asset.entities.HashTag;
+import com.mit.common.enums.ObjectType;
+import com.mit.event.enums.EventStatus;
+import com.mit.map.entities.Coordinate;
+
+@Document(collection = "event")
+public class Event extends HashTag {
+	@Id
+	private long id;
+	private String atlasId;
+	private long categoryId;
+	private List<Long> categoryIds;
+	private String name;
+	private String desc;
+	private long photo;
+	private List<Long> otherPhotos;
+	@GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
+	private Coordinate coordinate;
+	private long addressId;
+	private BusinessHour businessHour;
+	private long startTime;
+	private long endTime;
+	private boolean isFeature;
+	private int status;
+	private int type;
+
+	public EventStatus calStatus() {
+		Calendar now = Calendar.getInstance();
+		if (now.getTimeInMillis() < startTime) {
+			return EventStatus.UPCOMMING;
+		}
+		if (now.getTimeInMillis() > endTime) {
+			return EventStatus.FINISHED;
+		}
+		return EventStatus.ONGOING;
+	}
+
+	public Event clone() {
+		Event event = new Event();
+		event.setId(id);
+		event.setAtlasId(atlasId);
+		event.setCategoryIds(categoryIds);
+		event.setName(name);
+		event.setDesc(desc);
+		event.setPhoto(photo);
+		event.setOtherPhotos(otherPhotos);
+		event.setCoordinate(coordinate);
+		event.setAddressId(addressId);
+		event.setBusinessHour(businessHour);
+		event.setStartTime(startTime);
+		event.setEndTime(endTime);
+		event.setFeature(isFeature);
+		event.setStatus(status);
+		event.setCreatedDate(createdDate);
+		event.setUpdatedDate(updatedDate);
+		event.setHashTags(getHashTags());
+		return event;
+	}
+
+	@Override
+	public Long getId() {
+		return id;
+	}
+
+	@Override
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getAtlasId() {
+		return atlasId;
+	}
+
+	public void setAtlasId(String atlasId) {
+		this.atlasId = atlasId;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDesc() {
+		return desc;
+	}
+
+	public void setDesc(String desc) {
+		this.desc = desc;
+	}
+
+	public long getPhoto() {
+		return photo;
+	}
+
+	public void setPhoto(long photo) {
+		this.photo = photo;
+	}
+
+	public List<Long> getOtherPhotos() {
+		return otherPhotos;
+	}
+
+	public void setOtherPhotos(List<Long> otherPhotos) {
+		this.otherPhotos = otherPhotos;
+	}
+
+	public long getAddressId() {
+		return addressId;
+	}
+
+	public void setAddressId(long addressId) {
+		this.addressId = addressId;
+	}
+
+	public BusinessHour getBusinessHour() {
+		return businessHour;
+	}
+
+	public void setBusinessHour(BusinessHour businessHour) {
+		this.businessHour = businessHour;
+	}
+
+	public long getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(long startTime) {
+		this.startTime = startTime;
+	}
+
+	public long getEndTime() {
+		return endTime;
+	}
+
+	public void setEndTime(long endTime) {
+		this.endTime = endTime;
+	}
+
+	public boolean isFeature() {
+		return isFeature;
+	}
+
+	public void setFeature(boolean isFeature) {
+		this.isFeature = isFeature;
+	}
+
+	public Coordinate getCoordinate() {
+		return coordinate;
+	}
+
+	public void setCoordinate(Coordinate coordinate) {
+		this.coordinate = coordinate;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public List<Long> getCategoryIds() {
+		return categoryIds;
+	}
+
+	public void setCategoryIds(List<Long> categoryIds) {
+		this.categoryIds = categoryIds;
+	}
+
+	public long getCategoryId() {
+		return categoryId;
+	}
+
+	public void setCategoryId(long categoryId) {
+		this.categoryId = categoryId;
+	}
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	@Override
+	public int getObjectType() {
+		return ObjectType.EVENT.getValue();
+	}
+
+}

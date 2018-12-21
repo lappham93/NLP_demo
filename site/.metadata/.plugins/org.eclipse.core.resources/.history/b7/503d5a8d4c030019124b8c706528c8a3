@@ -1,0 +1,55 @@
+package com.mit.map.bodies;
+
+import com.mit.asset.entities.PhotoInfo;
+
+public class CreateMapBody {
+	private long eventId;
+	private long floorId;
+	private int numLevel;
+	private PhotoInfo photoInfo;
+
+	public CreateMapBody() {
+		super();
+	}
+
+	public CreateMapBody(long eventId, long floorId, int numLevel, PhotoInfo photoInfo) {
+		super();
+		this.eventId = eventId;
+		this.floorId = floorId;
+		this.numLevel = numLevel;
+		this.photoInfo = photoInfo;
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+	public long getFloorId() {
+		return floorId;
+	}
+
+	public void setFloorId(long floorId) {
+		this.floorId = floorId;
+	}
+
+	public int getNumLevel() {
+		return numLevel;
+	}
+
+	public void setNumLevel(int numLevel) {
+		this.numLevel = numLevel;
+	}
+
+	public PhotoInfo getPhotoInfo() {
+		return photoInfo;
+	}
+
+	public void setPhotoInfo(PhotoInfo photoInfo) {
+		this.photoInfo = photoInfo;
+	}
+
+}

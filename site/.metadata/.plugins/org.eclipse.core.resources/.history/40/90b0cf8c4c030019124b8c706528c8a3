@@ -1,0 +1,70 @@
+package com.mit.navigation.responses;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.navigation.entities.BoothCategory;
+import com.mit.utils.LinkBuilder;
+
+public class BoothCategoryResponse {
+	private long id;
+	private long eventId;
+	private String name;
+	private String desc;
+	private String photo;
+	private int status;
+	private boolean followed;
+	private long createTime;
+	private long updateTime;
+
+	public BoothCategoryResponse(BoothCategory boothCategory) {
+		super();
+		this.id = boothCategory.getId();
+		this.eventId = boothCategory.getEventId();
+		this.name = boothCategory.getName();
+		this.desc = boothCategory.getDesc();
+		this.photo = LinkBuilder.buildPhotoLink(boothCategory.getPhoto(), ObjectType.BOOTH.getLowerName());
+		this.status = boothCategory.getStatus();
+		this.createTime = boothCategory.getCreatedDate().getTime();
+		this.updateTime = boothCategory.getUpdatedDate().getTime();
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getDesc() {
+		return desc;
+	}
+
+	public String getPhoto() {
+		return photo;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public long getCreateTime() {
+		return createTime;
+	}
+
+	public long getUpdateTime() {
+		return updateTime;
+	}
+
+	public boolean isFollowed() {
+		return followed;
+	}
+
+	public void setFollowed(boolean followed) {
+		this.followed = followed;
+	}
+
+}

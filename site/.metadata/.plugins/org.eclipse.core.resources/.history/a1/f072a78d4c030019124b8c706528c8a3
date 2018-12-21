@@ -1,0 +1,37 @@
+package com.mit.banner.enums;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonFormat.Shape;
+
+/**
+ * Created by Lap Pham on 4/4/17.
+ */
+@JsonFormat(shape = Shape.OBJECT)
+public enum BannerType {
+	WEB(1, "Web"), EVENT(2, "Event"), BOOTH(3, "Booth"), WELCOME(4, "Welcome");
+    private int value;
+    private String name;
+    
+    BannerType(int value, String name) {
+        this.value = value;
+        this.name = name;
+    }
+
+    public int getValue() {
+        return value;
+    }
+    
+    public String getName() {
+    	return name;
+    }
+    
+    public static BannerType getType(int value) {
+    	for (BannerType banner : BannerType.values()) {
+    		if (banner.getValue() == value) {
+    			return banner;
+    		}
+    	}
+    	
+    	return BannerType.WEB;
+    }
+}

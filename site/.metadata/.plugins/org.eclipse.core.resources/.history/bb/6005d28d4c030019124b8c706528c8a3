@@ -1,0 +1,131 @@
+package com.mit.address.responses;
+
+import com.mit.address.entities.EventAddress;
+import com.mit.map.entities.Coordinate;
+
+public class EventAddressResponse {
+	private String addressLine1;
+	private String addressLine2;
+	private String city;
+	private String state;
+	private String country;
+	private String zipCode;
+	private String phone;
+	private String countryCode;
+	private double lon;
+	private double lat;
+	private Coordinate coordinate;
+	private String name;
+	
+	public EventAddressResponse(EventAddress address) {
+		this.name = address.getName();
+		this.addressLine1 = address.getAddressLine1();
+		this.addressLine2 = address.getAddressLine2();
+		this.city = address.getCity();
+		this.state = address.getState();
+		this.country = address.getCountry();
+		this.zipCode = address.getZipCode();
+		this.phone = address.getPhone();
+		this.countryCode = address.getCountryCode();
+		this.lon = address.getCoordinate().getLon();
+		this.lat = address.getCoordinate().getLat();
+		this.coordinate = address.getCoordinate();
+	}
+
+	public String getAddressLine1() {
+		return addressLine1;
+	}
+
+	public void setAddressLine1(String addressLine1) {
+		this.addressLine1 = addressLine1;
+	}
+
+	public String getAddressLine2() {
+		return addressLine2;
+	}
+
+	public void setAddressLine2(String addressLine2) {
+		this.addressLine2 = addressLine2;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getState() {
+		return state;
+	}
+
+	public void setState(String state) {
+		this.state = state;
+	}
+
+	public String getCountry() {
+		return country;
+	}
+
+	public void setCountry(String country) {
+		this.country = country;
+	}
+
+	public String getZipCode() {
+		return zipCode;
+	}
+
+	public void setZipCode(String zipCode) {
+		this.zipCode = zipCode;
+	}
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
+	public String getCountryCode() {
+		return countryCode;
+	}
+
+	public void setCountryCode(String countryCode) {
+		this.countryCode = countryCode;
+	}
+
+	public double getLon() {
+		return lon;
+	}
+
+	public void setLon(double lon) {
+		this.lon = lon;
+	}
+
+	public double getLat() {
+		return lat;
+	}
+
+	public void setLat(double lat) {
+		this.lat = lat;
+	}
+
+	public Coordinate getCoordinate() {
+		return coordinate;
+	}
+
+	public void setCoordinate(Coordinate coordinate) {
+		this.coordinate = coordinate;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+}

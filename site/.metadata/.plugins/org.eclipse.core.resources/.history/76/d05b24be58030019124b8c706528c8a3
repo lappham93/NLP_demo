@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+	layout:decorator="layout">
+<head>
+	<script type="text/javascript" th:src="${resources_path} + '/js/app/home.js?201804131000'"></script>
+</head>
+<body>
+	<div layout:fragment="body">
+		Hello
+	</div>
+</body>
+</html>

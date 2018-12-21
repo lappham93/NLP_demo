@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+	layout:decorator="location_layout">
+<head>
+	<script type="text/javascript" th:src="${resources_path} + '/js/app/mapbox.js'"></script>
+	<script type="text/javascript" th:src="${resources_path} + '/js/app/location_edit.js'"></script>
+	<style type="text/css">
+		#mapId {
+			width: 100%; height: 800px; float: left;
+		}
+		#formId {
+			width: 40%; position: absolute; float:left;
+		}
+		@media (max-width: 500px) {
+			#formId {
+				width: 80%; position: absolute; float:left;
+			}
+		}
+		#actionBtnId {
+			margin-top: -25px;
+		}
+	</style>
+</head>
+<body>
+	<div layout:fragment="content">
+		<div class="col-sm-12">
+			<div id='mapId'></div>
+			<div id='formId' class="panel panel-flat">
+				<div class="panel-heading" style="padding-bottom: 0px;">
+					<h5 class="panel-title form-header" th:text="${location.name}">Create location</h5>
+				</div>
+				<form id="editLocationFrmId" class="form-horizontal form-body">
+					<div th:replace="fragments/fragments :: form_error_2"></div>
+					<div th:replace="fragments/fragments :: form_success_2"></div>
+					<div th:replace="fragments/fragments :: loader"></div>
+					<div class="form-group">
+						<label class="col-lg-3 control-label">Name: <span class="text-danger">(*)</span></label>
+						<div class="col-lg-9">
+							<input type="text" id="nameAddIptId" class="form-control" placeholder="Name" th:value="${location.name}"/>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label class="col-lg-3 control-label">Address: </label>
+						<div class="col-lg-9">
+							<input type="text" id="addressAddIptId" class="form-control" placeholder="Address" th:value="${location.address}"/>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label class="col-lg-3 control-label">Description: </label>
+						<div class="col-lg-9">
+							<input type="text" id="descAddIptId" class="form-control" placeholder="Description" th:value="${location.desc}"/>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label class="col-lg-3 control-label">Latitude: <span class="text-danger">(*)</span></label>
+						<div class="col-lg-9">
+							<input type="number" min="-90" max="90" step="any" id="latAddIptId"  class="form-control" placeholder="latitude" th:value="${location.coordinate.lat}"/>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label class="col-lg-3 control-label">Longitude: <span class="text-danger">(*)</span></label>
+						<div class="col-lg-9">
+							<input type="number" min="-180" max="180" step="any" id="lonAddIptId"  class="form-control" placeholder="longitude" th:value="${location.coordinate.lon}"/>
+						</div>
+					</div>
+					
+					<input type="hidden" id="locationId" th:value="${location.idRef}" />
+					
+					<div class="form-note">
+						Note: Changing the coordinates or address of a location doesn't change the placement of its floor plans.
+					</div>
+					<div class="form-separator"></div>
+
+					<div class="text-left" style="float:left">
+						<button class="btn btn-default btn-rounded" th:onclick="'window.location.replace(\'' + ${locations_item_url + '/' + location.idRef} + '\'); return false'">Cancel</button>
+					</div>
+					<div class="text-right">
+						<button class="btn btn-primary btn-rounded btn-submit" id="saveLocationBtnId">Save</button>
+					</div>
+				</form>
+			</div>
+			
+			
+			<div class="col-sm-offset-2 col-sm-12" id="actionBtnId">
+				<select id="mapStyleOptionId" data-placeholder="Select style" style="background: #fff">
+					<option selected="selected" value="streets">Mapbox</option>
+					<option value="satellite">Mapbox Sat.</option>
+				</select>
+				<button id="yourLocationBtnId" data-toggle="modal" data-popup="tooltip" title="Go to my location"><i class="icon-googleplus5"></i></button>
+			</div>
+		</div>
+		
+	</div>
+</body>
+</html>

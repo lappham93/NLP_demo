@@ -1,0 +1,126 @@
+package com.mit.sensor.bodies;
+
+import java.util.List;
+
+/**
+ * Created by Hung on 12/3/2017.
+ */
+public class IndrLocationBody {
+    private List<SensorBody> acc;
+    private List<SensorBody> mag;
+    private List<SensorBody> gyr;
+    private List<SensorBody> press;
+    private List<LocationBody> gps;
+    private List<RFBody> bluetooth;
+    private List<RFBody> wifi;
+    private List<SensorBody> rotation;
+    private List<StepCounterBody> stepCounter;
+    private List<StepCounterBody> stepDetector;
+    private List<StepDistanceBody> stepDist;
+    private double startTime;
+    private long eventId;
+
+    public List<SensorBody> getAcc() {
+        return acc;
+    }
+
+    public void setAcc(List<SensorBody> acc) {
+        this.acc = acc;
+    }
+
+    public List<SensorBody> getMag() {
+        return mag;
+    }
+
+    public void setMag(List<SensorBody> mag) {
+        this.mag = mag;
+    }
+
+    public List<SensorBody> getGyr() {
+        return gyr;
+    }
+
+    public void setGyr(List<SensorBody> gyr) {
+        this.gyr = gyr;
+    }
+
+    public List<SensorBody> getPress() {
+        return press;
+    }
+
+    public void setPress(List<SensorBody> press) {
+        this.press = press;
+    }
+
+    public List<LocationBody> getGps() {
+        return gps;
+    }
+
+    public void setGps(List<LocationBody> gps) {
+        this.gps = gps;
+    }
+
+    public List<RFBody> getBluetooth() {
+        return bluetooth;
+    }
+
+    public void setBluetooth(List<RFBody> bluetooth) {
+        this.bluetooth = bluetooth;
+    }
+
+    public List<RFBody> getWifi() {
+        return wifi;
+    }
+
+    public void setWifi(List<RFBody> wifi) {
+        this.wifi = wifi;
+    }
+
+    public double getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(double startTime) {
+        this.startTime = startTime;
+    }
+
+    public long getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(long eventId) {
+        this.eventId = eventId;
+    }
+
+    public List<StepCounterBody> getStepCounter() {
+        return stepCounter;
+    }
+
+    public void setStepCounter(List<StepCounterBody> stepCounter) {
+        this.stepCounter = stepCounter;
+    }
+
+    public List<StepCounterBody> getStepDetector() {
+        return stepDetector;
+    }
+
+    public void setStepDetector(List<StepCounterBody> stepDetector) {
+        this.stepDetector = stepDetector;
+    }
+
+    public List<StepDistanceBody> getStepDist() {
+        return stepDist;
+    }
+
+    public void setStepDist(List<StepDistanceBody> stepDist) {
+        this.stepDist = stepDist;
+    }
+
+    public List<SensorBody> getRotation() {
+        return rotation;
+    }
+
+    public void setRotation(List<SensorBody> rotation) {
+        this.rotation = rotation;
+    }
+}

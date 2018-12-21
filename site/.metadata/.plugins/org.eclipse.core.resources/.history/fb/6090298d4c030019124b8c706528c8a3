@@ -1,0 +1,72 @@
+package com.mit.navigation.bodies;
+
+/**
+ * Created by Hung on 6/22/2017.
+ */
+
+public class IndoorLocationBody {
+    private long userId;
+    private double x;
+    private double y;
+    private double lat;
+    private double lon;
+    private long floorId;
+	private String atlasId;
+
+    public long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
+
+    public double getX() {
+        return x;
+    }
+
+	public void setX(double x) {
+		this.x = x;
+	}
+
+	public double getY() {
+		return y;
+	}
+
+	public void setY(double y) {
+		this.y = y;
+	}
+	
+	public double getLat() {
+		return lat;
+	}
+
+	public void setLat(double lat) {
+		this.lat = lat;
+	}
+
+	public double getLon() {
+		return lon;
+	}
+
+	public void setLon(double lon) {
+		this.lon = lon;
+	}
+
+	public long getFloorId() {
+		return floorId;
+	}
+
+	public void setFloorId(long floorId) {
+		this.floorId = floorId;
+	}
+
+	public String getAtlasId() {
+		return atlasId;
+	}
+
+	public void setAtlasId(String atlasId) {
+		this.atlasId = atlasId;
+	}
+
+}

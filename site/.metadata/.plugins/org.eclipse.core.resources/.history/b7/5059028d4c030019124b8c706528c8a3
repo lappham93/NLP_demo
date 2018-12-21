@@ -1,0 +1,15 @@
+package com.mit.navigation.enums;
+
+public enum FloorDirection {
+	NONE(0), UP(1), DOWN(2);
+	
+	int value;
+	
+	private FloorDirection(int value) {
+		this.value = value;
+	}
+
+	public int getValue() {
+		return value;
+	}
+}

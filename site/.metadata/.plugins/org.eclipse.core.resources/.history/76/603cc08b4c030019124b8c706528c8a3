@@ -1,0 +1,16 @@
+package com.mit.social.responses;
+
+import java.util.List;
+
+import com.mit.react.entities.ReactStat;
+import com.mit.react.entities.UserStat;
+import com.mit.social.entities.MessageFeed;
+import com.mit.user.responses.ProfileShortResponse;
+
+public class MessageFeedResponse extends FeedResponse {
+
+	public MessageFeedResponse(MessageFeed feed, long viewUserId, ProfileShortResponse profile, List<ReactStat> reactStats, UserStat userStat) {
+		super(feed, viewUserId, profile, reactStats, userStat);
+	}
+
+}

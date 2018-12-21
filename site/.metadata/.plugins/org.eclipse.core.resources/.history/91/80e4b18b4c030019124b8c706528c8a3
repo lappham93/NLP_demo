@@ -1,0 +1,27 @@
+package com.mit.stat.entities;
+
+import java.util.Date;
+
+/**
+ * Created by Lap Pham on 4/19/17.
+ */
+public class TimelineStatId extends StatId {
+    private int timelineType;
+    private Date statTime;
+
+    public int getTimelineType() {
+        return timelineType;
+    }
+
+    public void setTimelineType(int timelineType) {
+        this.timelineType = timelineType;
+    }
+
+    public Date getStatTime() {
+        return statTime;
+    }
+
+    public void setStatTime(Date statTime) {
+        this.statTime = statTime;
+    }
+}

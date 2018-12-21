@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+    layout:decorator="myapp_layout">
+<head>
+	<script type="text/javascript" th:src="${resources_path} + '/js/app/apikey_add.js'"></script>
+</head>
+<body>
+<div layout:fragment="content">
+	<div id="formId" class="panel panel-flat">
+		<div class="panel-heading">
+			<h5 class="panel-title">Add new API key</h5>
+			<div class="heading-elements">
+			</div>
+		</div>
+		<form id="addApikeyFrmId" class="form-horizontal">
+			<div th:replace="fragments/fragments :: form_error_2"></div>
+			<div th:replace="fragments/fragments :: form_success_2"></div>
+			<div th:replace="fragments/fragments :: loader"></div>
+			<div class="panel-body">
+				<div class="form-group">
+					<label class="col-lg-3 control-label">API key name: <span class="text-danger">(*)</span></label>
+					<div class="col-lg-9">
+						<input type="text" id="nameAddIptId" class="form-control" placeholder="api key name" />
+					</div>
+					<input type="hidden" id="appId" th:value="${app.idRef}"/>
+				</div>
+				
+				<div class="text-right">
+					<button class="btn btn-default btn-rounded" th:onclick="'window.location.replace(\'' + ${#strings.replace(apps_item_url, '{0}', app.idRef)} + '\'); return false'">Cancel</button>
+					<button class="btn btn-primary btn-rounded" id="addApikeyBtnId" disabled="disabled">Submit</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+</body>
+</html>

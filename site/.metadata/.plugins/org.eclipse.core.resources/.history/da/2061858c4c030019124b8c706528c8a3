@@ -1,0 +1,117 @@
+package com.mit.notification.responses;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.notification.entities.SocialNews;
+import com.mit.notification.enums.SocialNewsType;
+import com.mit.social.entities.Feed;
+import com.mit.user.entities.Profile;
+import com.mit.utils.LinkBuilder;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created by Lap Pham on 4/4/17.
+ */
+public class SocialNewsResponse extends NewsResponse {
+    private long feedId;
+    private String photoId;
+    private long commentId;
+    private List<Long> fromUserIds;
+    private List<String> fromUserNames;
+    private String msg;
+    private String thumb;
+    private int socialType;
+
+    public SocialNewsResponse(SocialNews socialNews, Map<Long, Profile> profileMap) {
+        super(socialNews);
+
+        this.fromUserIds = socialNews.getFromUserIds() != null ? socialNews.getFromUserIds() : Arrays.asList();
+        fromUserNames = new ArrayList<>();
+        for (long userId : fromUserIds) {
+            Profile profile = profileMap.get(userId);
+            if (profile != null) {
+                fromUserNames.add(profile.getFullName());
+            }
+        }
+        if (socialNews.getProfile() != null) {
+            this.thumb = LinkBuilder.buildPhotoLink(socialNews.getProfile().getAvatar(), ObjectType.USER.getName());
+        }
+        feedId = socialNews.getFeedId();
+        this.photoId = socialNews.getPhotoId() > 0 ? String.valueOf(socialNews.getPhotoId()) : "";
+        this.socialType = socialNews.getSocialNewsType();
+        this.commentId = socialNews.getCmtId();
+        Feed feed = socialNews.getFeed();
+        if (feed != null && socialNews.getUserId() == feed.getUserId()) {
+            this.msg = SocialNewsType.getSocialNewsType(socialType).getMessage();
+        } else {
+            this.msg = SocialNewsType.getSocialNewsType(socialType).getOtherMessage();
+        }
+    }
+
+    public long getFeedId() {
+        return feedId;
+    }
+
+    public void setFeedId(long feedId) {
+        this.feedId = feedId;
+    }
+
+    public String getPhotoId() {
+        return photoId;
+    }
+
+    public void setPhotoId(String photoId) {
+        this.photoId = photoId;
+    }
+
+    public long getCommentId() {
+        return commentId;
+    }
+
+    public void setCommentId(long commentId) {
+        this.commentId = commentId;
+    }
+
+    public List<Long> getFromUserIds() {
+        return fromUserIds;
+    }
+
+    public void setFromUserIds(List<Long> fromUserIds) {
+        this.fromUserIds = fromUserIds;
+    }
+
+    public List<String> getFromUserNames() {
+        return fromUserNames;
+    }
+
+    public void setFromUserNames(List<String> fromUserNames) {
+        this.fromUserNames = fromUserNames;
+    }
+
+    public String getMsg() {
+        return msg;
+    }
+
+    public void setMsg(String msg) {
+        this.msg = msg;
+    }
+
+    public String getThumb() {
+        return thumb;
+    }
+
+    public void setThumb(String thumb) {
+        this.thumb = thumb;
+    }
+
+    public int getSocialType() {
+        return socialType;
+    }
+
+    public void setSocialType(int socialType) {
+        this.socialType = socialType;
+    }
+}

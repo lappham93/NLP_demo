@@ -1,0 +1,31 @@
+package com.mit.asset.responses;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.utils.LinkBuilder;
+
+public class FileResponse {
+	private long id;
+	private String link;
+
+	public FileResponse(long id, int objectType) {
+		this.id = id;
+		this.link = LinkBuilder.buildPhotoLink(id, ObjectType.getType(objectType).getLowerName());
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public String getLink() {
+		return link;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public void setLink(String link) {
+		this.link = link;
+	}
+
+}

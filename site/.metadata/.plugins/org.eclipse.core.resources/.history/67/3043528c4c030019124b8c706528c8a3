@@ -1,0 +1,27 @@
+package com.mit.react.enums;
+
+public enum ReactType {
+	COMMENT(1), LIKE(2), VIEW(3), LIVE(4), RATING(5), SHARE(6), FOLLOW(7), FOLLOWING(8), HFFU(9), REGISTER(10), BUYING(11), SERVE(12), LANDSCAPING(13), USE(14), 
+	POST_FEED(15), CONNECT(16), REQUEST_CONNECT(17), CHECK_IN(18), GOING(19), FRIEND_GOING(20);
+	
+	private int value;
+	
+	private ReactType(int value) {
+		this.value = value;
+	}
+	
+	public int getValue() {
+		return value;
+	}
+	
+	public static ReactType getType(int value) {
+		for (ReactType type : ReactType.values()) {
+			if (type.getValue() == value) {
+				return type;
+			}
+		}
+		
+		return null;
+	}
+
+}

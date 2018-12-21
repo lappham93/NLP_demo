@@ -1,0 +1,29 @@
+package com.mit.social.responses;
+
+import java.util.List;
+
+import com.mit.asset.responses.LinkResponse;
+import com.mit.react.entities.ReactStat;
+import com.mit.react.entities.UserStat;
+import com.mit.social.entities.LinkFeed;
+import com.mit.user.responses.ProfileShortResponse;
+
+public class LinkFeedResponse extends FeedResponse {
+
+	private LinkResponse link;
+
+	public LinkFeedResponse(LinkFeed feed, long viewUserId, ProfileShortResponse profile, List<ReactStat> reactStats,
+			LinkResponse link, UserStat userStat) {
+		super(feed, viewUserId, profile, reactStats, userStat);
+		this.link = link;
+	}
+
+	public LinkResponse getLink() {
+		return link;
+	}
+
+	public void setLink(LinkResponse link) {
+		this.link = link;
+	}
+
+}

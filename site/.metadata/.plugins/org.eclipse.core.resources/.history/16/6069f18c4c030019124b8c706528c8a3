@@ -1,0 +1,112 @@
+package com.mit.navigation.repositories;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.navigation.entities.MapLevel;
+
+@Repository
+public class MapLevelRepo extends TimeDocRepo<MapLevel> {
+
+	public int totalAll(long eventId, boolean onlyActive) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (eventId > 0) {
+			criteria.and("eventId").is(eventId);
+		}
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		return (int) mongoOps.count(new Query(criteria), MapLevel.class);
+	}
+
+	public MapLevel getById(long id) {
+		return mongoOps.findById(id, MapLevel.class);
+	}
+
+	public MapLevel getMaxLevel(long floorId) {
+		Criteria criteria = Criteria.where("floorId").is(floorId).and("isActive").is(true).and("isDeleted").is(false);
+		Sort sort = new Sort(new Order(Direction.DESC, "level"));
+		return mongoOps.findOne(new Query(criteria).with(sort), MapLevel.class);
+	}
+
+	public MapLevel getByFloorAndLevel(long floorId, int level) {
+		Criteria criteria = Criteria.where("floorId").is(floorId).and("level").is(level).and("isActive").is(true)
+				.and("isDeleted").is(false);
+		return mongoOps.findOne(new Query(criteria), MapLevel.class);
+	}
+
+	public List<MapLevel> getSlice(long eventId, boolean onlyActive, int from, int count) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (eventId > 0) {
+			criteria.and("eventId").is(eventId);
+		}
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		return mongoOps.find(new Query(criteria), MapLevel.class);
+	}
+
+	public List<MapLevel> getList(long eventId, long floorId) {
+		Criteria criteria = Criteria.where("isActive").is(true).and("isDeleted").is(false);
+		if (eventId > 0) {
+			criteria.and("eventId").is(eventId);
+		}
+		if (floorId > 0) {
+			criteria.and("floorId").is(floorId);
+		}
+		Sort sort = new Sort(new Order(Direction.ASC, "level"));
+		return mongoOps.find(new Query(criteria).with(sort), MapLevel.class);
+	}
+
+	public List<Long> getListId(long eventId, long floorId) {
+		List<MapLevel> floors = getList(eventId, floorId);
+		List<Long> ids = new LinkedList<>();
+		if (!CollectionUtils.isEmpty(floors)) {
+			floors.forEach(t -> ids.add(t.getId()));
+		}
+		return ids;
+	}
+
+	public List<MapLevel> getListByFloorIds(List<Long> floorIds) {
+		Criteria criteria = Criteria.where("floorId").in(floorIds);
+		return mongoOps.find(new Query(criteria), MapLevel.class);
+	}
+
+	public Map<Long, List<MapLevel>> getMapByListFloorIds(List<Long> floorIds) {
+		List<MapLevel> mapLevels = getListByFloorIds(floorIds);
+		Map<Long, List<MapLevel>> map = new HashMap<>();
+		if (!CollectionUtils.isEmpty(mapLevels)) {
+			for (MapLevel mapLevel : mapLevels) {
+				if (map.get(mapLevel.getFloorId()) == null) {
+					map.put(mapLevel.getFloorId(), new LinkedList<>());
+				}
+				map.get(mapLevel.getFloorId()).add(mapLevel);
+			}
+		}
+		return map;
+	}
+
+	public void delete(long id) {
+		Update update = new Update().set("isDeleted", true);
+		Query query = new Query(Criteria.where("id").is(id));
+		mongoOps.updateFirst(query, update, MapLevel.class);
+	}
+	
+	public void deleteByFloorId(long floorId) {
+		Update update = new Update().set("isDeleted", true);
+		Query query = new Query(Criteria.where("floorId").is(floorId));
+		mongoOps.updateMulti(query, update, MapLevel.class);
+	}
+}

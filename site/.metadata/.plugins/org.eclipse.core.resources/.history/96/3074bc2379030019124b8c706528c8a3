@@ -1,0 +1,22 @@
+$(function(){
+	
+})
+
+function predict(comment) {
+	data = JSON.stringify({
+		'comment': comment
+	});
+	$.ajax({
+    	  headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+    	  url: App.prefix + ,
+    	  method: 'POST',
+    	  dataType: 'json',
+    	  data: data,
+    	  success: function(response) {
+    		  
+    	  },
+    	  error: function(httpObj) {
+    		  
+    	  }
+	});
+}

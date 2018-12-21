@@ -1,0 +1,62 @@
+package com.mit.react.repositories;
+
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.react.entities.Rating;
+import com.mit.seq.repositories.SeqIdRepo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Repository
+public class RatingRepo extends TimeDocRepo<Rating>{
+    @Autowired
+    MongoOperations mongoOps;
+
+    @Autowired
+    SeqIdRepo seqIdRepo;
+    
+    public Rating getById(long id) {
+        return mongoOps.findById(id, Rating.class);
+    }
+    
+    public List<Rating> getByIds(List<Long> ids) {
+        List<Rating> comments = mongoOps.find(new Query(Criteria.where("id").in(ids)), Rating.class);
+        return comments;
+    }
+    
+    public List<Rating> getSlice(int count, int from, String fieldSort, boolean sortAcs, boolean isActiveStatus) { 
+    	Criteria criteria = new Criteria();
+    	if (isActiveStatus) {
+    		criteria = Criteria.where("status").gt(0);
+    	}
+    	Sort sort = new Sort(new Order(sortAcs ? Direction.ASC : Direction.DESC, fieldSort));
+        List<Rating> profiles = mongoOps.find(new Query(criteria).with(sort).skip(from).limit(count), Rating.class);
+        return profiles;
+    }
+
+    public Map<Long, Rating> getMapByIds(List<Long> profileIds) {
+        List<Rating> profiles = getByIds(profileIds);
+        Map<Long, Rating> profileMap = new HashMap<Long, Rating>();
+        for (Rating profile : profiles) {
+            profileMap.put(profile.getId(), profile);
+        }
+
+        return profileMap;
+    }
+
+    public Rating getByObjectAndUser(int objectType, long objectId, long userId) {
+        Criteria criteria = Criteria.where("objectType").is(objectType).and("objectId").is(objectId)
+                .and("userId").is(userId).and("status").gt(0);
+        return mongoOps.findOne(new Query(criteria), Rating.class);
+    }
+
+}

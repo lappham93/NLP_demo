@@ -1,0 +1,127 @@
+package com.mit.navigation.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.*;
+
+import java.util.Date;
+import java.util.List;
+
+/**
+ * Created by Lap Pham on 6/19/17.
+ */
+
+@Document(indexName = "sc_booth", type = "sc_booth")
+public class ElasticBooth {
+    @Id
+    private String id;
+    @Field(type = FieldType.Long)
+    private long eventId;
+    @Field(type = FieldType.Long)
+    private long categoryId;
+    @Field(type = FieldType.Long)
+    private long floorId;
+    @MultiField(
+            mainField = @Field(type = FieldType.String),
+            otherFields = {
+                    @InnerField(index = FieldIndex.not_analyzed, suffix = "raw", type = FieldType.String)
+            }
+    )
+    @Field(type = FieldType.String)
+    private String name;
+    @Field(type = FieldType.String)
+    private String desc;
+    @Field(type = FieldType.Boolean)
+    private boolean isFeature;
+    @Field(type = FieldType.Date)
+    private Date createdDate;
+    @Field(type = FieldType.Nested)
+    private List<String> hashTags;
+
+    public ElasticBooth() {
+    }
+
+    public ElasticBooth(Booth booth) {
+        this.id = booth.getId() + "";
+        this.eventId = booth.getEventId();
+        this.categoryId = booth.getCategoryId();
+        this.floorId = booth.getFloorId();
+        this.name = booth.getName();
+        this.desc = booth.getDesc();
+        this.isFeature = booth.isFeature();
+        this.createdDate = booth.getCreatedDate();
+        this.hashTags = booth.getHashTags();
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public long getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(long eventId) {
+        this.eventId = eventId;
+    }
+
+    public long getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(long categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public long getFloorId() {
+        return floorId;
+    }
+
+    public void setFloorId(long floorId) {
+        this.floorId = floorId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
+    }
+
+    public boolean isFeature() {
+        return isFeature;
+    }
+
+    public void setFeature(boolean feature) {
+        isFeature = feature;
+    }
+
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
+    }
+
+	public List<String> getHashTags() {
+		return hashTags;
+	}
+
+	public void setHashTags(List<String> hashTags) {
+		this.hashTags = hashTags;
+	}
+    
+}

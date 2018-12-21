@@ -1,0 +1,113 @@
+package com.mit.navigation.entities;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.common.entities.ActiveTimeDoc;
+import com.mit.map.entities.Point;
+
+@Document(collection = "navigation_point")
+public class NavigationPoint extends ActiveTimeDoc<Long> {
+	@Id
+	private long id;
+	private long localId;
+	private long floorId;
+	private Point point;
+	private Point pxPoint;
+	private Map<Long, Double> adjPoints;
+	private int status;
+	
+	public void addAdjPoint(NavigationPoint neighbor) {
+		if (neighbor == null) {
+			return;
+		}
+		if (adjPoints == null) {
+			adjPoints = new HashMap<>();
+		}
+		adjPoints.put(neighbor.getId(), point.length(neighbor.getPoint()));
+	}
+	
+	public void removeAdjPoint(NavigationPoint neighbor) {
+		if (neighbor == null) {
+			return;
+		}
+		if (adjPoints != null) {
+			adjPoints.remove(neighbor.getId());
+		}
+	}
+
+	public NavigationPoint() {
+		super();
+	}
+
+	public NavigationPoint(long id, long floorId, Point point,
+						   Map<Long, Double> adjPoints) {
+		super();
+		this.id = id;
+		this.floorId = floorId;
+		this.point = point;
+		this.adjPoints = adjPoints;
+	}
+
+	@Override
+	public Long getId() {
+		return id;
+	}
+
+	@Override
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public long getLocalId() {
+		return localId;
+	}
+
+	public void setLocalId(long localId) {
+		this.localId = localId;
+	}
+
+	public long getFloorId() {
+		return floorId;
+	}
+
+	public void setFloorId(long floorId) {
+		this.floorId = floorId;
+	}
+
+	public Point getPoint() {
+		return point;
+	}
+
+	public void setPoint(Point point) {
+		this.point = point;
+	}
+
+	public Point getPxPoint() {
+		return pxPoint;
+	}
+
+	public void setPxPoint(Point pxPoint) {
+		this.pxPoint = pxPoint;
+	}
+
+	public Map<Long, Double> getAdjPoints() {
+		return adjPoints;
+	}
+
+	public void setAdjPoints(Map<Long, Double> adjPoints) {
+		this.adjPoints = adjPoints;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+}

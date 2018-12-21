@@ -1,0 +1,149 @@
+package com.mit.react.entities;
+
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.common.entities.ObjectRef;
+import com.mit.react.enums.ReactType;
+
+@Document(collection = "react_stats")
+public class ReactStat {
+	public static List<Integer> REP_ACTION = Arrays.asList(ReactType.COMMENT.getValue(), ReactType.SHARE.getValue(),
+			ReactType.BUYING.getValue(), ReactType.LANDSCAPING.getValue(), ReactType.SERVE.getValue(), ReactType.USE.getValue(), 
+			ReactType.RATING.getValue());
+
+	@Id
+	private String id;
+	private ObjectRef objectRef;
+	private int reactType; // refer ReactType enum
+	private List<Long> userIds;
+	private List<String> imeis;
+	private double totalRatingPoint; // use for rating
+	
+	public ReactStat() {
+	}
+
+	public ReactStat(int objectType, long objectId, long id, int reactType, List<Long> userIds, List<String> imeis,
+			int total) {
+		this.objectRef = new ObjectRef(reactType, objectId);
+//		this.id = id;
+		this.reactType = reactType;
+		this.userIds = userIds;
+		this.imeis = imeis;
+		this.totalRatingPoint = 0.0;
+	}
+	
+	public void addRating(long userId, double point) {
+		if (this.userIds == null) {
+			this.userIds = new LinkedList<>();
+		}
+		this.userIds.add(0, userId);
+		this.totalRatingPoint += point;
+	}
+
+	public void addToUserIds(List<Long> userIds) {
+		if (this.userIds == null) {
+			this.userIds = new LinkedList<>();
+		}
+		if (REP_ACTION.contains(reactType)) {
+			this.userIds.addAll(0, userIds);
+		} else {
+			for (long userId : userIds) {
+				if (!this.userIds.contains(userId)) {
+					this.userIds.add(0, userId);
+				}
+			}
+		}
+	}
+
+	public void removeFromUserIds(List<Long> userIds) {
+		if (this.userIds != null) {
+			for (long userId : userIds) {
+				if (this.userIds.remove(userId)) {
+				}
+			}
+		}
+	}
+	
+	public void addToImeiIds(List<String> imeis) {
+		if (this.imeis == null) {
+			this.imeis = new LinkedList<>();
+		}
+		if (REP_ACTION.contains(reactType)) {
+			this.imeis.addAll(0, imeis);
+		} else {
+			for (String imei : imeis) {
+				if (!this.imeis.contains(imei)) {
+					this.imeis.add(0, imei);
+				}
+			}
+		}
+	}
+
+	public void removeFromImeis(List<String> imeis) {
+		if (this.imeis != null) {
+			for (String imei : imeis) {
+				if (this.imeis.remove(imei)) {
+				}
+			}
+		}
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public ObjectRef getObjectRef() {
+		return objectRef;
+	}
+
+	public void setObjectRef(ObjectRef objectRef) {
+		this.objectRef = objectRef;
+	}
+
+	public int getReactType() {
+		return reactType;
+	}
+
+	public void setReactType(int reactType) {
+		this.reactType = reactType;
+	}
+
+	public List<Long> getUserIds() {
+		return userIds;
+	}
+
+	public void setUserIds(List<Long> userIds) {
+		this.userIds = userIds;
+	}
+
+	public int getTotal() {
+//		return total;
+		return this.userIds != null ? this.userIds.size() : 0;
+	}
+
+	public double getTotalRatingPoint() {
+		return totalRatingPoint;
+	}
+
+	public void setTotalRatingPoint(double totalRatingPoint) {
+		this.totalRatingPoint = totalRatingPoint;
+	}
+
+	public List<String> getImeis() {
+		return imeis;
+	}
+
+	public void setImeis(List<String> imeis) {
+		this.imeis = imeis;
+	}
+
+}

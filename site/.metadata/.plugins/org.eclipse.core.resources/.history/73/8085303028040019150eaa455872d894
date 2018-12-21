@@ -1,0 +1,8 @@
+package com.mit.ai.repositories;
+
+import com.mit.ai.entities.CommentLabeling;
+import com.mit.common.repositories.TimeDocRepo;
+
+public class CommentLabelingRepo extends TimeDocRepo<CommentLabeling>{
+
+}

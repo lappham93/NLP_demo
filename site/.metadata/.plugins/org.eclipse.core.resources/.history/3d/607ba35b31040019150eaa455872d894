@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout">
+<head>
+	<meta charset="utf-8"/>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+	<title th:text="${admin_title}">NLP</title>
+	<link rel="icon" type="image/x-icon" th:href="@{${resources_path} + '/images/app-logo.png'}" />
+	
+	<!-- Global stylesheets -->
+	<link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700,900" rel="stylesheet" type="text/css"/>
+	<link th:href="${resources_path} + '/limitless/css/icons/icomoon/styles.css'" rel="stylesheet" type="text/css"/>
+	<link th:href="${resources_path} + '/limitless/css/bootstrap.css'" rel="stylesheet" type="text/css"/>
+	<!-- /global stylesheets -->
+
+	<!-- Core JS files -->
+	<script type="text/javascript" th:src="${resources_path} + '/limitless/js/plugins/loaders/pace.min.js'"></script>
+	<script type="text/javascript" th:src="${resources_path} + '/limitless/js/core/libraries/jquery.min.js'"></script>
+	<script type="text/javascript" th:src="${resources_path} + '/limitless/js/core/libraries/bootstrap.min.js'"></script>
+	<script type="text/javascript" th:src="${resources_path} + '/limitless/js/plugins/loaders/blockui.min.js'"></script>
+	<script type="text/javascript" th:src="${resources_path} + '/js/midlib/jquery-ui.js'"></script>
+	<!-- /core JS files -->
+
+	<link th:href="${resources_path} + '/css/app/common.css?20181220'" rel="stylesheet" type="text/css"/>
+	<link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet'/>
+	
+	
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		App = {};
+		App.sitePrefix = [[${site_prefix}]];
+		/*]]>*/
+	</script>
+</head>
+
+<body>
+	<div class="container col-sm-12">
+     	<div layout:fragment="body">BODY CONTENT</div>
+   	</div>
+</body>
+</html>

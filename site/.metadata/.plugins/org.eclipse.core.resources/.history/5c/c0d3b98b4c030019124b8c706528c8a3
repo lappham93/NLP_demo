@@ -1,0 +1,605 @@
+package com.mit.social.services;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.app.enums.AppConstKey;
+import com.mit.app.services.AppConstManager;
+import com.mit.asset.entities.Link;
+import com.mit.asset.entities.PhotoInfo;
+import com.mit.asset.repositories.LinkRepo;
+import com.mit.asset.repositories.PhotoInfoRepo;
+import com.mit.asset.responses.LinkResponse;
+import com.mit.asset.responses.PhotoResponse;
+import com.mit.asset.services.LinkParser;
+import com.mit.asset.services.PhotoService;
+import com.mit.common.entities.ObjectRef;
+import com.mit.common.enums.ObjectType;
+import com.mit.errcode.SocialErrCode;
+import com.mit.notification.services.NewsService;
+import com.mit.react.entities.ReactStat;
+import com.mit.react.entities.UserStat;
+import com.mit.react.enums.ReactType;
+import com.mit.react.repositories.ReactStatRepo;
+import com.mit.react.repositories.UserStatRepo;
+import com.mit.react.responses.FollowResponse;
+import com.mit.social.bodies.FeedBody;
+import com.mit.social.entities.Feed;
+import com.mit.social.entities.FeedReport;
+import com.mit.social.entities.LinkFeed;
+import com.mit.social.entities.MessageFeed;
+import com.mit.social.entities.PhotoFeed;
+import com.mit.social.entities.StickerFeed;
+import com.mit.social.repositories.FeedRepo;
+import com.mit.social.repositories.FeedReportRepo;
+import com.mit.social.responses.FeedPhotoResponse;
+import com.mit.social.responses.FeedResponse;
+import com.mit.social.responses.LinkFeedResponse;
+import com.mit.social.responses.MessageFeedResponse;
+import com.mit.social.responses.PhotoFeedResponse;
+import com.mit.social.responses.StickerFeedResponse;
+import com.mit.social.responses.SubFeedResponse;
+import com.mit.user.responses.ProfileShortResponse;
+import com.mit.user.services.UserService;
+import com.mit.utils.ImageInfoUtils;
+
+@Service
+public class FeedService {
+	@Autowired
+	private FeedRepo feedRepo;
+	@Autowired
+	private PhotoInfoRepo photoInfoRepo;
+	@Autowired
+	private LinkRepo linkRepo;
+	@Autowired
+	private UserStatRepo userStatRepo;
+	@Autowired
+	private ReactStatRepo reactStatRepo;
+	@Autowired
+	private FeedReportRepo feedReportRepo;
+
+	@Autowired
+	private PhotoService photoService;
+	@Autowired
+	private NewsService newsService;
+	@Autowired
+	private UserService userService;
+	@Autowired
+	private AppConstManager appConstManager;
+
+	public final int FEED_DEFAULT = 1;
+	public final int FEED_HOT = 2;
+	public final int FEED_FOLLOW = 3;
+	public final int FEED_MINE = 4;
+
+	public final int ADD = 1;
+	public final int REMOVE = 0;
+	
+	public void postSystemFeed(FeedBody body) {
+		body.setUserId(appConstManager.getLong(AppConstKey.SUPPORT_USER_ID));
+		postFeed(body);
+	}
+
+	public Map<String, Object> postFeed(FeedBody body) {
+		Map<String, Object> rs = new HashMap<String, Object>();
+		int err = SocialErrCode.SUCCESS;
+		try {
+			if (StringUtils.isEmpty(body.getFeedMessage()) 
+					&& body.getFeedLink() == 0
+					&& StringUtils.isEmpty(body.getFeedSticker())
+					&& CollectionUtils.isEmpty(body.getFeedPhotos())) {
+				err = SocialErrCode.FEED_CONTENT_EMPTY;
+			} else {
+				Feed feed = body.toFeed();
+				feedRepo.save(feed);
+				rs.put("feed", buildFeedResponse(feed, body.getUserId()));
+				newsService.postFeed(feed.getId(), body.getUserId());
+			}
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+		rs.put("err", err);
+
+		return rs;
+	}
+
+	public Map<String, Object> editFeed(long feedId, FeedBody body) {
+		Map<String, Object> rs = new HashMap<String, Object>();
+		int err = SocialErrCode.SUCCESS;
+		Feed feed = feedRepo.getById(feedId);
+		try {
+			if (feed.getUserId() == body.getUserId()) {
+				if (StringUtils.isEmpty(body.getFeedMessage()) 
+						&& body.getFeedLink() == 0
+						&& StringUtils.isEmpty(body.getFeedSticker())
+						&& CollectionUtils.isEmpty(body.getFeedPhotos())) {
+					err = SocialErrCode.FEED_CONTENT_EMPTY;
+				} else {
+					body.toFeed(feed);
+					feedRepo.save(feed);
+					rs.put("feed", buildFeedResponse(feed, body.getUserId()));
+				}
+			} else {
+				err = SocialErrCode.PERMISSION_LIMIT;
+			}
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+		rs.put("err", err);
+
+		return rs;
+	}
+
+	public Map<String, Object> deleteFeed(long feedId, long userId) {
+		Map<String, Object> rs = new HashMap<String, Object>();
+		int err = SocialErrCode.SUCCESS;
+		Feed feed = feedRepo.getById(feedId);
+		try {
+			if (feed.getUserId() == userId) {
+				feed.setStatus(0);
+				feedRepo.save(feed);
+			} else {
+				err = SocialErrCode.PERMISSION_LIMIT;
+			}
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+		rs.put("err", err);
+
+		return rs;
+	}
+
+	public Map<String, Object> getListFeed(long viewUserId, long feedOwnId, int count, int from, int type, long eventId) {
+		Map<String, Object> rs = new HashMap<String, Object>();
+		int err = SocialErrCode.SUCCESS;
+		List<Feed> feeds = null;
+		List<Long> hffuIds = null;
+		List<Long> feedHides = null;
+		List<Long> followIds = new ArrayList<>();
+		followIds.add(viewUserId);
+		followIds.add(appConstManager.getLong(AppConstKey.SUPPORT_USER_ID));
+		UserStat ff = userStatRepo.getByUserId(viewUserId, false);
+		if (ff != null) {
+			hffuIds = ff.getHffuIds();
+			feedHides = ff.getFeedHideIds();
+			if (ff.getFollowUserIds() != null) {
+				followIds.addAll(ff.getFollowUserIds());
+			}
+			if (ff.getConnectUserIds() != null) {
+				followIds.addAll(ff.getConnectUserIds());
+			}
+		}
+		if (type == FEED_DEFAULT) {
+			feeds = feedRepo.getSlice(viewUserId, followIds, hffuIds, feedHides, count + 1, from, "createdDate",
+					false, true, eventId);
+		} else if (type == FEED_HOT) {
+			Map<Long, Feed> recentFeeds = feedRepo.getRecentMap(viewUserId, hffuIds, feedHides, true);
+			List<Long> topFeedIds = new LinkedList<>();
+			List<Double> points = new LinkedList<>();
+			for (int i = 0; i <= from + count; i++) {
+				points.add(-1.0);
+			}
+			for (long id : recentFeeds.keySet()) {
+				List<ReactStat> rss = reactStatRepo.getByObject(new ObjectRef(ObjectType.FEED.getValue(), id));
+				double point = 0.0;
+				for (ReactStat react : rss) {
+					if (react.getReactType() == ReactType.COMMENT.getValue()) {
+						point += react.getTotal() * 0.6;
+					} else if (react.getReactType() == ReactType.LIKE.getValue()) {
+						point += react.getTotal() * 0.1;
+					} else if (react.getReactType() == ReactType.SHARE.getValue()) {
+						point += react.getTotal() * 0.1;
+					} else if (react.getReactType() == ReactType.VIEW.getValue()) {
+						point += react.getTotal() * 0.1;
+					}
+				}
+				if (recentFeeds.get(id).getUserId() == viewUserId) {
+					point += 1.0;
+				}
+				for (int i = 0; i <= from + count; i++) {
+					if (point > points.get(i)) {
+						points.add(i, point);
+						topFeedIds.add(i, id);
+						break;
+					}
+				}
+			}
+			if (topFeedIds.size() > from) {
+				int toIdx = topFeedIds.size() >= from + count + 1 ? from + count + 1 : topFeedIds.size();
+				topFeedIds = topFeedIds.subList(from, toIdx);
+				feeds = new LinkedList<>();
+				for (long feedId : topFeedIds) {
+					feeds.add(recentFeeds.get(feedId));
+				}
+			}
+		} else if (type == FEED_MINE) {
+			if (feedOwnId <= 0) {
+				feedOwnId = viewUserId;
+			}
+			feeds = feedRepo.getSlice(0L, Arrays.asList(feedOwnId), null, feedHides, count, from,
+					"createdDate", false, true, eventId);
+		} else if (type == FEED_FOLLOW) {
+			feeds = feedRepo.getSlice(viewUserId, followIds, hffuIds, feedHides, count, from, "createdDate",
+					false, true, eventId);
+		}
+
+		boolean hasMore = false;
+		if (feeds != null) {
+			if (feeds.size() > count) {
+				feeds = feeds.subList(0, count);
+				hasMore = true;
+			}
+		}
+		List<FeedResponse> feedViews = buildFeedResponseList(feeds, viewUserId);
+		rs.put("err", err);
+		rs.put("hasMore", hasMore);
+		rs.put("feeds", feedViews);
+
+		return rs;
+	}
+
+	public Map<String, Object> countNewFeed(long feedId, long viewUserId, int type) {
+		Map<String, Object> rs = new HashMap<>();
+		int err = SocialErrCode.SUCCESS;
+		int count = 0;
+		List<Long> hffuIds = null;
+		List<Long> feedHides = null;
+		List<Long> followIds = new ArrayList<>();
+		followIds.add(viewUserId);
+		UserStat ff = userStatRepo.getByUserId(viewUserId, false);
+		if (ff != null) {
+			hffuIds = ff.getHffuIds();
+			feedHides = ff.getFeedHideIds();
+			if (ff.getFollowUserIds() != null) {
+				followIds.addAll(ff.getFollowUserIds());
+			}
+		}
+		if (type == FEED_DEFAULT) {
+			count = feedRepo.countNewFeed(feedId, null, hffuIds, feedHides);
+		} else if (type == FEED_FOLLOW) {
+			count = feedRepo.countNewFeed(feedId, followIds, hffuIds, feedHides);
+		}
+		rs.put("totalNew", count);
+		rs.put("err", err);
+		return rs;
+	}
+
+	public Map<String, Object> getNewFeedList(long feedId, long viewUserId, int count, int type) {
+		Map<String, Object> rs = new HashMap<String, Object>();
+		int err = SocialErrCode.SUCCESS;
+		List<Feed> feeds = null;
+		List<Long> hffuIds = null;
+		List<Long> feedHides = null;
+		List<Long> followIds = new ArrayList<>();
+		followIds.add(viewUserId);
+		UserStat ff = userStatRepo.getByUserId(viewUserId, false);
+		if (ff != null) {
+			hffuIds = ff.getHffuIds();
+			feedHides = ff.getFeedHideIds();
+			if (ff.getFollowUserIds() != null) {
+				followIds.addAll(ff.getFollowUserIds());
+			}
+		}
+		if (type == FEED_DEFAULT) {
+			feeds = feedRepo.getNewFeed(feedId, null, hffuIds, feedHides);
+		} else if (type == FEED_FOLLOW) {
+			feeds = feedRepo.getNewFeed(feedId, followIds, hffuIds, feedHides);
+		}
+		boolean isAppend = true;
+		if (feeds != null && feeds.size() > count) {
+			isAppend = false;
+			feeds = feeds.subList(0, count);
+		}
+		rs.put("feeds", buildFeedResponseList(feeds, viewUserId));
+		rs.put("isAppend", isAppend);
+		rs.put("err", err);
+		return rs;
+	}
+
+	public Map<String, Object> getFeed(long feedId, long photoId, long userId) {
+		Map<String, Object> rs = new HashMap<String, Object>();
+		int err = SocialErrCode.SUCCESS;
+		UserStat ff = userStatRepo.getByUserId(userId, false);
+		Feed feed = feedRepo.getById(feedId);
+		if (feed != null && feed.getStatus() > 0) {
+			if (ff != null && 
+					((ff.getHffuIds() != null && ff.getHffuIds().contains(feed.getUserId()))) || (ff.getFeedHideIds() != null && ff.getFeedHideIds().contains(feed.getId()))) {
+				err = SocialErrCode.FEED_NOT_EXIST;
+			} else {
+				if (photoId > 0 && feed.isSubFeed()) {
+					if (feed instanceof PhotoFeed) {
+						SubFeedResponse subFeedResponse = buildSubFeedResponse(feed, photoId, userId);
+						rs.put("feed", subFeedResponse);
+						// rs.put("photo", subFeedResponse.getPhoto());
+						rs.put("message", feed.getMessage());
+					} else {
+						err = SocialErrCode.FEED_NOT_EXIST;
+					}
+				} else {
+					rs.put("feed", buildFeedResponse(feed, userId));
+				}
+			}
+		} else {
+			err = SocialErrCode.FEED_NOT_EXIST;
+		}
+		rs.put("err", err);
+
+		return rs;
+	}
+
+	public Map<String, Object> hideFeed(long feedId, long userId) {
+		Map<String, Object> rs = new HashMap<String, Object>();
+		int err = SocialErrCode.SUCCESS;
+		UserStat userStat = userStatRepo.getByUserId(userId, true);
+		userStat.addToFeedHideIds(feedId);
+		try {
+			userStatRepo.save(userStat);
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+
+		rs.put("err", err);
+
+		return rs;
+	}
+
+	public Map<String, Object> hffu(long userId, long relatedUserId, int type) {
+		Map<String, Object> rs = new HashMap<String, Object>();
+		int err = SocialErrCode.SUCCESS;
+		UserStat userStat = userStatRepo.getByUserId(userId, true);
+		if (type == ADD) {
+			if (userStat.getFollowUserIds() != null && userStat.getFollowUserIds().contains(relatedUserId)) {
+				followed(relatedUserId, userId, REMOVE);
+			}
+			userStat.addToHffuIds(relatedUserId);
+		} else {
+			userStat.removeFromHffuIds(relatedUserId);
+		}
+		try {
+			userStatRepo.save(userStat);
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+
+		rs.put("err", err);
+
+		return rs;
+	}
+
+	public Map<String, Object> follow(long userId, long relatedUserId, int type) {
+		Map<String, Object> rs = new HashMap<String, Object>();
+		int err = SocialErrCode.SUCCESS;
+		int followers = 0;
+		UserStat userStat = userStatRepo.getByUserId(userId, true);
+		if (type == ADD) {
+			userStat.addToFollowUserIds(relatedUserId);
+		} else {
+			userStat.removeFromFollowUserIds(relatedUserId);
+		}
+		Map<String, Object> followedRs = followed(relatedUserId, userId, type);
+		followers = (int) followedRs.get("totalFollower");
+		try {
+			userStatRepo.save(userStat);
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+		FollowResponse follow = new FollowResponse(type == ADD, followers);
+		rs.put("follow", follow);
+		rs.put("err", err);
+
+		return rs;
+	}
+
+	public Map<String, Object> followed(long userId, long relatedUserId, int type) {
+		Map<String, Object> rs = new HashMap<String, Object>();
+		int err = SocialErrCode.SUCCESS;
+		UserStat userStat = userStatRepo.getByUserId(userId, true);
+		if (type == ADD) {
+			userStat.addToUserFollowIds(relatedUserId);
+		} else {
+			userStat.removeFromUserFollowIds(relatedUserId);
+		}
+		try {
+			userStatRepo.save(userStat);
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+		rs.put("totalFollower", userStat != null ? userStat.getUserFollowIds().size() : 0);
+		rs.put("err", err);
+
+		return rs;
+	}
+
+	public Map<String, Object> parseLink(String link) {
+		Map<String, Object> rs = new HashMap<String, Object>();
+		int err = SocialErrCode.SUCCESS;
+		link = link.toLowerCase();
+		long id = LinkParser.hashLink(link);
+		Link feedLink = linkRepo.getById(id);
+		Calendar period = Calendar.getInstance();
+		period.set(Calendar.DATE, period.get(Calendar.DATE) - 7);
+		boolean isOldLink = false;
+		if (feedLink == null || (isOldLink = feedLink.getUpdatedDate().getTime() < period.getTimeInMillis())) {
+			LinkParser parser = new LinkParser(link);
+			if (parser.getStatus() == LinkParser.FAIL) {
+				err = SocialErrCode.PARSE_LINK_ERROR;
+			} else {
+				feedLink = new Link();
+				feedLink.setId(id);
+				feedLink.setLink(link);
+				feedLink.setTitle(parser.getTitle());
+				feedLink.setDesc(parser.getDescription());
+				feedLink.setSite(parser.getSite());
+//				String fileName = parser.getThumbUri();
+//				byte[] thumbnailData = parser.getThumbData();
+				// upload thumbnail
+//				long thumb;
+//				try {
+//					thumb = photoService.saveDataPhoto(thumbnailData, fileName, ObjectType.FEED);
+//				} catch (IOException e) {
+//					thumb = 0L;
+//				}
+//				feedLink.setThumbnail(thumb);
+				feedLink.setThumbnailExt(parser.getThumbUri());
+				feedLink.setStatus(1);
+				if (isOldLink) {
+					try {
+						linkRepo.save(feedLink);
+					} catch (Exception e) {
+						err = SocialErrCode.SERVER_ERR;
+					}
+				} else {
+					linkRepo.insert(feedLink);
+				}
+			}
+		}
+		if (err == SocialErrCode.SUCCESS) {
+			rs.put("feedLink", new LinkResponse(feedLink));
+		}
+		rs.put("err", err);
+
+		return rs;
+	}
+
+	public Map<String, Object> uploadFeedPhoto(byte[] data, String fileName) {
+		Map<String, Object> rs = new HashMap<String, Object>();
+		int err = SocialErrCode.SUCCESS;
+		long id;
+		try {
+			id = photoService.saveDataPhoto(data, fileName, ObjectType.FEED);
+			if (id > 0) {
+				ImageInfoUtils iu = new ImageInfoUtils(data);
+				int width = iu.getWidth();
+				int height = iu.getHeight();
+				PhotoInfo pi = new PhotoInfo();
+				pi.setPhotoId(id);
+				pi.setWidth(width);
+				pi.setHeight(height);
+				pi.setType(ObjectType.FEED.getValue());
+				photoInfoRepo.save(pi);
+				rs.put("photo", new PhotoResponse(pi));
+			} else {
+				err = SocialErrCode.SERVER_ERR;
+			}
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+		rs.put("err", err);
+
+		return rs;
+	}
+
+	public Map<String, Object> report(long feedId, long userId) {
+		Map<String, Object> rs = new HashMap<String, Object>();
+		int err = SocialErrCode.SUCCESS;
+		FeedReport freport = feedReportRepo.getByFeedId(feedId);
+		if (freport == null) {
+			freport = new FeedReport();
+			freport.setFeedId(feedId);
+			freport.setStatus(FeedReport.ReportStatus.NEW.getValue());
+			freport.addReport(userId);
+		} else {
+			if (freport.getUserReportIds() == null || !freport.getUserReportIds().contains(userId)) {
+				freport.addReport(userId);
+				freport.setStatus(FeedReport.ReportStatus.NEW.getValue());
+			} else {
+				err = SocialErrCode.ALREADY_REPORT;
+			}
+		}
+		try {
+			feedReportRepo.save(freport);
+		} catch (Exception e) {
+			err = SocialErrCode.SERVER_ERR;
+		}
+
+		rs.put("err", err);
+		return rs;
+	}
+
+	public boolean isSubFeed(long feedId) {
+		return feedRepo.isSubFeed(feedId);
+	}
+
+	public void broadcastCmt(long feedId, long photoId, long userId, Object data) {
+		// TODO
+	}
+
+	public List<FeedResponse> buildFeedResponseList(List<Feed> feeds, long viewUserId) {
+		List<FeedResponse> feedResponses = new ArrayList<>();
+		if (feeds != null) {
+			for (Feed feed : feeds) {
+				FeedResponse feedResponse = buildFeedResponse(feed, viewUserId);
+				if (feedResponse != null) {
+					feedResponses.add(feedResponse);
+				}
+			}
+		}
+		return feedResponses;
+	}
+
+	public FeedResponse buildFeedResponse(Feed feed, long viewUserId) {
+		FeedResponse feedResponse = null;
+		ProfileShortResponse profile = userService.buildProfileShortResponse(feed.getUserId(), viewUserId);
+		List<ReactStat> reactStats = reactStatRepo.getByObject(new ObjectRef(ObjectType.FEED.getValue(), feed.getId()));
+		UserStat userStat = userStatRepo.getByUserId(feed.getUserId(), false);
+		if (profile != null) {
+			if (feed instanceof MessageFeed) {
+				MessageFeed messageFeed = (MessageFeed) feed;
+				feedResponse = new MessageFeedResponse(messageFeed, viewUserId, profile, reactStats, userStat);
+			} else if (feed instanceof StickerFeed) {
+				StickerFeed stickerFeed = (StickerFeed) feed;
+				feedResponse = new StickerFeedResponse(stickerFeed, viewUserId, profile, reactStats, userStat);
+			} else if (feed instanceof LinkFeed) {
+				LinkFeed linkFeed = (LinkFeed) feed;
+				Link link = linkRepo.getById(linkFeed.getLinkId());
+				if (link != null) {
+					LinkResponse linkResponse = new LinkResponse(link);
+					feedResponse = new LinkFeedResponse(linkFeed, viewUserId, profile, reactStats, linkResponse, userStat);
+				}
+			} else if (feed instanceof PhotoFeed) {
+				PhotoFeed photoFeed = (PhotoFeed) feed;
+				List<PhotoInfo> photoInfos = photoInfoRepo.getListByPhotoAndType(photoFeed.getPhotos(),
+						ObjectType.FEED.getValue());
+				List<FeedPhotoResponse> feedPhotoResponses = new ArrayList<>();
+				if (photoInfos != null) {
+					for (PhotoInfo photoInfo : photoInfos) {
+						feedPhotoResponses.add(new FeedPhotoResponse(photoInfo));
+					}
+				}
+				feedResponse = new PhotoFeedResponse(photoFeed, viewUserId, profile, reactStats, feedPhotoResponses, userStat);
+			}
+		}
+		return feedResponse;
+	}
+
+	public SubFeedResponse buildSubFeedResponse(Feed feed, long photoId, long viewUserId) {
+		SubFeedResponse subFeedResponse = null;
+		ProfileShortResponse profile = userService.buildProfileShortResponse(feed.getUserId(), viewUserId);
+		UserStat userStat = userStatRepo.getByUserId(feed.getUserId(), false);
+		List<ReactStat> reactStats = feed.isSubFeed() 
+				? reactStatRepo.getByObject(new ObjectRef(ObjectType.SUBFEED.getValue(), photoId))
+				: reactStatRepo.getByObject(new ObjectRef(ObjectType.FEED.getValue(), feed.getId()));
+		if (profile != null && feed instanceof PhotoFeed) {
+			PhotoFeed photoFeed = (PhotoFeed) feed;
+			FeedPhotoResponse feedPhotoResponse = null;
+			PhotoInfo photoInfo = photoInfoRepo.getByPhotoAndType(photoId, ObjectType.FEED.getValue());
+			if (photoInfo != null) {
+				feedPhotoResponse = new FeedPhotoResponse(photoInfo);
+			}
+			subFeedResponse = new SubFeedResponse(photoFeed, viewUserId, profile, reactStats, feedPhotoResponse, userStat);
+		}
+
+		return subFeedResponse;
+	}
+
+}

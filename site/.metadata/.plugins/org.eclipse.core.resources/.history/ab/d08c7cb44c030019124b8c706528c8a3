@@ -1,0 +1,32 @@
+package com.mit.app.bodies;
+
+public class AppStatBody {
+	private String key;
+	private String place;
+	
+	public AppStatBody() {
+		super();
+	}
+
+	public AppStatBody(String key, String place) {
+		this.key = key;
+		this.place = place;
+	}
+	
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public String getPlace() {
+		return place;
+	}
+
+	public void setPlace(String place) {
+		this.place = place;
+	}
+
+}

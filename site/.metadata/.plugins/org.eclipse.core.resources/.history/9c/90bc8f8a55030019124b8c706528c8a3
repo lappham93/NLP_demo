@@ -1,0 +1,104 @@
+admin.title=Indoor Innkom
+admin.prefix=/indoor/innkom
+admin.resources=/static
+admin.resources.path=${admin.prefix}${admin.resources}
+admin.paging.pageSize=10
+
+# HTTP encoding (HttpEncodingProperties)
+spring.http.encoding.charset=UTF-8
+spring.http.encoding.enabled=true
+spring.http.encoding.force=true
+spring.thymeleaf.cache=false
+#spring.thymeleaf.prefix=file:///${user.dir}/homber-admin/src/main/resources/templates/
+#spring.resources.static-locations=file:///${user.dir}/homber-admin/src/main/resources/static/
+#spring.resources.cache-period=0
+spring.http.multipart.max-file-size=30MB
+spring.http.multipart.max-request-size=30MB
+
+server.jetty.uri-encoding = UTF-8
+server.port=10336
+#server.ssl.key-store=classpath:keystore.jks
+#server.ssl.key-store-password=secret
+#server.ssl.key-password=another-secret
+server.session.persistent=true
+
+facebook.graph.url=https://graph.facebook.com/v2.10/
+facebook.appId=343828349399725
+facebook.appSecret=a7492cc85958382b938d54f83096bf29
+facebook.accessToken=343828349399725|a7492cc85958382b938d54f83096bf29
+
+accountkit.api.version=v1.1
+accountkit.graph.url=https://graph.accountkit.com/v1.0/
+accountkit.appSecret=0a76ad3bced85c646f38c6c40565ff1a
+accountkit.accessToken=AA|343828349399725|0a76ad3bced85c646f38c6c40565ff1a
+
+spring.data.mongodb.host=45.77.34.142
+spring.data.mongodb.port=27017
+spring.data.mongodb.database=innkom
+spring.data.mongodb.authentication-database=admin
+spring.data.mongodb.username=innkomuser
+spring.data.mongodb.password=iNnk0m@@Uz3r#DDb
+spring.messages.basename = messages
+
+spring.redis.host=45.77.34.142
+spring.redis.port=6379
+spring.redis.password=S1Dyl@R3diS
+
+firebase.secret=e55c41cfb6ea23ae5792d96d61299a0c
+firebase.serverKey=
+firebase.client.key=AAAAGjD3Irg:APA91bFXziLIOidWEPlambrIfnnrEgFub2veZV9f7CS61CZI3xtxv7_XWdGwvWduCM6se0vzaojbyHdiTKDnHkL55sN4cfqBWDIO_DM7LIP5Z61YlMmPhHPDZwONXMRT4Dnk0AInY2uE
+firebase.provider.key=AAAAGjD3Irg:APA91bFXziLIOidWEPlambrIfnnrEgFub2veZV9f7CS61CZI3xtxv7_XWdGwvWduCM6se0vzaojbyHdiTKDnHkL55sN4cfqBWDIO_DM7LIP5Z61YlMmPhHPDZwONXMRT4Dnk0AInY2uE
+
+system.test.signature=c9343693c9676bd1b347e0f6b61f19e8
+
+system.domain=http://api.innkom.com
+system.domain-file=http://file.innkom.com
+system.domain-admin=http://admin.innkom.com
+system.domain-api-socket=ws://45.77.34.142:20102
+system.domain-upload-socket=ws://45.77.34.142:20105
+system.api-prefix=/ik
+
+#photo client
+saocoo_productphoto.thriftclient.host = 45.77.34.142
+saocoo_productphoto.thriftclient.port = 15835
+saocoo_productphoto.thriftclient.timeout = 30000
+
+saocoo_bannerphoto.thriftclient.host = 45.77.34.142
+saocoo_bannerphoto.thriftclient.port = 15836
+saocoo_bannerphoto.thriftclient.timeout = 30000
+
+saocoo_feedphoto.thriftclient.host = 45.77.34.142
+saocoo_feedphoto.thriftclient.port = 15837
+saocoo_feedphoto.thriftclient.timeout = 30000
+
+saocoo_userphoto.thriftclient.host = 45.77.34.142
+saocoo_userphoto.thriftclient.port = 15838
+saocoo_userphoto.thriftclient.timeout = 30000
+
+saocoo_mapphoto.thriftclient.host = 45.77.34.142
+saocoo_mapphoto.thriftclient.port = 15839
+saocoo_mapphoto.thriftclient.timeout = 30000
+
+saocoo_eventphoto.thriftclient.host = 45.77.34.142
+saocoo_eventphoto.thriftclient.port = 15840
+saocoo_eventphoto.thriftclient.timeout = 30000
+
+saocoo_tempfile.thriftclient.host = 45.77.34.142
+saocoo_tempfile.thriftclient.port = 15841
+saocoo_tempfile.thriftclient.timeout = 30000
+
+saocoo_chatphoto.thriftclient.host = 45.77.34.142
+saocoo_chatphoto.thriftclient.port = 15842
+saocoo_chatphoto.thriftclient.timeout = 30000
+
+
+rabbitmq.host = 45.77.34.142
+rabbitmq.port = 5672
+rabbitmq.stompport = 61613
+rabbitmq.user = innkom
+rabbitmq.password = Rabb!t1nknom
+rabbitmq.vh = /
+
+# elastic
+spring.data.elasticsearch.cluster-nodes = 45.77.34.142:9300
+spring.data.elasticsearch.cluster-name = sidyl

@@ -1,0 +1,39 @@
+package com.mit.react.responses;
+
+import java.util.List;
+
+import com.mit.react.entities.Comment;
+import com.mit.react.entities.ReactStat;
+import com.mit.react.entities.UserStat;
+import com.mit.social.responses.FeedPhotoResponse;
+import com.mit.user.responses.ProfileShortResponse;
+
+public class ProductCommentResponse extends CommentResponse {
+	private boolean isRated;
+	private double ratingPoint;
+
+	public ProductCommentResponse(long viewUserId, Comment comment, ProfileShortResponse profile, FeedPhotoResponse photoCmt,
+			CommentResponse lstChild, List<ReactStat> reactStats, UserStat userStat, boolean isRated,
+			double ratingPoint) {
+		super(viewUserId, comment, profile, photoCmt, lstChild, reactStats, userStat);
+		this.isRated = isRated;
+		this.ratingPoint = ratingPoint;
+	}
+
+	public boolean isRated() {
+		return isRated;
+	}
+
+	public void setRated(boolean isRated) {
+		this.isRated = isRated;
+	}
+
+	public double getRatingPoint() {
+		return ratingPoint;
+	}
+
+	public void setRatingPoint(double ratingPoint) {
+		this.ratingPoint = ratingPoint;
+	}
+
+}

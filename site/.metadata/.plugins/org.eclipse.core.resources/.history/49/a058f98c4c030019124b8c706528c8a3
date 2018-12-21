@@ -1,0 +1,95 @@
+package com.mit.navigation.repositories;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.navigation.entities.BoothProduct;
+
+/**
+ * Created by Lap Pham on 6/13/17.
+ */
+
+@Repository
+public class BoothProductRepo extends TimeDocRepo<BoothProduct> {
+
+    @Autowired
+    protected MongoOperations mongoOps;
+
+    public int totalAll(long eventId, long boothId, String key, boolean onlyActive) {
+        Criteria criteria = Criteria.where("isDeleted").is(false);
+        if (onlyActive) {
+        	criteria = criteria.and("isActive").is(true);
+        }
+        if (eventId > 0) {
+            criteria = criteria.and("eventId").is(eventId);
+        }
+        if (boothId > 0) {
+            criteria = criteria.and("boothId").is(boothId);
+        }
+        if (!StringUtils.isEmpty(key)) {
+            criteria = criteria.and("name").regex(Pattern.compile(key, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE));
+        }
+        return (int) mongoOps.count(new Query(criteria), BoothProduct.class);
+    }
+
+    public BoothProduct getById(long id) {
+        return mongoOps.findById(id, BoothProduct.class);
+    }
+
+    public List<BoothProduct> getListByIds(List<Long> ids) {
+        return mongoOps.find(new Query(Criteria.where("_id").in(ids)), BoothProduct.class);
+    }
+
+    public Map<Long, BoothProduct> getMapByIds(List<Long> ids) {
+        List<BoothProduct> products = getListByIds(ids);
+        Map<Long, BoothProduct> productMap = new HashMap<>();
+        for (BoothProduct product: products) {
+            productMap.put(product.getId(), product);
+        }
+        return productMap;
+    }
+
+    public List<BoothProduct> getListByBoothId(long boothId) {
+        Criteria criteria = Criteria.where("boothId").is(boothId).and("isActive").is(true).and("isDeleted").is(false);
+        Sort sort = new Sort(new Order(Direction.ASC, "name"));
+        return mongoOps.find(new Query(criteria).with(sort), BoothProduct.class);
+    }
+
+    public List<BoothProduct> getSlice(long eventId, long boothId, String key, int offset, int count, boolean onlyActive) {
+        Criteria criteria = Criteria.where("isDeleted").is(false);
+        if (onlyActive) {
+        	criteria = criteria.and("isActive").is(true);
+        }
+        if (eventId > 0) {
+            criteria = criteria.and("eventId").is(eventId);
+        }
+        if (boothId > 0) {
+            criteria = criteria.and("boothId").is(boothId);
+        }
+        if (!StringUtils.isEmpty(key)) {
+            criteria = criteria.and("name").regex(Pattern.compile(key, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE));
+        }
+        Sort sort = new Sort(new Order(Direction.ASC, "name"));
+        return mongoOps.find(new Query(criteria).with(sort).skip(offset).limit(count), BoothProduct.class);
+    }
+
+    public void delete(long id) {
+        Update update = new Update().set("isDeleted", true);
+        Query query = new Query(Criteria.where("id").is(id));
+        mongoOps.updateFirst(query, update, BoothProduct.class);
+    }
+}

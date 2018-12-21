@@ -1,0 +1,15 @@
+package com.mit.navigation.enums;
+
+public enum TransitMode {
+	NONE(0), ELEVATOR(1), ESCALATOR(2);	
+	
+	private int value;
+	
+	private TransitMode(int value) {
+		this.value = value;
+	}
+
+	public int getValue() {
+		return value;
+	}
+}

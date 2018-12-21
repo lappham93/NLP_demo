@@ -1,0 +1,22 @@
+package com.mit.social.entities;
+
+import com.mit.social.enums.FeedContentType;
+
+public class StickerFeed extends Feed {
+	public static final int TYPE = FeedContentType.STICKER.getValue();
+
+	private String sticker;
+
+	public StickerFeed() {
+		super(TYPE);
+	}
+
+	public String getSticker() {
+		return sticker;
+	}
+
+	public void setSticker(String sticker) {
+		this.sticker = sticker;
+	}
+
+}

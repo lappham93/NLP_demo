@@ -1,0 +1,16 @@
+package com.mit.navigation.responses;
+
+import com.mit.navigation.entities.Floor;
+
+/**
+ * Created by Hung on 8/25/2017.
+ */
+public class FloorSimpleResponse extends FloorShortResponse{
+    public FloorSimpleResponse() {
+    }
+
+    public FloorSimpleResponse(Floor floor) {
+        super(floor, null);
+    }
+
+}

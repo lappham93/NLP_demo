@@ -1,0 +1,55 @@
+package com.mit.navigation.utils;
+
+import com.mit.navigation.entities.TilePosition;
+
+/**
+ * Created by Lap Pham on 6/20/17.
+ */
+public class MapUtils {
+    public static String tileXYToQuadKey(int tileX, int tileY, int level) {
+        StringBuilder quadKey = new StringBuilder();
+        for (int i = level; i > 0; i--) {
+            char digit = '0';
+            int mask = 1 << (i - 1);
+            if ((tileX & mask) != 0) {
+                digit++;
+            }
+            if ((tileY & mask) != 0) {
+                digit++;
+                digit++;
+            }
+            quadKey.append(digit);
+        }
+        return quadKey.toString();
+    }
+
+    public static TilePosition quadKeyToTileXY(String quadKey) {
+        int tileX = 0, tileY = 0;
+        int level = quadKey.length();
+        for (int i = level; i > 0; i--) {
+            int mask = 1 << (i - 1);
+            switch (quadKey.charAt(level - i)) {
+                case '0':
+                    break;
+
+                case '1':
+                    tileX |= mask;
+                    break;
+
+                case '2':
+                    tileY |= mask;
+                    break;
+
+                case '3':
+                    tileX |= mask;
+                    tileY |= mask;
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Invalid QuadKey digit sequence.");
+            }
+        }
+
+        return new TilePosition(tileX, tileY, level);
+    }
+}

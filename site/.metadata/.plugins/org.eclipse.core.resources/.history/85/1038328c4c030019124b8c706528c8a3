@@ -1,0 +1,32 @@
+package com.mit.react.responses;
+
+public class CommentHandleResponse {
+	private CommentResponse comment;
+	private int totalComment;
+	private int childs;
+
+	public CommentResponse getComment() {
+		return comment;
+	}
+
+	public void setComment(CommentResponse comment) {
+		this.comment = comment;
+	}
+
+	public int getTotalComment() {
+		return totalComment;
+	}
+
+	public void setTotalComment(int totalComment) {
+		this.totalComment = totalComment;
+	}
+
+	public int getChilds() {
+		return childs;
+	}
+
+	public void setChilds(int childs) {
+		this.childs = childs;
+	}
+
+}

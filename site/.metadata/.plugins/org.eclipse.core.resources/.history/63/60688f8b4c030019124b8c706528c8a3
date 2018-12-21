@@ -1,0 +1,27 @@
+package com.mit.stat.entities;
+
+import java.io.Serializable;
+
+/**
+ * Created by Lap Pham on 4/19/17.
+ */
+public class StatId implements Serializable {
+    private long objId;
+    private int objType;
+
+    public long getObjId() {
+        return objId;
+    }
+
+    public void setObjId(long objId) {
+        this.objId = objId;
+    }
+
+    public int getObjType() {
+        return objType;
+    }
+
+    public void setObjType(int objType) {
+        this.objType = objType;
+    }
+}

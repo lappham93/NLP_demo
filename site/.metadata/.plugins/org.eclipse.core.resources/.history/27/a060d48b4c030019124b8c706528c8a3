@@ -1,0 +1,146 @@
+package com.mit.social.repositories;
+
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.http.exception.SequenceException;
+import com.mit.seq.repositories.SeqIdRepo;
+import com.mit.social.entities.Feed;
+
+@Repository
+public class FeedRepo extends TimeDocRepo<Feed>{
+    @Autowired
+    MongoOperations mongoOps;
+
+    @Autowired
+    SeqIdRepo seqIdRepo;
+    
+    public boolean isSubFeed(long feedId) {
+		Criteria criteria = Criteria.where("id").is(feedId).and("isSubFeed").is(true);
+		return mongoOps.count(new Query(criteria), Feed.class) > 0;
+	}
+    
+    public int countNewFeed(long feedId, List<Long> ownIds, List<Long> hffuIds, List<Long> feedHides) {
+    	Criteria criteria = new Criteria().andOperator(Criteria.where("id").gt(feedId), 
+    			feedHides != null ? Criteria.where("id").nin(feedHides): new Criteria(), 
+    			ownIds != null ? Criteria.where("userId").in(ownIds) : new Criteria(), 
+    			hffuIds != null ? Criteria.where("userId").nin(hffuIds) : new Criteria(),
+    			Criteria.where("status").gt(0));
+    	return (int)mongoOps.count(new Query(criteria), Feed.class);
+    }
+    
+    public int countOfUser(long userId) {
+    	Criteria criteria = Criteria.where("userId").is(userId).and("status").gt(0);
+    	return (int)mongoOps.count(new Query(criteria), Feed.class);
+    }
+    
+    public Feed getById(long id) {
+        return mongoOps.findById(id, Feed.class);
+    }
+    
+    public Feed getByPhotoId(long photoId) {
+        Feed feed = mongoOps.findOne(new Query(Criteria.where("photos").is(photoId)), Feed.class);
+        return feed;
+    }
+    
+    public List<Feed> getByIds(List<Long> ids) {
+        List<Feed> feeds = mongoOps.find(new Query(Criteria.where("id").in(ids)), Feed.class);
+        return feeds;
+    }
+    
+    public List<Feed> getSlice(long viewUserId, List<Long> ownIds, List<Long> hffuIds, List<Long> feedHides, int count, int from, String fieldSort, 
+    		boolean sortAcs, boolean isActiveStatus, long eventId) { 
+    	Criteria criteria = new Criteria(); 
+    	criteria.andOperator(new Criteria().orOperator(Criteria.where("userId").is(viewUserId), 
+    				ownIds != null ? Criteria.where("userId").in(ownIds) : new Criteria()), 
+    			hffuIds != null ? Criteria.where("userId").nin(hffuIds) : new Criteria());
+    	if (isActiveStatus) {
+    		criteria = criteria.and("status").gt(0);
+    	}
+    	if (feedHides != null) {
+    		criteria = criteria.and("id").nin(feedHides);
+    	}
+    	if (eventId > 0) {
+    		criteria.and("eventId").is(eventId);
+    	}
+    	Sort sort = new Sort(new Order(sortAcs ? Direction.ASC : Direction.DESC, fieldSort));
+        List<Feed> profiles = mongoOps.find(new Query(criteria).with(sort).skip(from).limit(count), Feed.class);
+        return profiles;
+    }
+    
+    public List<Feed> getRecent(long viewUserId, List<Long> hffuIds, List<Long> feedHides, boolean isActiveStatus) { 
+    	Criteria criteria = new Criteria();
+    	if (hffuIds != null) {
+    		criteria.and("userId").nin(hffuIds);
+    	}
+    	if (isActiveStatus) {
+    		criteria = criteria.and("status").gt(0);
+    	}
+    	if (feedHides != null) {
+    		criteria = criteria.and("id").nin(feedHides);
+    	}
+    	Calendar cal = Calendar.getInstance();
+    	cal.set(Calendar.DATE, cal.get(Calendar.DATE) - 30);
+    	criteria.andOperator(Criteria.where("createdDate").lt(cal.getTime()));
+    	Sort sort = new Sort(new Order(Direction.DESC, "createdDate"));
+        List<Feed> profiles = mongoOps.find(new Query(criteria).with(sort), Feed.class);
+        return profiles;
+    }
+    
+    public List<Feed> getNewFeed(long feedId, List<Long> ownIds, List<Long> hffuIds, List<Long> feedHides) {
+    	Criteria criteria = new Criteria().andOperator(Criteria.where("id").gt(feedId), 
+    			feedHides != null ? Criteria.where("id").nin(feedHides): new Criteria(), 
+    			ownIds != null ? Criteria.where("userId").in(ownIds) : new Criteria(), 
+    			hffuIds != null ? Criteria.where("userId").nin(hffuIds) : new Criteria(),
+    			Criteria.where("status").gt(0));
+    	return mongoOps.find(new Query(criteria), Feed.class);
+    }
+    
+    public Map<Long, Feed> getMapByIds(List<Long> profileIds) {
+        List<Feed> profiles = getByIds(profileIds);
+        Map<Long, Feed> profileMap = new HashMap<Long, Feed>();
+        for (Feed profile : profiles) {
+            profileMap.put(profile.getId(), profile);
+        }
+
+        return profileMap;
+    }
+    
+    public Map<Long, Feed> getRecentMap(long viewUserId, List<Long> hffuIds, List<Long> feedHides, boolean isActiveStatus) {
+        List<Feed> profiles = getRecent(viewUserId, hffuIds, feedHides, isActiveStatus);
+        Map<Long, Feed> profileMap = new HashMap<Long, Feed>();
+        for (Feed profile : profiles) {
+            profileMap.put(profile.getId(), profile);
+        }
+
+        return profileMap;
+    }
+
+    public void delete(long id) throws SequenceException {
+		Query query = new Query(Criteria.where("_id").is(id));
+		Update update = new Update();
+		update.set("status", 0);
+		mongoOps.findAndModify(query, update, Feed.class);
+	}
+    
+    public void deleteByUser(long userId) throws SequenceException {
+		Query query = new Query(Criteria.where("userId").is(userId));
+		Update update = new Update();
+		update.set("status", 0);
+		mongoOps.updateMulti(query, update, Feed.class);
+	}
+    
+}

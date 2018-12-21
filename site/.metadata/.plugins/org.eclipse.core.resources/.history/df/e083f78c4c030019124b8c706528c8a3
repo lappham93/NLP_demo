@@ -1,0 +1,119 @@
+package com.mit.navigation.repositories;
+
+import com.mit.common.repositories.ElasticRepo;
+import com.mit.navigation.entities.ElasticBoothProduct;
+import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.core.query.SearchQuery;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * Created by Lap Pham on 6/14/17.
+ */
+
+@Repository
+public class ElasticBoothProductRepo extends ElasticRepo<ElasticBoothProduct> {
+
+    @Autowired
+    private ElasticsearchTemplate elasticsearchTemplate;
+
+    public Page<ElasticBoothProduct> find(long boothId, long eventId, String query, boolean isFeature, int page, int size, List<SortBuilder> sorts) {
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        if (boothId > 0) {
+            boolQuery.must(QueryBuilders.termQuery("boothId", boothId));
+        }
+
+        if (eventId > 0) {
+            boolQuery.must(QueryBuilders.termQuery("eventId", eventId));
+        }
+
+        if (isFeature) {
+            boolQuery.must(QueryBuilders.termQuery("feature", isFeature));
+        }
+
+        if (!StringUtils.isEmpty(query)) {
+//            boolQuery.must(QueryBuilders.queryStringQuery(query.trim()).field("name"));
+            boolQuery.minimumNumberShouldMatch(1).should(QueryBuilders.queryStringQuery(query.trim()).field("name"))
+				.should(QueryBuilders.matchQuery("hashTags", query));
+        }	
+
+        NativeSearchQueryBuilder nativeSearchQuery = new NativeSearchQueryBuilder()
+                .withQuery(boolQuery);
+
+        if (!CollectionUtils.isEmpty(sorts)) {
+            for (SortBuilder sort: sorts) {
+                nativeSearchQuery.withSort(sort);
+            }
+        }
+
+        nativeSearchQuery.withPageable(new PageRequest(page, size));
+
+        SearchQuery searchQuery = nativeSearchQuery.build();
+
+        Page<ElasticBoothProduct> productPage = elasticsearchTemplate.queryForPage(searchQuery, ElasticBoothProduct.class);
+        return productPage;
+    }
+
+    public Page<ElasticBoothProduct> findDefault(long boothId, long eventId, String query, boolean isFeature, int page, int size) {
+        List<SortBuilder> sorts = null;
+        if (query == null || query.isEmpty()) {
+            sorts = new ArrayList<>(2);
+            sorts.add(SortBuilders.fieldSort("displayOrder").order(SortOrder.DESC));
+            sorts.add(SortBuilders.fieldSort("createdDate").order(SortOrder.DESC));
+        }
+        return find(boothId, eventId, query, isFeature, page, size, sorts);
+    }
+
+    public Page<ElasticBoothProduct> findNewest(long boothId, long eventId, String query, boolean isFeature, int page, int size) {
+        SortBuilder sort = SortBuilders.fieldSort("createdDate").order(SortOrder.DESC);
+        return find(boothId, eventId, query, isFeature, page, size, Arrays.asList(sort));
+    }
+
+    public Page<ElasticBoothProduct> findLowestPrice(long boothId, long eventId, String query, boolean isFeature, int page, int size) {
+        SortBuilder sort = SortBuilders.fieldSort("salePrice").order(SortOrder.ASC);
+        return find(boothId, eventId, query, isFeature, page, size, Arrays.asList(sort));
+    }
+
+    public Page<ElasticBoothProduct> findHighestPrice(long boothId, long eventId, String query, boolean isFeature, int page, int size) {
+        SortBuilder sort = SortBuilders.fieldSort("salePrice").order(SortOrder.DESC);
+        return find(boothId, eventId, query, isFeature, page, size, Arrays.asList(sort));
+    }
+
+    public Page<ElasticBoothProduct> findAZ(long boothId, long eventId, String query, boolean isFeature, int page, int size) {
+        SortBuilder sort = SortBuilders.fieldSort("name.raw").order(SortOrder.ASC);
+        return find(boothId, eventId, query, isFeature, page, size, Arrays.asList(sort));
+    }
+
+    public Page<ElasticBoothProduct> findZA(long boothId, long eventId, String query, boolean isFeature, int page, int size) {
+        SortBuilder sort = SortBuilders.fieldSort("name.raw").order(SortOrder.DESC);
+        return find(boothId, eventId, query, isFeature, page, size, Arrays.asList(sort));
+    }
+
+    public Page<ElasticBoothProduct> findMatchest(long boothId, long eventId, String query, boolean isFeature, int page, int size) {
+        return find(boothId, eventId, query, isFeature, page, size, null);
+    }
+
+    public List<Long> page2Ids(Page<ElasticBoothProduct> page) {
+        List<ElasticBoothProduct> products = page.getContent();
+        List<Long> ids = new ArrayList<>(products.size());
+        for (ElasticBoothProduct product: products) {
+            ids.add(NumberUtils.toLong(product.getId()));
+        }
+        return ids;
+    }
+}

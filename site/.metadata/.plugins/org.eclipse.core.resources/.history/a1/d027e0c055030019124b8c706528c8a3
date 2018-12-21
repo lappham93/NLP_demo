@@ -1,0 +1,38 @@
+App.formObject.formEles = {
+		userName: ["#nameAddIptId", App.formEleType.INPUT],
+		email: ["#emailAddIptId", App.formEleType.INPUT],
+		firstName: ["#firstNameAddIptId", App.formEleType.INPUT],
+		lastName: ["#lastNameAddIptId", App.formEleType.INPUT],
+		company: ["#companyAddIptId", App.formEleType.INPUT]
+}
+App.formObject.formId = '#updateProfileFrmId';
+App.formObject.submitId = '#updateProfileBtnId';
+App.formObject.checkData = function(data) {
+	if (!data) {
+		data = App.getFormData();
+	}
+	return data.userName && App.validateEmail(data.email);
+}
+
+
+$(function(){
+	$(App.formObject.formId).submit(function(e) {
+		App.showLoader("Processing", App.formObject.formId);
+		App.initAjaxRequest(App.formObject.formId);
+		
+		var data = App.getFormData();
+		if (App.formObject.checkData(data)) {
+			var url = App.getFullUri(App.uris.profile);
+			App.ajaxRequest('PUT', url, data, function(resp) {
+				var errors = [App.errors.PARAMS_INVALID, App.errors.MISSING_PARAM, App.errors.USERNAME_EXIST];
+				var successUrl = resp.code >= 0 ? App.uris.profile : "";
+				App.callbackAjaxRequest2($(App.formObject.formId), resp, errors, successUrl, "", "");
+			})
+		} else {
+			App.hideLoader();
+		}
+		
+		
+		return false;
+	})
+});

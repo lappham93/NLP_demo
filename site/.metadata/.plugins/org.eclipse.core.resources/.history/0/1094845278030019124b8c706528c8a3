@@ -1,0 +1,81 @@
+App.formObject.formEles = {
+		name: ["#nameAddIptId", App.formEleType.INPUT],
+		desc: ["#descAddIptId", App.formEleType.INPUT],
+		address: ["#addressAddIptId", App.formEleType.INPUT],
+		lon: ["#lonAddIptId", App.formEleType.INPUT],
+		lat: ["#latAddIptId", App.formEleType.INPUT]
+}
+App.formObject.formId = '#addLocationFrmId';
+App.formObject.submitId = '#addLocationBtnId';
+App.formObject.checkData = function(data) {
+			if (!data) {
+				data = App.getFormData();
+			}
+			var check = data.name && App.validateCoordinate(data.lon, data.lat);
+			return check;
+}
+
+$(function(){
+	
+});
+
+function lonlatChange() {
+	var lon = $(App.formObject.formEles.lon[0]).val();
+	var lat = $(App.formObject.formEles.lat[0]).val();
+	if (App.validateCoordinate(lon, lat)) {
+		var coordinate = {lng: lon, lat: lat};
+		mbDrawLocation(coordinate);
+		updateLocation(coordinate);
+	}
+}
+
+function updateLocation(coordinate) { 
+	App.getAddress(coordinate.lng, coordinate.lat, function(place) {
+		if (place && place.display_name) {
+			$(App.formObject.formEles.address[0]).val(place.display_name);
+		}
+	});
+	$(App.formObject.formEles.lat[0]).val(coordinate.lat);
+	$(App.formObject.formEles.lon[0]).val(coordinate.lng);
+}
+
+
+function suggestLocation($input) {
+	var url = App.getFullUri(App.uris.locationSuggest) + "?q=" + $input.val();
+	App.ajaxRequest('GET', url, null, function(resp) {
+		if (resp.code >= 0) {
+			$('#suggest-location ul').html('');
+			resp.data.forEach(function(place) {
+				$('#suggest-location ul').append("<li onclick=\"chooseSuggest('" + place.fullAddress + "'," + place.coordinate.lat + "," + place.coordinate.lon + ")\">" + place.fullAddress + "</li>");
+				
+			});
+			if ($('#suggest-location ul li').length > 0) {
+				$('#suggest-location').show();
+			}
+		}
+	})
+}
+
+function chooseSuggest(name, lat, lon) {
+	$(App.formObject.formEles.address[0]).val(name);
+	$(App.formObject.formEles.lat[0]).val(lat);
+	$(App.formObject.formEles.lon[0]).val(lon);
+	var coordinate = {lng: lon, lat: lat};
+	mbDrawLocation(coordinate);
+}
+
+	
+function drawBorder() {
+	var data = $('#borderDataId').val();
+	data = JSON.parse(data);
+	if (data && data.length > 0) {
+		for (var id = 0; id < data.length; id++) {
+			mbDrawPoint({lat: data[id][0], lng: data[id][1]}, {id: id});
+		}
+		var data0 = {lat: data[0][0], lng: data[0][1]};
+		mbDrawLocation(data0);
+		updateLocation(data0);
+	}
+}
+
+

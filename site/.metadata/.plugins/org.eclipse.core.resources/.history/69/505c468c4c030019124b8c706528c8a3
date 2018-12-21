@@ -1,0 +1,17 @@
+package com.mit.react.repositories;
+
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
+
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.react.entities.Connect;
+
+@Repository
+public class ConnectRepo extends TimeDocRepo<Connect> {
+	
+	public Connect getConnect(long fromUserId, long toUserId) {
+		Criteria criteria = new Criteria().andOperator(Criteria.where("userIds").is(fromUserId), Criteria.where("userIds").is(toUserId));
+		return mongoOps.findOne(new Query(criteria), entityClass);
+	}
+}	

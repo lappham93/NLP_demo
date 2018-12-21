@@ -1,0 +1,68 @@
+package com.mit.navigation.responses;
+
+import com.mit.banner.responses.BannerResponse;
+import com.mit.event.responses.EventShortResponse;
+import com.mit.navigation.entities.Booth;
+import com.mit.react.entities.ReactStat;
+import com.mit.react.responses.ProductCommentResponse;
+
+import java.util.List;
+
+public class BoothResponse extends BoothShortResponse {
+	private List<BannerResponse> banners;
+	private ProductCommentResponse lastComment;
+	private boolean isRated;
+	private double myRatingPoint;
+	private EventShortResponse event;
+
+	public BoothResponse(Booth booth, FloorShortResponse floor, List<ReactStat> reactStats, int totalOnline, long userId,
+			List<BannerResponse> banners, ProductCommentResponse lastComment, boolean isRated, double myRatingPoint, EventShortResponse event) {
+		super(booth, floor, reactStats, totalOnline, userId);
+		this.banners = banners;
+		this.lastComment = lastComment;
+		this.isRated = isRated;
+		this.myRatingPoint = myRatingPoint;
+		this.event = event;
+	}
+
+	public List<BannerResponse> getBanners() {
+		return banners;
+	}
+
+	public void setBanners(List<BannerResponse> banners) {
+		this.banners = banners;
+	}
+
+	public ProductCommentResponse getLastComment() {
+		return lastComment;
+	}
+
+	public void setLastComment(ProductCommentResponse lastComment) {
+		this.lastComment = lastComment;
+	}
+
+	public boolean isRated() {
+		return isRated;
+	}
+
+	public void setRated(boolean rated) {
+		isRated = rated;
+	}
+
+	public double getMyRatingPoint() {
+		return myRatingPoint;
+	}
+
+	public void setMyRatingPoint(double myRatingPoint) {
+		this.myRatingPoint = myRatingPoint;
+	}
+
+	public EventShortResponse getEvent() {
+		return event;
+	}
+
+	public void setEvent(EventShortResponse event) {
+		this.event = event;
+	}
+ 
+}

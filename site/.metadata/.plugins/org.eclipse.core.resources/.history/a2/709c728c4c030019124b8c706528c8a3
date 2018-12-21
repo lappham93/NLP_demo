@@ -1,0 +1,53 @@
+package com.mit.react.bodies;
+
+import java.util.Arrays;
+
+import com.mit.common.entities.ObjectRef;
+import com.mit.react.entities.Connect;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel
+public class ConnectBody {
+	private long userId;
+	private ObjectRef objectRef;
+	private int type;
+
+	@ApiModelProperty(hidden = true)
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	@ApiModelProperty(required = true, value = "type: USER(7)")
+	public ObjectRef getObjectRef() {
+		return objectRef;
+	}
+
+	public void setObjectRef(ObjectRef objectRef) {
+		this.objectRef = objectRef;
+	}
+	
+	@ApiModelProperty(required = true, value = "REQUEST_CONNECT(3), CANCEL_REQUEST(4), CONFIRM_REQUEST(5), DELETE_REQUEST(6), DISCONNECT(7)")
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+	
+	public Connect toConnect() {
+		Connect connect = new Connect();
+		connect.setActive(true);
+		connect.setFromUserId(userId);
+		connect.setUserIds(Arrays.asList(userId, objectRef.getId()));
+		connect.setStatus(type);
+		return connect;
+	}
+
+}

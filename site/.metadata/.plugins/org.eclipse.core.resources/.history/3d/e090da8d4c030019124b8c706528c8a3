@@ -1,0 +1,47 @@
+package com.mit.address.entities;
+
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.util.StringUtils;
+
+@Document(collection = "event_address")
+public class EventAddress extends Address {
+	private String name;
+	private String phone;
+	
+	public String buildPlace() {
+		String place = "";
+		if (!StringUtils.isEmpty(getCity())) {
+			place += getCity() + ",";
+		}
+		if (!StringUtils.isEmpty(getState())) {
+			place += getState() + ",";
+		}
+		if (!StringUtils.isEmpty(getStateCode())) {
+			place += getStateCode() + ",";
+		}
+		if (!StringUtils.isEmpty(getCountry())) {
+			place += getCountry() + ",";
+		}
+		if (!StringUtils.isEmpty(getCountryCode())) {
+			place += getCountryCode() + ",";
+		}
+		return place;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
+}

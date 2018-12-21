@@ -1,0 +1,66 @@
+package com.mit.navigation.entities;
+
+import java.util.List;
+
+public class FloorRoute {
+	private List<Path> paths;
+	private double distance;
+	private long floorId;
+	private int direction;
+	private int transitMode;
+	
+	public FloorRoute(List<Path> paths, double distance) {
+		super();
+		this.paths = paths;
+		this.distance = distance;
+	}
+
+	public FloorRoute(List<Path> paths, double distance, long floorId,
+			int direction) {
+		super();
+		this.paths = paths;
+		this.distance = distance;
+		this.floorId = floorId;
+		this.direction = direction;
+	}
+
+	public List<Path> getPaths() {
+		return paths;
+	}
+
+	public void setPaths(List<Path> paths) {
+		this.paths = paths;
+	}
+
+	public double getDistance() {
+		return distance;
+	}
+
+	public void setDistance(double distance) {
+		this.distance = distance;
+	}
+
+	public long getFloorId() {
+		return floorId;
+	}
+
+	public void setFloorId(long floorId) {
+		this.floorId = floorId;
+	}
+
+	public int getDirection() {
+		return direction;
+	}
+
+	public void setDirection(int direction) {
+		this.direction = direction;
+	}
+
+	public int getTransitMode() {
+		return transitMode;
+	}
+
+	public void setTransitMode(int transitMode) {
+		this.transitMode = transitMode;
+	}
+}

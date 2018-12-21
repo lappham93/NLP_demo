@@ -1,0 +1,192 @@
+package com.mit.navigation.entities;
+
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.GeoPointField;
+import org.springframework.data.elasticsearch.annotations.Setting;
+import org.springframework.data.elasticsearch.core.geo.GeoPoint;
+
+import com.mit.event.entities.Event;
+import com.mit.event.enums.EventStatus;
+import com.mit.map.entities.Coordinate;
+
+/**
+ * Created by Hung on 6/18/2017.
+ */
+
+@Document(indexName = "sc_event")
+@Setting(settingPath = "/elasticsearch/autocomplete-analyzer.json")
+public class ElasticEvent {
+    @Id
+    private String id;
+    @Field(type = FieldType.Integer)
+    private int type;
+    @Field(type = FieldType.Long)
+    private long categoryId;
+    @Field(type = FieldType.Object)
+    private List<Long> categoryIds;
+    @Field(type = FieldType.String, analyzer = "autocomplete-index")
+    private String name;
+    @Field(type = FieldType.String)
+    private String desc;
+    @Field(type = FieldType.String)
+    private String place;
+    @Field(type = FieldType.String)
+    private String businessHour;
+    @GeoPointField
+    private GeoPoint location;
+    @Field(type = FieldType.Integer)
+    private int status;
+    @Field(type = FieldType.Boolean)
+    private boolean isFeature;
+    @Field(type = FieldType.Date)
+    private Date startTime;
+    @Field(type = FieldType.Date)
+    private Date endTime;
+    @Field(type = FieldType.Nested)
+    private List<String> hashTags;
+
+    public ElasticEvent() {
+    }
+
+    public ElasticEvent(Event event, String place) {
+        this.id = event.getId() + "";
+        this.type = event.getType();
+        this.categoryIds = event.getCategoryIds();
+        this.name = event.getName();
+        this.desc = event.getDesc();
+        this.place = place;
+        this.businessHour = this.getBusinessHour() != null ? (event.getBusinessHour().getMondayStart() + ":" + event.getBusinessHour().getMondayEnd()) : "";
+        Coordinate coordinate = event.getCoordinate();
+        if (coordinate != null) {
+            this.location = new GeoPoint(coordinate.getLat(), coordinate.getLon());
+        }
+        if (event.isActive() && !event.isDeleted()) {
+        	this.status = event.getStatus();
+        } else {
+        	this.status = EventStatus.DELETE.getValue();
+        }
+        this.isFeature = event.isFeature();
+        this.startTime = new Date(event.getStartTime());
+        this.endTime = new Date(event.getEndTime());
+        this.hashTags = event.getHashTags();
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public long getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(long categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
+    }
+
+    public String getPlace() {
+        return place;
+    }
+
+    public void setPlace(String place) {
+        this.place = place;
+    }
+
+    public String getBusinessHour() {
+        return businessHour;
+    }
+
+    public void setBusinessHour(String businessHour) {
+        this.businessHour = businessHour;
+    }
+
+    public GeoPoint getLocation() {
+        return location;
+    }
+
+    public void setLocation(GeoPoint location) {
+        this.location = location;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    public boolean isFeature() {
+        return isFeature;
+    }
+
+    public void setFeature(boolean feature) {
+        isFeature = feature;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    public Date getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(Date endTime) {
+        this.endTime = endTime;
+    }
+
+	public List<Long> getCategoryIds() {
+		return categoryIds;
+	}
+
+	public void setCategoryIds(List<Long> categoryIds) {
+		this.categoryIds = categoryIds;
+	}
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	public List<String> getHashTags() {
+		return hashTags;
+	}
+
+	public void setHashTags(List<String> hashTags) {
+		this.hashTags = hashTags;
+	}
+    
+}

@@ -1,0 +1,59 @@
+package com.mit.atlas.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.common.entities.ActiveTimeDoc;
+
+@Document(collection = "atlas_app")
+public class AtlasApp extends ActiveTimeDoc<Long> {
+	@Id
+	private long id;
+	private String idRef;
+	private long userId;
+	private String name;
+	private String desc;
+
+	public long getUserId() {
+		return userId;
+	}
+
+	public String getIdRef() {
+		return idRef;
+	}
+
+	public void setIdRef(String idRef) {
+		this.idRef = idRef;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDesc() {
+		return desc;
+	}
+
+	public void setDesc(String desc) {
+		this.desc = desc;
+	}
+
+	@Override
+	public Long getId() {
+		return id;
+	}
+
+	@Override
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+}

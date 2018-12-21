@@ -1,0 +1,54 @@
+//package com.mit.address.responses;
+//
+//import com.mit.banner.responses.BannerResponse;
+//import com.mit.common.enums.ObjectType;
+//import com.mit.event.entities.BusinessHour;
+//import com.mit.event.entities.Event;
+//import com.mit.event.responses.EventCategoryResponse;
+//import com.mit.event.responses.EventShortResponse;
+//import com.mit.react.entities.ReactStat;
+//import com.mit.utils.LinkBuilder;
+//import org.springframework.util.CollectionUtils;
+//
+//import java.util.LinkedList;
+//import java.util.List;
+//
+//public class EventResponse extends EventShortResponse {
+//	private BusinessHour businessHour;
+//	private List<String> otherPhotos;
+//	private List<BannerResponse> banners;
+//	private boolean isBeingOnline;
+//
+//	public EventResponse(Event event, EventCategoryResponse category, EventAddressResponse address,
+//			ReactStat reactStat, long userId, double lon, double lat, int totalLive, List<BannerResponse> banners, boolean isBeingOnline) {
+//		super(event, category, address, reactStat, userId, lon, lat, totalLive);
+//		this.businessHour = event.getBusinessHour();
+//		if (!CollectionUtils.isEmpty(event.getOtherPhotos())) {
+//			this.otherPhotos = new LinkedList<>();
+//			event.getOtherPhotos().forEach(t -> this.otherPhotos.add(LinkBuilder.buildPhotoLink(t, ObjectType.EVENT.getLowerName())));
+//		}
+//		this.banners = banners;
+//		this.isBeingOnline = isBeingOnline;
+//	}
+//
+//	public BusinessHour getBusinessHour() {
+//		return businessHour;
+//	}
+//
+//	public List<String> getOtherPhotos() {
+//		return otherPhotos;
+//	}
+//
+//	public boolean isBeingOnline() {
+//		return isBeingOnline;
+//	}
+//
+//	public List<BannerResponse> getBanners() {
+//		return banners;
+//	}
+//
+//	public EventResponse setBanners(List<BannerResponse> banners) {
+//		this.banners = banners;
+//		return this;
+//	}
+//}

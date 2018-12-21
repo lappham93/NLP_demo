@@ -1,0 +1,5 @@
+package com.mit.ai.entities;
+
+public class CommentLabeling {
+
+}

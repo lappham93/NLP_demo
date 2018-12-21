@@ -1,0 +1,155 @@
+package com.mit.user.responses;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.event.responses.MyCalendarResponse;
+import com.mit.user.entities.Profile;
+import com.mit.utils.LinkBuilder;
+
+/**
+ * Created by Lap Pham on 2/16/17.
+ */
+public class ProfileResponse extends ProfileShortResponse{
+    private int profileType;
+    private String cover;
+    private String firstName;
+    private String lastName;
+    private int gender;
+    private String birthDay;
+    private String timeZone;
+    private String phone;
+    private String nationalNumber;
+    private String countryCode;
+    private String email;
+    private int status;
+    private boolean disableNotifyChat;
+    
+    public ProfileResponse() {
+    	super();
+    }
+
+    public ProfileResponse(Profile profile) {
+    	super(profile);
+        profileType = profile.getProfileType();
+        cover = LinkBuilder.buildPhotoLink(profile.getCover(), ObjectType.USER.getLowerName());
+        firstName = profile.getFirstName();
+        lastName = profile.getLastName();
+        gender = profile.getGender();
+        birthDay = profile.getBirthDay();
+        timeZone = profile.getTimeZone();
+        phone = profile.getPhone();
+        email = profile.getEmail();
+        status = profile.getStatus();
+        nationalNumber = profile.getNationalNumber();
+        countryCode = profile.getCountryCode();
+        disableNotifyChat = profile.isDisableNotifyChat();
+    }
+    
+    public ProfileResponse(Profile profile, MyCalendarResponse calendar) {
+    	this(profile);
+        this.setCalendar(calendar);
+    }
+
+    public int getProfileType() {
+        return profileType;
+    }
+
+    public void setProfileType(int profileType) {
+        this.profileType = profileType;
+    }
+
+    public String getCover() {
+        return cover;
+    }
+
+    public void setCover(String cover) {
+        this.cover = cover;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public int getGender() {
+        return gender;
+    }
+
+    public void setGender(int gender) {
+        this.gender = gender;
+    }
+
+    public String getBirthDay() {
+        return birthDay;
+    }
+
+    public void setBirthDay(String birthDay) {
+        this.birthDay = birthDay;
+    }
+
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+	public String getNationalNumber() {
+		return nationalNumber;
+	}
+
+	public void setNationalNumber(String nationalNumber) {
+		this.nationalNumber = nationalNumber;
+	}
+
+	public String getCountryCode() {
+		return countryCode;
+	}
+
+	public void setCountryCode(String countryCode) {
+		this.countryCode = countryCode;
+	}
+
+    public boolean isDisableNotifyChat() {
+        return disableNotifyChat;
+    }
+
+    public void setDisableNotifyChat(boolean disableNotifyChat) {
+        this.disableNotifyChat = disableNotifyChat;
+    }
+}

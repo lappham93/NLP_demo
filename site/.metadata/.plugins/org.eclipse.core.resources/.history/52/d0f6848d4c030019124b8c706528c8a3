@@ -1,0 +1,230 @@
+package com.mit.event.entities;
+
+import java.util.Calendar;
+
+import org.springframework.util.StringUtils;
+
+public class BusinessHour {
+	private String mondayStart;
+	private String mondayEnd;
+	private String tuesdayStart;
+	private String tuesdayEnd;
+	private String wednesdayStart;
+	private String wednesdayEnd;
+	private String thursdayStart;
+	private String thursdayEnd;
+	private String fridayStart;
+	private String fridayEnd;
+	private String saturdayStart;
+	private String saturdayEnd;
+	private String sundayStart;
+	private String sundayEnd;
+
+	public static String getDateName(int day) {
+		if (day == Calendar.MONDAY) {
+			return "Monday";
+		}
+		if (day == Calendar.TUESDAY) {
+			return "Tuesday";
+		}
+		if (day == Calendar.WEDNESDAY) {
+			return "Wednesday";
+		}
+		if (day == Calendar.THURSDAY) {
+			return "Thursday";
+		}
+		if (day == Calendar.FRIDAY) {
+			return "Friday";
+		}
+		if (day == Calendar.SATURDAY) {
+			return "Saturday";
+		}
+		if (day == Calendar.SUNDAY) {
+			return "Sunday";
+		}
+		return "";
+	}
+	public String getString(int day) {
+		if (day == Calendar.MONDAY) {
+			if (!StringUtils.isEmpty(mondayStart) && !StringUtils.isEmpty(mondayEnd)) {
+				return mondayStart + " - " + mondayEnd;
+			}
+			return "";
+		}
+		if (day == Calendar.TUESDAY) {
+			if (!StringUtils.isEmpty(tuesdayStart) && !StringUtils.isEmpty(tuesdayEnd)) {
+				return tuesdayStart + " - " + tuesdayEnd;
+			}
+			return "";
+		}
+		if (day == Calendar.WEDNESDAY) {
+			if (!StringUtils.isEmpty(wednesdayStart) && !StringUtils.isEmpty(wednesdayEnd)) {
+				return wednesdayStart + " - " + wednesdayEnd;
+			}
+			return "";
+		}
+		if (day == Calendar.THURSDAY) {
+			if (!StringUtils.isEmpty(thursdayStart) && !StringUtils.isEmpty(thursdayEnd)) {
+				return thursdayStart + " - " + thursdayEnd;
+			}
+			return "";
+		}
+		if (day == Calendar.FRIDAY) {
+			if (!StringUtils.isEmpty(fridayStart) && !StringUtils.isEmpty(fridayEnd)) {
+				return fridayStart + " - " + fridayEnd;
+			}
+			return "";
+		}
+		if (day == Calendar.SATURDAY) {
+			if (!StringUtils.isEmpty(saturdayStart) && !StringUtils.isEmpty(saturdayEnd)) {
+				return saturdayStart + " - " + saturdayEnd;
+			}
+			return "";
+		}
+		if (day == Calendar.SUNDAY) {
+			if (!StringUtils.isEmpty(sundayStart) && !StringUtils.isEmpty(sundayEnd)) {
+				return sundayStart + " - " + sundayEnd;
+			}
+			return "";
+		}
+		return "";
+	}
+	
+	public String getMondayStart() {
+		return mondayStart;
+	}
+
+	public void setMondayStart(String mondayStart) {
+		this.mondayStart = mondayStart;
+	}
+
+	public String getMondayEnd() {
+		return mondayEnd;
+	}
+
+	public void setMondayEnd(String mondayEnd) {
+		this.mondayEnd = mondayEnd;
+	}
+
+	public String getTuesdayStart() {
+		return tuesdayStart;
+	}
+
+	public void setTuesdayStart(String tuesdayStart) {
+		this.tuesdayStart = tuesdayStart;
+	}
+
+	public String getTuesdayEnd() {
+		return tuesdayEnd;
+	}
+
+	public void setTuesdayEnd(String tuesdayEnd) {
+		this.tuesdayEnd = tuesdayEnd;
+	}
+
+	public String getWednesdayStart() {
+		return wednesdayStart;
+	}
+
+	public void setWednesdayStart(String wednesdayStart) {
+		this.wednesdayStart = wednesdayStart;
+	}
+
+	public String getWednesdayEnd() {
+		return wednesdayEnd;
+	}
+
+	public void setWednesdayEnd(String wednesdayEnd) {
+		this.wednesdayEnd = wednesdayEnd;
+	}
+
+	public String getThursdayStart() {
+		return thursdayStart;
+	}
+
+	public void setThursdayStart(String thursdayStart) {
+		this.thursdayStart = thursdayStart;
+	}
+
+	public String getThursdayEnd() {
+		return thursdayEnd;
+	}
+
+	public void setThursdayEnd(String thursdayEnd) {
+		this.thursdayEnd = thursdayEnd;
+	}
+
+	public String getFridayStart() {
+		return fridayStart;
+	}
+
+	public void setFridayStart(String fridayStart) {
+		this.fridayStart = fridayStart;
+	}
+
+	public String getFridayEnd() {
+		return fridayEnd;
+	}
+
+	public void setFridayEnd(String fridayEnd) {
+		this.fridayEnd = fridayEnd;
+	}
+
+	public String getSaturdayStart() {
+		return saturdayStart;
+	}
+
+	public void setSaturdayStart(String saturdayStart) {
+		this.saturdayStart = saturdayStart;
+	}
+
+	public String getSaturdayEnd() {
+		return saturdayEnd;
+	}
+
+	public void setSaturdayEnd(String saturdayEnd) {
+		this.saturdayEnd = saturdayEnd;
+	}
+
+	public String getSundayStart() {
+		return sundayStart;
+	}
+
+	public void setSundayStart(String sundayStart) {
+		this.sundayStart = sundayStart;
+	}
+
+	public String getSundayEnd() {
+		return sundayEnd;
+	}
+
+	public void setSundayEnd(String sundayEnd) {
+		this.sundayEnd = sundayEnd;
+	}
+	
+	public String toString() {
+		String rs = "";
+		if (!StringUtils.isEmpty(mondayStart) && !StringUtils.isEmpty(mondayEnd)) {
+			rs += String.format("Mon[%s - %s]", mondayStart, mondayEnd);
+		}
+		if (!StringUtils.isEmpty(tuesdayStart) && !StringUtils.isEmpty(tuesdayEnd)) {
+			rs += String.format(", Tue[%s - %s]", tuesdayStart, tuesdayEnd);
+		}
+		if (!StringUtils.isEmpty(wednesdayStart) && !StringUtils.isEmpty(wednesdayEnd)) {
+			rs += String.format(", Wed[%s - %s]", wednesdayStart, wednesdayEnd);
+		}
+		if (!StringUtils.isEmpty(thursdayStart) && !StringUtils.isEmpty(thursdayEnd)) {
+			rs += String.format(", Thu[%s - %s]", thursdayStart, thursdayEnd);
+		}
+		if (!StringUtils.isEmpty(fridayStart) && !StringUtils.isEmpty(fridayEnd)) {
+			rs += String.format(", Fri[%s - %s]", fridayStart, fridayEnd);
+		}
+		if (!StringUtils.isEmpty(saturdayStart) && !StringUtils.isEmpty(saturdayEnd)) {
+			rs += String.format(", Sat[%s - %s]", saturdayStart, saturdayEnd);
+		}
+		if (!StringUtils.isEmpty(sundayStart) && !StringUtils.isEmpty(sundayEnd)) {
+			rs += String.format(", Sun[%s - %s]", sundayStart, sundayEnd);
+		}
+		return rs;
+	}
+}

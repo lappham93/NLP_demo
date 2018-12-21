@@ -1,0 +1,404 @@
+package com.mit.map.services;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.map.bodies.MapObjectRender;
+import com.mit.map.entities.CandidateLocation;
+import com.mit.map.entities.MapObjectLocation;
+import com.mit.map.entities.Point;
+import com.mit.utils.JsonUtils;
+
+@Service
+public class RenderMapService {
+	private final int MAX_RENDERABLE_POSITION = 6;
+
+	public void renderObjectOnMap(List<MapObjectRender> objects) {
+		if (CollectionUtils.isEmpty(objects)) {
+			return;
+		}
+		initCandidate(objects);
+		boolean[][][][] collision = collision(objects);
+		MapRenderResult result = new MapRenderResult(objects.size());
+//		renderFreeLabel(objects, collision, result);
+//		int freeLabel = result.getMaxLabelRendered();
+//		int[] freeTracking = result.getRenderTrackingFinal().clone();
+//		int objectIdx = 0;
+//		for (int objectIdx = 0; objectIdx < objects.size(); objectIdx++) {
+//			if (result.getMaxLabelRendered() == objects.size()) {
+//				break;
+//			}
+//			result.doStart(freeLabel, freeTracking);
+//			result.setObjectStart(objectIdx);
+//			recursionProcess(objects, collision, objectIdx, objectIdx, result);
+//			for (MapObjectRender object: objects) {
+//				object.setTempRendered(object.isRendered());
+//			}
+//		}
+//		for (int i = 0; i < objects.size(); i++) {
+//			int candIdx = result.getRenderTrackingFinal()[i];
+//			if (result.getRenderTrackingFinal()[i] >= 0) {
+//				objects.get(i).setRendered(true);
+//				objects.get(i).setLocation(objects.get(i).getCandidateLoc().get(candIdx).getLocation());
+//			}
+//		}
+		greedyProcess(objects, collision, result);
+		System.out.println(JsonUtils.Instance.toJson(result));
+	}
+
+	public void renderFreeLabel(List<MapObjectRender> objects, boolean[][][][] collision, MapRenderResult result) {
+		for (int objectIdx = 0; objectIdx < objects.size(); objectIdx++) {
+			MapObjectRender object = objects.get(objectIdx);
+			for (int candidateIdx = 0; candidateIdx < object.getCandidateLoc().size(); candidateIdx++) {
+				CandidateLocation loc = object.getCandidateLoc().get(candidateIdx);
+				if (isFree(objectIdx, candidateIdx, collision)) {
+					object.setLocation(loc.getLocation());
+					object.setRendered(true);
+					object.setTempRendered(true);
+					result.incMaxLabelRendered();
+					result.getRenderTrackingFinal()[objectIdx] = candidateIdx;
+				}
+			}
+
+		}
+	}
+
+	public boolean isFree(int objectIdx, int candidateIdx, boolean[][][][] collision) {
+		for (int i = 0; i < collision.length; i++) {
+			if (i != objectIdx) {
+				for (int j = 0; j < MAX_RENDERABLE_POSITION; j++) {
+					if (collision[objectIdx][candidateIdx][i][j]) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+	
+	public void greedyProcess(List<MapObjectRender> objects, boolean[][][][] collision, MapRenderResult result) {
+		for (int objectIdx = 0; objectIdx < objects.size(); objectIdx++) {
+			MapObjectRender object = objects.get(objectIdx);
+			if (object.isRendered()) {
+				continue;
+			}
+			for (int candidateIdx = 0; candidateIdx < object.getCandidateLoc().size(); candidateIdx++) {
+				CandidateLocation loc = object.getCandidateLoc().get(candidateIdx);
+				if (isFree(objectIdx, candidateIdx, collision)) {
+					object.setLocation(loc.getLocation());
+					object.setRendered(true);
+					object.setTempRendered(true);
+					result.incMaxLabelRendered();
+					result.getRenderTrackingFinal()[objectIdx] = candidateIdx;
+					break;
+				}
+			}
+
+			for (int candidateIdx = 0; candidateIdx < object.getCandidateLoc().size(); candidateIdx++) {
+				CandidateLocation loc = object.getCandidateLoc().get(candidateIdx);
+				if (loc.isEnable()) {
+					object.setLocation(loc.getLocation());
+					object.setRendered(true);
+					object.setTempRendered(true);
+					result.incMaxLabelRendered();
+					result.getRenderTrackingFinal()[objectIdx] = candidateIdx;
+					chooseCandidate(objects, collision, objectIdx, candidateIdx);
+					break;
+				}
+			}
+
+		}
+	} 
+
+	public void recursionProcess(List<MapObjectRender> objects, boolean[][][][] collision, int objectNum, int objectStart, MapRenderResult result) {
+		MapObjectRender object = objects.get(objectNum);
+		int next = (objectNum + 1) % objects.size();
+		if (object.isTempRendered()) {
+			if (next == objectStart) {
+				result.doFinish();
+				return;
+			}
+			recursionProcess(objects, collision, next, objectStart, result);
+		}
+		boolean isStuck = true;
+		for (CandidateLocation loc : object.getCandidateLoc()) {
+			int locIdx = object.getCandidateLoc().indexOf(loc);
+			if (loc.isEnable()) {
+				isStuck = false;
+				loc.setEnable(false);
+				result.getRenderTracking()[objectNum] = locIdx;
+				result.setNumLabelRendered(result.getNumLabelRendered() + 1);
+				chooseCandidate(objects, collision, objectNum, locIdx);
+				
+				if (next == objectStart) {
+					System.out.println("Dont");
+					result.doFinish();
+					return;
+				}
+				
+				recursionProcess(objects, collision, next, objectStart, result);
+				
+				loc.setEnable(true);
+				result.setNumLabelRendered(result.getNumLabelRendered() - 1);
+				undoChoosenCandidate(objects, objectNum, locIdx);
+			}
+			if (result.isEnd()) {
+				break;
+			}
+		}
+		
+		if (isStuck && next != objectStart) {
+			recursionProcess(objects, collision, next, objectStart, result);
+		}
+	}
+	
+	public boolean isFinish(int objectNum, int objectStart, int size) {
+		return false;
+	}
+
+	public void chooseCandidate(List<MapObjectRender> objects, boolean[][][][] collision, int objectNum,
+			int candidateNum) {
+		for (int i = 0; i < objects.size(); i++) {
+			if (i != objectNum) {
+				MapObjectRender object = objects.get(i);
+				for (int j = 0; j < object.getCandidateLoc().size(); j++) {
+					if (collision[objectNum][candidateNum][i][j]) {
+						object.getCandidateLoc().get(j).setEnable(false);
+						Set<String> tracks = object.getCandidateLoc().get(j).getCollisionTracks();
+						if (tracks == null) {
+							tracks = new HashSet<>();
+							object.getCandidateLoc().get(j).setCollisionTracks(tracks);
+						}
+						tracks.add(objectNum + "-" + candidateNum);
+					}
+				}
+			}
+		}
+	}
+
+	public void undoChoosenCandidate(List<MapObjectRender> objects, int objectNum, int candidateNum) {
+		for (int i = 0; i < objects.size(); i++) {
+			if (i != objectNum) {
+				MapObjectRender object = objects.get(i);
+				for (int j = 0; j < object.getCandidateLoc().size(); j++) {
+					CandidateLocation loc = object.getCandidateLoc().get(j);
+					Set<String> tracks = loc.getCollisionTracks();
+					if (tracks != null) {
+						tracks.remove(objectNum + "-" + candidateNum);
+					}
+					if (CollectionUtils.isEmpty(tracks)) {
+						loc.setEnable(true);
+					}
+				}
+			}
+		}
+	}
+
+	public void initCandidate(List<MapObjectRender> objects) {
+		if (CollectionUtils.isEmpty(objects)) {
+			return;
+		}
+		for (MapObjectRender object : objects) {
+			if (object.getCandidateLoc() != null) {
+				for (CandidateLocation candidate : object.getCandidateLoc()) {
+					candidate.setEnable(true);
+				}
+			}
+			object.setRendered(false);
+		}
+	}
+
+	public boolean[][][][] collision(List<MapObjectRender> objects) {
+		boolean[][][][] collision = new boolean[objects.size()][MAX_RENDERABLE_POSITION][objects
+				.size()][MAX_RENDERABLE_POSITION];
+		for (int from = 0; from < objects.size(); from++) {
+			for (int to = from + 1; to < objects.size(); to++) {
+				MapObjectRender object1 = objects.get(to);
+				MapObjectRender object2 = objects.get(from);
+				for (int i = 0; i < MAX_RENDERABLE_POSITION; i++) {
+					for (int j = 0; j < MAX_RENDERABLE_POSITION; j++) {
+						boolean isCollision = object1.getCandidateLoc().size() > i
+								&& object2.getCandidateLoc().size() > j
+								&& isCollision(object1.getCandidateLoc().get(i).getLocation(), object1.getWidth(),
+										object1.getHeight(), object2.getCandidateLoc().get(j).getLocation(),
+										object2.getWidth(), object2.getHeight());
+						collision[from][i][to][j] = collision[to][j][from][i] = isCollision;
+					}
+				}
+			}
+		}
+		return collision;
+	}
+
+	public static boolean isCollision(Point loc1, double width1, double height1, Point loc2, double width2,
+			double height2) {
+		if (loc1 == null || loc2 == null) {
+			return false;
+		}
+		return !(loc1.getY() + height1 < loc2.getY() || loc1.getY() > loc2.getY() + height2
+				|| loc1.getX() + width1 < loc2.getX() || loc1.getX() > loc2.getX() + width2);
+	}
+
+	public static boolean pointInObject(Point point, MapObjectLocation loc) {
+		return point.getX() >= loc.getPoint().getX() && point.getX() <= loc.getPoint().getX() + loc.getWidth()
+				&& point.getY() >= loc.getPoint().getY() && point.getY() <= loc.getPoint().getY() + loc.getHeight();
+	}
+
+	public static void main(String[] args) {
+
+		MapObjectRender label1 = new MapObjectRender();
+		label1.setHeight(3);
+		label1.setWidth(4);
+		CandidateLocation loc1 = new CandidateLocation();
+		loc1.setLocation(new Point(1, 1));
+		CandidateLocation loc2 = new CandidateLocation();
+		loc2.setLocation(new Point(2, 1));
+		label1.setCandidateLoc(Arrays.asList(loc1, loc2));
+
+		MapObjectRender label2 = new MapObjectRender();
+		label2.setHeight(3);
+		label2.setWidth(4);
+		CandidateLocation loc3 = new CandidateLocation();
+		loc3.setLocation(new Point(1, 1));
+		CandidateLocation loc4 = new CandidateLocation();
+		loc4.setLocation(new Point(2, 1));
+		CandidateLocation loc5 = new CandidateLocation();
+		loc5.setLocation(new Point(6, 1));
+		label2.setCandidateLoc(Arrays.asList(loc3, loc4, loc5));
+		
+		MapObjectRender label3 = new MapObjectRender();
+		label3.setHeight(2);
+		label3.setWidth(2);
+		CandidateLocation loc6 = new CandidateLocation();
+		loc6.setLocation(new Point(3, 1));
+		CandidateLocation loc7 = new CandidateLocation();
+		loc7.setLocation(new Point(0, 0));
+		CandidateLocation loc8 = new CandidateLocation();
+		loc8.setLocation(new Point(4, 2));
+		label3.setCandidateLoc(Arrays.asList(loc6, loc7, loc8));
+
+		List<MapObjectRender> labels = new LinkedList<>();
+		labels.add(label1);
+		labels.add(label2);
+		labels.add(label3);
+		new RenderMapService().renderObjectOnMap(labels);
+		System.out.println(JsonUtils.Instance.toJson(labels));
+	}
+
+	public class MapRenderResult {
+		private boolean end;
+		private int maxLabelRendered;
+		private int[] renderTrackingFinal;
+		private int numLabelRendered;
+		private int[] renderTracking;
+		private int objectStart;
+
+		public MapRenderResult() {
+			super();
+		}
+
+		public MapRenderResult(int numLabels) {
+			this();
+			this.renderTracking = new int[numLabels];
+			this.renderTrackingFinal = new int[numLabels];
+			initTracking();
+			initTrackingFinal();
+		}
+		
+		public void doStart(int numLabelRendered, int[] renderTracking) {
+			this.end = false;
+			this.numLabelRendered = numLabelRendered;
+			this.renderTracking = renderTracking.clone();
+		}
+		
+		public void doFinish() {
+			this.end = true;
+			System.out.println("temNum=" + this.numLabelRendered + ", maxNum=" + this.maxLabelRendered + ", objectStart=" + objectStart);
+			System.out.println(JsonUtils.Instance.toJson(renderTrackingFinal));
+			System.out.println(JsonUtils.Instance.toJson(renderTracking));
+			if (this.maxLabelRendered < numLabelRendered) {
+				this.maxLabelRendered = numLabelRendered;
+				this.renderTrackingFinal = renderTracking.clone();
+			}
+		}
+		
+		public void initTracking() {
+			for (int i = 0; i < this.renderTracking.length; i++) {
+				this.renderTracking[i] = -1;
+			}
+		}
+		
+		public void initTrackingFinal() {
+			for (int i = 0; i < this.renderTrackingFinal.length; i++) {
+				this.renderTrackingFinal[i] = -1;
+			}
+		}
+		
+		public int incMaxLabelRendered() {
+			return (++ this.maxLabelRendered);
+		}
+		
+		public int incNumLabelRendered() {
+			return (++ this.numLabelRendered);
+		}
+		
+		public int decNumLabelRendered() {
+			return (-- this.numLabelRendered);
+		}
+		
+		public boolean isEnd() {
+			return end;
+		}
+
+		public void setEnd(boolean end) {
+			this.end = end;
+		}
+
+		public int getMaxLabelRendered() {
+			return maxLabelRendered;
+		}
+
+		public void setMaxLabelRendered(int maxLabelRendered) {
+			this.maxLabelRendered = maxLabelRendered;
+		}
+
+		public int[] getRenderTracking() {
+			return renderTracking;
+		}
+
+		public void setRenderTracking(int[] renderTracking) {
+			this.renderTracking = renderTracking;
+		}
+
+		public int[] getRenderTrackingFinal() {
+			return renderTrackingFinal;
+		}
+
+		public void setRenderTrackingFinal(int[] renderTrackingFinal) {
+			this.renderTrackingFinal = renderTrackingFinal;
+		}
+
+		public int getNumLabelRendered() {
+			return numLabelRendered;
+		}
+
+		public void setNumLabelRendered(int numLabelRendered) {
+			this.numLabelRendered = numLabelRendered;
+		}
+
+		public int getObjectStart() {
+			return objectStart;
+		}
+
+		public void setObjectStart(int objectStart) {
+			this.objectStart = objectStart;
+		}
+
+	}
+}

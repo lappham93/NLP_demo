@@ -1,0 +1,168 @@
+package com.mit.sensor.entities;
+
+import com.mit.common.entities.TimeDoc;
+import com.mit.map.entities.Point;
+import com.mit.sensor.bodies.IntLocationBody;
+import com.mit.sensor.bodies.IntRFBody;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.List;
+
+/**
+ * Created by Hung on 12/11/2017.
+ */
+
+@Document(collection = "user_route_memory")
+public class UserRouteMemory extends TimeDoc<Long> {
+    @Id
+    private long id;
+    private double lastSampling;
+    private List<List<List<Float>>> hx;
+    private double x;
+    private double y;
+    private List<Point> points;
+    private int step;
+    private long floorId;
+    private double stepDistance;
+    private List<Float> rotation;
+    private List<List<Float>> mag;
+    private List<Double> magMean;
+    private List<Double> magStd;
+    private IntLocationBody gps;
+    private List<IntRFBody> bluetooth;
+    private List<IntRFBody> wifi;
+
+    @Override
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public double getLastSampling() {
+        return lastSampling;
+    }
+
+    public void setLastSampling(double lastSampling) {
+        this.lastSampling = lastSampling;
+    }
+
+    public List<List<List<Float>>> getHx() {
+        return hx;
+    }
+
+    public void setHx(List<List<List<Float>>> hx) {
+        this.hx = hx;
+    }
+
+    public double getX() {
+        return x;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setY(double y) {
+        this.y = y;
+    }
+
+    public List<Point> getPoints() {
+        return points;
+    }
+
+    public void setPoints(List<Point> points) {
+        this.points = points;
+    }
+
+    public int getStep() {
+        return step;
+    }
+
+    public void setStep(int step) {
+        this.step = step;
+    }
+
+    public long getFloorId() {
+        return floorId;
+    }
+
+    public void setFloorId(long floorId) {
+        this.floorId = floorId;
+    }
+
+    public double getStepDistance() {
+        return stepDistance;
+    }
+
+    public void setStepDistance(double stepDistance) {
+        this.stepDistance = stepDistance;
+    }
+
+    public List<Float> getRotation() {
+        return rotation;
+    }
+
+    public void setRotation(List<Float> rotation) {
+        this.rotation = rotation;
+    }
+
+    public List<List<Float>> getMag() {
+        return mag;
+    }
+
+    public void setMag(List<List<Float>> mag) {
+        this.mag = mag;
+    }
+
+    public List<Double> getMagStd() {
+        return magStd;
+    }
+
+    public void setMagStd(List<Double> magStd) {
+        this.magStd = magStd;
+    }
+
+    public List<Double> getMagMean() {
+        return magMean;
+    }
+
+    public void setMagMean(List<Double> magMean) {
+        this.magMean = magMean;
+    }
+
+    public IntLocationBody getGps() {
+        return gps;
+    }
+
+    public void setGps(IntLocationBody gps) {
+        this.gps = gps;
+    }
+
+    public List<IntRFBody> getBluetooth() {
+        return bluetooth;
+    }
+
+    public void setBluetooth(List<IntRFBody> bluetooth) {
+        this.bluetooth = bluetooth;
+    }
+
+    public List<IntRFBody> getWifi() {
+        return wifi;
+    }
+
+    public void setWifi(List<IntRFBody> wifi) {
+        this.wifi = wifi;
+    }
+}

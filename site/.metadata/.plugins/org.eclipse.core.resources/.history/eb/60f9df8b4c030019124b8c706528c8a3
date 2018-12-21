@@ -1,0 +1,104 @@
+package com.mit.social.entities;
+
+import com.mit.caches.Cache;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * Created by Lap Pham on 5/9/17.
+ */
+
+@Service
+public class FeedUserSubscription {
+
+    @Autowired
+    private Cache cache;
+
+    private final String _prefixFeedUser = "mmd.feed.user.";
+    private final String _prefixSubfeedUser = "mmd.subfeed.user.";
+
+    private final String _prefixUserFeed = "mmd.user.feed.";
+    private final String _prefixUserSubfeed = "mmd.user.subfeed.";
+
+
+    public void addUser(long feedId, boolean isSubfeed, long userId) {
+        String feedUserKey = getFeedUserKey(feedId, isSubfeed);
+        Set<Long> userIds = (Set)cache.get(feedUserKey);
+        if (CollectionUtils.isEmpty(userIds)) {
+            userIds = new HashSet<>();
+        }
+        userIds.add(userId);
+        cache.add(feedUserKey, userIds);
+
+        addFeed(userId, isSubfeed, feedId);
+    }
+
+    public void removeUser(long feedId, boolean isSubfeed, long userId) {
+        String feedUserKey = getFeedUserKey(feedId, isSubfeed);
+        Set<Long> userIds = (Set)cache.get(feedUserKey);
+        if (!CollectionUtils.isEmpty(userIds)) {
+            userIds.remove(userId);
+            cache.add(feedUserKey, userIds);
+        }
+
+        removeFeed(userId, isSubfeed, feedId);
+    }
+
+    public boolean checkUser(long feedId, boolean isSubfeed, long userId) {
+        String feedUserKey = getFeedUserKey(feedId, isSubfeed);
+        Set<Long> userIds = (Set)cache.get(feedUserKey);
+        if (!CollectionUtils.isEmpty(userIds)) {
+            return userIds.contains(userId);
+        }
+
+        return false;
+    }
+
+    public void addFeed(long userId, boolean isSubfeed, long feedId) {
+        String userFeedKey = getUserFeedKey(userId, isSubfeed);
+        Set<Long> feedIds = (Set)cache.get(userFeedKey);
+        if (CollectionUtils.isEmpty(feedIds)) {
+            feedIds = new HashSet<>();
+        }
+        feedIds.add(feedId);
+        cache.add(userFeedKey, feedIds);
+    }
+
+    public void removeFeed(long userId, boolean isSubfeed, long feedId) {
+        String userFeedKey = getUserFeedKey(userId, isSubfeed);
+        Set<Long> feedIds = (Set)cache.get(userFeedKey);
+        if (!CollectionUtils.isEmpty(feedIds)) {
+            feedIds.remove(feedId);
+            cache.add(userFeedKey, feedIds);
+        }
+    }
+
+    public void removeAllFeed(long userId, boolean isSubfeed) {
+        String userFeedKey = getUserFeedKey(userId, isSubfeed);
+        Set<Long> feedIds = (Set)cache.get(userFeedKey);
+        if (!CollectionUtils.isEmpty(feedIds)) {
+            for (long feedId: feedIds) {
+                removeUser(feedId, isSubfeed, userId);
+            }
+            cache.delete(userFeedKey);
+        }
+    }
+
+    private String getFeedUserKey(long feedId, boolean isSubfeed) {
+        if (isSubfeed) {
+            return _prefixSubfeedUser + feedId;
+        }
+        return _prefixFeedUser + feedId;
+    }
+
+    private String getUserFeedKey(long userId, boolean isSubfeed) {
+        if (isSubfeed) {
+            return _prefixUserSubfeed + userId;
+        }
+        return _prefixUserFeed + userId;
+    }
+}

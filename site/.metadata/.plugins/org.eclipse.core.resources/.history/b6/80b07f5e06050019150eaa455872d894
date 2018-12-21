@@ -1,0 +1,81 @@
+package com.mit.ai.services;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.codec.Charsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import com.mit.ai.bodies.CommentBody;
+import com.mit.ai.bodies.CommentLabelingBody;
+import com.mit.ai.entities.CommentLabeling;
+import com.mit.ai.repositories.CommentLabelingRepo;
+import com.mit.ai.responses.SentimentPredictResponse;
+import com.mit.utils.JsonUtils;
+
+@Service
+public class SentimentService {
+	private Logger log = LoggerFactory.getLogger(SentimentService.class);
+	
+	private final static String SENTIMENT_URI = "/photo/grass";
+	
+	@Value("${ai.server:http://127.0.0.1:5555}")
+	private String aiServer;
+	
+	@Autowired
+	CommentLabelingRepo commentLabelingRepo;
+	
+	public SentimentPredictResponse predict(CommentBody comment) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("comment", comment.getComment());
+		return postRequest(buildUrl(SENTIMENT_URI, null), params, SentimentPredictResponse.class);
+	}
+	
+	public boolean labeling(CommentLabelingBody body) {
+		CommentLabeling label = new CommentLabeling(body.getComment(), body.getLabel(), body.getPredict());
+		try {
+			commentLabelingRepo.save(label);
+		} catch (Exception e) {
+			log.info("Insert error: ", e);
+		}
+		return true;
+	}
+	
+	private String buildUrl(String uri, Map<String, String> params) {
+		String queryParam = "";
+		if (params != null && !params.isEmpty()) {
+			for (String key : params.keySet()) {
+				queryParam += key + "=" + params.get(key) + "&";
+			}
+		}
+		return aiServer + uri + "?" + queryParam;
+	}
+	
+	private <T> T postRequest(String url, Map<String, Object> params, Class<T> t) {
+		try {
+			RestTemplate restApi = new RestTemplate();
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.setAcceptCharset(Arrays.asList(Charsets.UTF_8));
+			HttpEntity<String> entity = new HttpEntity<String>(JsonUtils.Instance.toJson(params), headers);
+			ResponseEntity<T> response = restApi.postForEntity(url, entity, t);
+			if (response.getStatusCode().is2xxSuccessful()) {
+				return response.getBody();
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			log.info("Exception: ", e);
+		}
+		return null;
+	}
+}

@@ -1,0 +1,301 @@
+package com.mit.controllers;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.mit.address.entities.Address;
+import com.mit.atlas.entities.AtlasFloor;
+import com.mit.atlas.entities.AtlasLocation;
+import com.mit.atlas.repositories.AtlasFloorRepo;
+import com.mit.atlas.repositories.AtlasLocationRepo;
+import com.mit.bodies.AtlasFloorBody;
+import com.mit.bodies.AtlasLocationBody;
+import com.mit.define.ApiError;
+import com.mit.google.services.GoogleService;
+import com.mit.http.ApiResponse;
+import com.mit.responses.AtlasFloorResponse;
+import com.mit.responses.AtlasLocationResponse;
+import com.mit.services.AtlasLocationService;
+import com.mit.session.entities.UserSession;
+import com.mit.sessions.AtlasSession;
+import com.mit.utils.ControllerUtils;
+
+import io.swagger.annotations.ApiOperation;
+
+@RestController
+@RequestMapping(value="/locations")
+public class LocationController {
+	public static final Logger logger = LoggerFactory.getLogger(LocationController.class);
+	
+	@Autowired
+	AtlasLocationRepo locationRepo;
+	@Autowired
+	AtlasLocationService locationService;
+	@Autowired
+	AtlasFloorRepo floorRepo;
+	@Autowired
+	GoogleService googleService;
+	
+	@RequestMapping(value="", method = RequestMethod.GET)
+    @ModelAttribute
+    public ModelAndView renderLocation(HttpServletRequest req, Model model) {
+		UserSession userSession = (UserSession) req.getAttribute("session");
+    	ModelAndView rs = ControllerUtils.initPage("location", "Locations", null, "isLocationTab");
+    	rs.addObject("locations", locationService.getListByUser(userSession.getUserId()));
+        return rs;
+    }
+	
+	@RequestMapping(value="/item/{id}", method = RequestMethod.GET)
+    @ModelAttribute
+    public ModelAndView renderLocationDetail(HttpServletRequest req, Model model, @PathVariable(value = "id") String id) {
+    	try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasLocation atlasLocation = locationRepo.getByIdRef(id, userSession.getUserId());
+	    	ModelAndView mav = ControllerUtils.initPage("location_detail", "Locations", null, "isLocationTab");
+	    	mav.addObject("location", locationService.buildLocationResponse(atlasLocation));
+	    	mav.addObject("locations", locationService.getListByUser(userSession.getUserId()));
+	    	return mav;
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ModelAndView("redirect:" + (String)model.asMap().get("admin_prefix") + "/locations");
+    }
+	
+	@RequestMapping(value="/item/{id}/get", method = RequestMethod.GET)
+    @ModelAttribute
+    public ApiResponse<AtlasLocationResponse> getLocation(HttpServletRequest req, @PathVariable(value = "id") String id) {
+    	try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasLocation atlasLocation = locationRepo.getByIdRef(id, userSession.getUserId());
+	    	return new ApiResponse<AtlasLocationResponse>(locationService.buildLocationResponse(atlasLocation));
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ApiResponse<>(ApiError.SERVER_ERROR);
+    }
+	
+	@RequestMapping(value="/item/{id}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public ApiResponse<Object> deleteLocation(HttpServletRequest req, @PathVariable(value = "id") String locationId) {
+    	try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	locationRepo.deleteLocation(userSession.getUserId(), locationId);
+	    	return new ApiResponse<>();
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ApiResponse<>(ApiError.SERVER_ERROR);
+    }
+	
+	@RequestMapping(value="/item/{id}/edit", method = RequestMethod.GET)
+    @ResponseBody
+    public ModelAndView renderEditLocation(HttpServletRequest req, Model model, @PathVariable(value = "id") String id) {
+		try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasLocation atlasLocation = locationRepo.getByIdRef(id, userSession.getUserId());
+	    	ModelAndView mav = ControllerUtils.initPage("location_edit", "Locations", null, "isLocationTab");
+	    	mav.addObject("locations", locationService.getListByUser(userSession.getUserId()));
+	    	mav.addObject("location", locationService.buildLocationResponse(atlasLocation));
+	    	return mav;
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ModelAndView("redirect:" + (String)model.asMap().get("admin_prefix") + "/locations");
+    }
+	
+	@RequestMapping(value="/item/{id}/edit", method = RequestMethod.PUT)
+    @ResponseBody
+    public ApiResponse<AtlasLocationResponse> editLocation(HttpServletRequest req, Model model, @PathVariable(value = "id") String id, 
+    		@RequestBody AtlasLocationBody body) {
+		try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasLocation atlasLocation = locationRepo.getByIdRef(id, userSession.getUserId());
+	    	body.updateLocation(atlasLocation);
+	    	locationRepo.save(atlasLocation);
+	    	return new ApiResponse<>(locationService.buildLocationResponse(atlasLocation));
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ApiResponse<>(ApiError.SERVER_ERROR);
+    }
+	
+    @RequestMapping(value="/add", method = RequestMethod.GET)
+    @ModelAttribute
+    public ModelAndView renderAddLocation(Model model) {
+    	ModelAndView rs = ControllerUtils.initPage("location_add", "Locations", null, "isLocationTab");
+        return rs;
+    }
+    
+    @RequestMapping(value="/add", method = RequestMethod.POST)
+    @ResponseBody
+    public ApiResponse<AtlasLocationResponse> addLocation(HttpServletRequest req, @RequestBody AtlasLocationBody body) {
+    	try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	body.setUserId(userSession.getUserId());
+	    	AtlasLocation location = body.toLocation();
+	    	locationRepo.save(location);
+	    	AtlasLocationResponse locationResponse = locationService.buildLocationResponse(location);
+	    	return new ApiResponse<>(locationResponse);
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ApiResponse<>(ApiError.SERVER_ERROR);
+    }
+    
+    @RequestMapping(value="/item/{id}/floor/add", method = RequestMethod.GET)
+    @ModelAttribute
+    public ModelAndView renderAddFloor(HttpServletRequest req, Model model,
+    		@PathVariable(value = "id") String locationId) {
+    	try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasLocation atlasLocation = locationRepo.getByIdRef(locationId, userSession.getUserId());
+	    	ModelAndView mav = ControllerUtils.initPage("floor_add", "Locations", null, "isLocationTab");
+	    	mav.addObject("location", locationService.buildLocationResponse(atlasLocation));
+	    	return mav;
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ModelAndView("redirect:" + (String)model.asMap().get("admin_prefix") + "/locations");
+    }
+    
+    @RequestMapping(value="/item/{id}/floor/add", method = RequestMethod.POST)
+    @ResponseBody
+    public ApiResponse<AtlasFloorResponse> addFloor(HttpServletRequest req, 
+    		@PathVariable(value = "id") String locationId,
+    		@RequestBody AtlasFloorBody body) {
+    	try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasLocation atlasLocation = locationRepo.getByIdRef(locationId, userSession.getUserId());
+	    	body.setUserId(userSession.getUserId());
+	    	body.setLocationId(atlasLocation.getIdRef());
+	    	AtlasFloor floor = body.toFloor();
+	    	floorRepo.save(floor);
+	    	AtlasFloorResponse floorResponse = locationService.buildFloorResponse(floor);
+	    	return new ApiResponse<>(floorResponse);
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ApiResponse<>(ApiError.SERVER_ERROR);
+    }
+    
+    @RequestMapping(value="/item/{id}/floor/item/{floorId}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public ApiResponse<Object> deleteFloor(HttpServletRequest req, 
+    		@PathVariable(value = "id") String locationId,
+    		@PathVariable(value = "floorId") String floorId) {
+    	try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	floorRepo.deleteFloor(userSession.getUserId(), floorId);
+	    	return new ApiResponse<>();
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ApiResponse<>(ApiError.SERVER_ERROR);
+    }
+    
+    @RequestMapping(value="/item/{id}/floor/item/{floorId}/plan/edit", method = RequestMethod.GET)
+    @ResponseBody
+    public ModelAndView renderFloorPlanEdit(HttpServletRequest req, Model model,
+    		@PathVariable(value = "id") String locationId,
+    		@PathVariable(value = "floorId") String floorId) {
+    	try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasLocation atlasLocation = locationRepo.getByIdRef(locationId, userSession.getUserId());
+	    	AtlasFloor atlasFloor = floorRepo.getByIdRef(floorId, userSession.getUserId());
+	    	ModelAndView mav = ControllerUtils.initPage("floor_edit", "Locations", null, "isLocationTab");
+	    	mav.addObject("location", locationService.buildLocationResponse(atlasLocation));
+	    	mav.addObject("locations", locationService.getListByUser(userSession.getUserId()));
+	    	mav.addObject("floor", locationService.buildFloorResponse(atlasFloor));
+	    	mav.addObject("planEdit", true);
+	    	return mav;
+    	} catch (Exception e) {
+    		logger.info("error ", e);
+    	}
+        return new ModelAndView("redirect:" + (String)model.asMap().get("admin_prefix") + "/locations");
+    }
+    
+    @RequestMapping(value="/item/{id}/floor/item/{floorId}/plan/edit", method = RequestMethod.PUT)
+    @ResponseBody
+    public ApiResponse<AtlasFloorResponse> editFloorPlan(HttpServletRequest req, Model model, 
+    		@PathVariable(value = "id") String id, 
+    		@PathVariable(value = "floorId") String floorId,
+    		@RequestBody AtlasFloorBody body) {
+		try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasFloor floor = floorRepo.getByIdRef(floorId, userSession.getUserId());
+	    	body.updateFloorPlan(floor);
+	    	floorRepo.save(floor);
+	    	return new ApiResponse<>(locationService.buildFloorResponse(floor));
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ApiResponse<>(ApiError.SERVER_ERROR);
+    }
+    
+    @RequestMapping(value="/item/{id}/floor/item/{floorId}/align/edit", method = RequestMethod.GET)
+    @ResponseBody
+    public ModelAndView renderFloorAligmentEdit(HttpServletRequest req, Model model,
+    		@PathVariable(value = "id") String locationId,
+    		@PathVariable(value = "floorId") String floorId) {
+    	try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasLocation atlasLocation = locationRepo.getByIdRef(locationId, userSession.getUserId());
+	    	AtlasFloor atlasFloor = floorRepo.getByIdRef(floorId, userSession.getUserId());
+	    	ModelAndView mav = ControllerUtils.initPage("floor_edit", "Locations", null, "isLocationTab");
+	    	mav.addObject("location", locationService.buildLocationResponse(atlasLocation));
+	    	mav.addObject("locations", locationService.getListByUser(userSession.getUserId()));
+	    	mav.addObject("floor", locationService.buildFloorResponse(atlasFloor));
+	    	mav.addObject("planEdit", false);
+	    	return mav;
+    	} catch (Exception e) {
+    		logger.info("error ", e);
+    	}
+        return new ModelAndView("redirect:" + (String)model.asMap().get("admin_prefix") + "/locations");
+    }
+    
+    @RequestMapping(value="/item/{id}/floor/item/{floorId}/align/edit", method = RequestMethod.PUT)
+    @ResponseBody
+    public ApiResponse<AtlasFloorResponse> editFloorAlignment(HttpServletRequest req, Model model, 
+    		@PathVariable(value = "id") String id, 
+    		@PathVariable(value = "floorId") String floorId,
+    		@RequestBody AtlasFloorBody body) {
+		try {
+	    	UserSession userSession = AtlasSession.getUserSession(req);
+	    	AtlasFloor floor = floorRepo.getByIdRef(floorId, userSession.getUserId());
+	    	body.updateFloorAlignment(floor);
+	    	floorRepo.save(floor);
+	    	return new ApiResponse<>(locationService.buildFloorResponse(floor));
+    	} catch (Exception e){
+    		logger.info("error ", e);
+    	}
+        return new ApiResponse<>(ApiError.SERVER_ERROR);
+    }
+    
+    @ApiOperation(value = "suggest place")
+	@RequestMapping(value = "/suggest", method = RequestMethod.GET)
+	@ResponseBody
+	public ApiResponse<List<Address>> getPlaces(HttpServletRequest req, 
+			@RequestParam(value = "q", required = false, defaultValue = "") String q) {
+		try {
+	    	List<Address> addresses = googleService.getAddress(q);
+	    	return new ApiResponse<List<Address>>(addresses);
+		} catch (Exception e) {
+			return new ApiResponse<>(ApiError.SERVER_ERROR);
+		}
+	}
+}

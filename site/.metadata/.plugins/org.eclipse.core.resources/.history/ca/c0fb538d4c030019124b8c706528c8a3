@@ -1,0 +1,82 @@
+package com.mit.map.bodies;
+
+import java.util.List;
+
+import com.mit.map.entities.CandidateLocation;
+import com.mit.map.entities.Point;
+
+public class MapObjectRender {
+	private List<CandidateLocation> candidateLoc;
+	private Point location;
+	private String text;
+	private Object id;
+	private double width;
+	private double height;
+	private boolean isRendered;
+	private boolean isTempRendered;
+
+	public Point getLocation() {
+		return location;
+	}
+
+	public void setLocation(Point location) {
+		this.location = location;
+	}
+
+	public double getWidth() {
+		return width;
+	}
+
+	public void setWidth(double width) {
+		this.width = width;
+	}
+
+	public double getHeight() {
+		return height;
+	}
+
+	public void setHeight(double height) {
+		this.height = height;
+	}
+
+	public List<CandidateLocation> getCandidateLoc() {
+		return candidateLoc;
+	}
+
+	public void setCandidateLoc(List<CandidateLocation> candidateLoc) {
+		this.candidateLoc = candidateLoc;
+	}
+
+	public String getText() {
+		return text;
+	}
+
+	public void setText(String text) {
+		this.text = text;
+	}
+
+	public boolean isRendered() {
+		return isRendered;
+	}
+
+	public void setRendered(boolean isRendered) {
+		this.isRendered = isRendered;
+	}
+
+	public boolean isTempRendered() {
+		return isTempRendered;
+	}
+
+	public void setTempRendered(boolean isTempRendered) {
+		this.isTempRendered = isTempRendered;
+	}
+
+	public Object getId() {
+		return id;
+	}
+
+	public void setId(Object id) {
+		this.id = id;
+	}
+	
+}

@@ -1,0 +1,137 @@
+package com.mit.notification.entities;
+
+import com.mit.notification.enums.NewsType;
+import com.mit.notification.enums.SocialNewsType;
+import com.mit.social.entities.Feed;
+import com.mit.user.entities.Profile;
+import org.springframework.data.annotation.Transient;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created by Lap Pham on 5/4/17.
+ */
+public class SocialNews extends News {
+    public static final int TYPE = NewsType.SOCIAL.getValue();
+
+    private long userId;
+    private long feedId;
+    private long photoId;
+    private long cmtId;
+    private List<Long> fromUserIds;
+    private int socialNewsType;
+    @Transient
+    private Profile profile;
+    @Transient
+    private Feed feed;
+
+    public SocialNews() {
+        super(TYPE);
+    }
+
+    public long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
+
+    public long getFeedId() {
+        return feedId;
+    }
+
+    public void setFeedId(long feedId) {
+        this.feedId = feedId;
+    }
+
+    public long getPhotoId() {
+        return photoId;
+    }
+
+    public void setPhotoId(long photoId) {
+        this.photoId = photoId;
+    }
+
+    public long getCmtId() {
+        return cmtId;
+    }
+
+    public void setCmtId(long cmtId) {
+        this.cmtId = cmtId;
+    }
+
+    public List<Long> getFromUserIds() {
+        return fromUserIds;
+    }
+
+    public void setFromUserIds(List<Long> fromUserIds) {
+        this.fromUserIds = fromUserIds;
+    }
+
+    public int getSocialNewsType() {
+        return socialNewsType;
+    }
+
+    public void setSocialNewsType(int socialNewsType) {
+        this.socialNewsType = socialNewsType;
+    }
+
+    public Profile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(Profile profile) {
+        this.profile = profile;
+    }
+
+    public Feed getFeed() {
+        return feed;
+    }
+
+    public void setFeed(Feed feed) {
+        this.feed = feed;
+    }
+
+    @Override
+    public String getMsg() {
+        String msg = "";
+        if (profile != null) {
+            msg += profile.getFullName();
+        }
+        SocialNewsType snType = SocialNewsType.getSocialNewsType(socialNewsType);
+        if (snType != null) {
+            if (userId == feed.getUserId()) {
+                msg += " " + snType.getMessage();
+            } else {
+                msg += " " + snType.getOtherMessage();
+            }
+        }
+        return msg;
+    }
+
+    @Override
+    public Map<String, String> getData() {
+        Map<String, String> data = new HashMap<>();
+
+        data.put("feedId", feedId + "");
+        data.put("socialType", socialNewsType + "");
+        data.put("photoId", this.getPhotoId() > 0 ? this.getPhotoId() + "" : "");
+        data.put("commentId", cmtId + "");
+
+        return data;
+    }
+
+    public void addFromUser(long userId) {
+        if (fromUserIds == null) {
+            fromUserIds = new ArrayList<>();
+        }
+        if (userId != this.userId) {
+            this.fromUserIds.remove(userId);
+            fromUserIds.add(0, userId);
+        }
+    }
+}

@@ -1,0 +1,18 @@
+package com.mit.stat.enums;
+
+/**
+ * Created by Lap Pham on 4/19/17.
+ */
+public enum RegionType {
+    ZIP_CODE(1), CITY(2), STATE(3), COUNTRY(4);
+
+    private int value;
+
+    RegionType(int value) {
+        this.value = value;
+    }
+
+    public int getValue() {
+        return value;
+    }
+}

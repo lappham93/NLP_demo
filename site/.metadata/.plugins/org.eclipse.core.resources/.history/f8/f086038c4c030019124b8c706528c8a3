@@ -1,0 +1,21 @@
+package com.mit.sensor.bodies;
+
+/**
+ * Created by Hung on 1/19/2018.
+ */
+public class StepDistanceBody {
+    private double elapsedTime;
+    private double distance;
+
+    public double getElapsedTime() {
+        return elapsedTime;
+    }
+
+    public double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(double distance) {
+        this.distance = distance;
+    }
+}

@@ -1,0 +1,60 @@
+package com.mit.react.responses;
+
+import java.util.List;
+
+import com.mit.event.responses.EventShortResponse;
+import com.mit.navigation.responses.BoothProductShortResponse;
+import com.mit.navigation.responses.BoothShortResponse;
+
+public class WishListResponse {
+	private List<EventShortResponse> events;
+	private List<BoothShortResponse> booths;
+	private List<BoothProductShortResponse> products;
+	private int total;
+
+	public WishListResponse() {
+		super();
+	}
+
+	public WishListResponse(List<EventShortResponse> events, List<BoothShortResponse> booths,
+			List<BoothProductShortResponse> products, int total) {
+		super();
+		this.events = events;
+		this.booths = booths;
+		this.products = products;
+		this.total = total;
+	}
+
+	public List<EventShortResponse> getEvents() {
+		return events;
+	}
+
+	public void setEvents(List<EventShortResponse> events) {
+		this.events = events;
+	}
+
+	public List<BoothShortResponse> getBooths() {
+		return booths;
+	}
+
+	public void setBooths(List<BoothShortResponse> booths) {
+		this.booths = booths;
+	}
+
+	public List<BoothProductShortResponse> getProducts() {
+		return products;
+	}
+
+	public void setProducts(List<BoothProductShortResponse> products) {
+		this.products = products;
+	}
+
+	public int getTotal() {
+		return total;
+	}
+
+	public void setTotal(int total) {
+		this.total = total;
+	}
+
+}

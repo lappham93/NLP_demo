@@ -1,0 +1,29 @@
+package com.mit.react.responses;
+
+public class ViewResponse {
+	private boolean isViewed;
+	private int totalView;
+
+	public ViewResponse(boolean isViewed, int views) {
+		super();
+		this.isViewed = isViewed;
+		this.totalView = views;
+	}
+
+	public boolean isViewed() {
+		return isViewed;
+	}
+
+	public void setViewed(boolean isViewed) {
+		this.isViewed = isViewed;
+	}
+
+	public int getTotalView() {
+		return totalView;
+	}
+
+	public void setTotalView(int totalView) {
+		this.totalView = totalView;
+	}
+
+}

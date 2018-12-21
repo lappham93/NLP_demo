@@ -1,0 +1,236 @@
+package com.mit.event.responses;
+
+import java.util.Date;
+import java.util.List;
+
+import com.mit.address.responses.EventAddressResponse;
+import com.mit.common.enums.ObjectType;
+import com.mit.event.entities.Event;
+import com.mit.event.enums.EventStatus;
+import com.mit.react.entities.ReactStat;
+import com.mit.react.enums.ReactType;
+import com.mit.utils.LinkBuilder;
+import com.mit.utils.MathUtils;
+
+public class EventShortResponse {
+	private long id;
+	private String atlasId;
+	private EventCategoryResponse category;
+	private List<EventCategoryResponse> categories;
+	private String name;
+	private String desc;
+	private String photo;
+	private EventAddressResponse address;
+	private int totalFollow;
+	private int totalLive;
+	private long startTime;
+	private long endTime;
+	private double distance;
+	private int status;
+	private long remainTime;
+	private boolean isFollowed;
+	private int totalCheckedIn;
+	private boolean isCheckedIn;
+	private int totalGoing;
+	private boolean isGoing;
+
+	public EventShortResponse() {
+	}
+
+	public EventShortResponse(Event event, List<EventCategoryResponse> categories, EventAddressResponse address,
+							  List<ReactStat> reactStats, long userId, double lon, double lat, int totalLive) {
+		this.id = event.getId();
+		this.atlasId = event.getAtlasId();
+		this.categories = categories;
+		this.name = event.getName();
+		this.desc = event.getDesc();
+		this.photo = LinkBuilder.buildPhotoLink(event.getPhoto(), ObjectType.EVENT.getLowerName());
+		this.address = address;
+		this.startTime = event.getStartTime();
+		this.endTime = event.getEndTime();
+		this.distance = MathUtils
+				.round(MathUtils.distance(lon, lat, event.getCoordinate().getLon(), event.getCoordinate().getLat()), 1);
+		this.status = event.getStatus();
+		if (this.status == EventStatus.UPCOMMING.getValue()) {
+			this.remainTime = this.startTime - new Date().getTime();
+		}
+		if (reactStats != null) {
+			for (ReactStat reactStat: reactStats) {
+				if (reactStat.getReactType() == ReactType.FOLLOW.getValue()) {
+					this.totalFollow = reactStat.getTotal();
+					this.isFollowed = reactStat.getUserIds() != null && reactStat.getUserIds().contains(userId);
+				} else if (reactStat.getReactType() == ReactType.CHECK_IN.getValue()) {
+					this.totalCheckedIn = reactStat.getTotal();
+					this.isCheckedIn = reactStat.getUserIds() != null && reactStat.getUserIds().contains(userId);
+				} else if (reactStat.getReactType() == ReactType.GOING.getValue()) {
+					this.totalGoing = reactStat.getTotal();
+					this.isGoing = reactStat.getUserIds() != null && reactStat.getUserIds().contains(userId);
+				}
+				
+			}
+		}
+		
+		this.totalLive = totalLive;
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getDesc() {
+		return desc;
+	}
+
+	public String getPhoto() {
+		return photo;
+	}
+
+	public EventCategoryResponse getCategory() {
+		return category;
+	}
+
+	public EventAddressResponse getAddress() {
+		return address;
+	}
+
+	public int getTotalFollow() {
+		return totalFollow;
+	}
+
+	public void setTotalFollow(int totalFollow) {
+		this.totalFollow = totalFollow;
+	}
+
+	public int getTotalLive() {
+		return totalLive;
+	}
+
+	public void setTotalLive(int totalLive) {
+		this.totalLive = totalLive;
+	}
+
+	public boolean isFollowed() {
+		return isFollowed;
+	}
+
+	public void setFollowed(boolean isFollowed) {
+		this.isFollowed = isFollowed;
+	}
+
+	public long getStartTime() {
+		return startTime;
+	}
+
+	public long getEndTime() {
+		return endTime;
+	}
+
+	public double getDistance() {
+		return distance;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public long getRemainTime() {
+		return remainTime;
+	}
+
+	public String getAtlasId() {
+		return atlasId;
+	}
+
+	public int getTotalCheckedIn() {
+		return totalCheckedIn;
+	}
+
+	public void setTotalCheckedIn(int totalCheckedIn) {
+		this.totalCheckedIn = totalCheckedIn;
+	}
+
+	public boolean isCheckedIn() {
+		return isCheckedIn;
+	}
+
+	public void setCheckedIn(boolean isCheckedIn) {
+		this.isCheckedIn = isCheckedIn;
+	}
+
+	public int getTotalGoing() {
+		return totalGoing;
+	}
+
+	public void setTotalGoing(int totalGoing) {
+		this.totalGoing = totalGoing;
+	}
+
+	public boolean isGoing() {
+		return isGoing;
+	}
+
+	public void setGoing(boolean isGoing) {
+		this.isGoing = isGoing;
+	}
+
+	public List<EventCategoryResponse> getCategories() {
+		return categories;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public void setAtlasId(String atlasId) {
+		this.atlasId = atlasId;
+	}
+
+	public void setCategory(EventCategoryResponse category) {
+		this.category = category;
+	}
+
+	public void setCategories(List<EventCategoryResponse> categories) {
+		this.categories = categories;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public void setDesc(String desc) {
+		this.desc = desc;
+	}
+
+	public void setPhoto(String photo) {
+		this.photo = photo;
+	}
+
+	public void setAddress(EventAddressResponse address) {
+		this.address = address;
+	}
+
+	public void setStartTime(long startTime) {
+		this.startTime = startTime;
+	}
+
+	public void setEndTime(long endTime) {
+		this.endTime = endTime;
+	}
+
+	public void setDistance(double distance) {
+		this.distance = distance;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	public void setRemainTime(long remainTime) {
+		this.remainTime = remainTime;
+	}
+
+}

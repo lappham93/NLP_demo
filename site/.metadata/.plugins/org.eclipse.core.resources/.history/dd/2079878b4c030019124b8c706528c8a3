@@ -1,0 +1,127 @@
+package com.mit.stat.repositories;
+
+import com.mit.mongodb.core.query.Update;
+import com.mit.stat.entities.ZipCodeStat;
+import com.mit.stat.entities.ZipCodeStatTotal;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
+
+/**
+ * Created by Lap Pham on 4/19/17.
+ */
+
+@Repository
+public class ZipCodeStatRepo {
+    @Autowired
+    MongoOperations mongoOps;
+
+    public List<ZipCodeStat> filterByCompleteTotal(long completeTotal) {
+        return mongoOps.find(new Query(Criteria.where("statTotal.completeTotal").gt(completeTotal)), ZipCodeStat.class);
+    }
+
+    public void addToSetActiveProvider(String id, long activeProviderId) {
+        Query query = new Query(Criteria.where("id").is(id));
+        Update update = new Update();
+        update.addToSet("activeProviderIds", activeProviderId);
+        mongoOps.upsert(query, update, ZipCodeStat.class);
+    }
+
+    public void addToSetActiveClient(String id, long activeClientId) {
+        Query query = new Query(Criteria.where("id").is(id));
+        Update update = new Update();
+        update.addToSet("activeClientIds", activeClientId);
+        mongoOps.upsert(query, update, ZipCodeStat.class);
+    }
+
+    public void inc(String id, List<Long> serviceIds, ZipCodeStatTotal statTotal) {
+        Query query = new Query(Criteria.where("id").is(id));
+        Update update = new Update();
+        if (!CollectionUtils.isEmpty(statTotal.getMatchProviderIds())) {
+            Long[] matchProviderIds = statTotal.getMatchProviderIds().toArray(new Long[statTotal.getMatchProviderIds().size()]);
+            update.pushAll("statTotal.matchProviderIds", matchProviderIds);
+            for (long serviceId: serviceIds) {
+                update.pushAll("serviceStatTotals." + serviceId + ".matchProviderIds", matchProviderIds);
+            }
+        }
+        if (!CollectionUtils.isEmpty(statTotal.getMatchClientIds())) {
+            Long[] matchClientIds = statTotal.getMatchClientIds().toArray(new Long[statTotal.getMatchClientIds().size()]);
+            update.pushAll("statTotal.matchClientIds", matchClientIds);
+            for (long serviceId: serviceIds) {
+                update.pushAll("serviceStatTotals." + serviceId + ".matchClientIds", matchClientIds);
+            }
+        }
+        if (!CollectionUtils.isEmpty(statTotal.getAcceptProviderIds())) {
+            Long[] acceptProviderIds = statTotal.getAcceptProviderIds().toArray(new Long[statTotal.getAcceptProviderIds().size()]);
+            update.pushAll("statTotal.acceptProviderIds", acceptProviderIds);
+            for (long serviceId: serviceIds) {
+                update.pushAll("serviceStatTotals." + serviceId + ".acceptProviderIds", acceptProviderIds);
+            }
+        }
+        if (!CollectionUtils.isEmpty(statTotal.getAcceptClientIds())) {
+            Long[] acceptClientIds = statTotal.getAcceptClientIds().toArray(new Long[statTotal.getAcceptClientIds().size()]);
+            update.pushAll("statTotal.acceptClientIds", acceptClientIds);
+            for (long serviceId: serviceIds) {
+                update.pushAll("serviceStatTotals." + serviceId + ".acceptClientIds", acceptClientIds);
+            }
+        }
+        if (!CollectionUtils.isEmpty(statTotal.getCompleteProviderIds())) {
+            Long[] completeProviderIds = statTotal.getCompleteProviderIds().toArray(new Long[statTotal.getCompleteProviderIds().size()]);
+            update.pushAll("statTotal.completeProviderIds", completeProviderIds);
+            for (long serviceId: serviceIds) {
+                update.pushAll("serviceStatTotals." + serviceId + ".completeProviderIds", completeProviderIds);
+            }
+        }
+        if (!CollectionUtils.isEmpty(statTotal.getCompleteClientIds())) {
+            Long[] completeClientIds = statTotal.getCompleteClientIds().toArray(new Long[statTotal.getCompleteClientIds().size()]);
+            update.pushAll("statTotal.completeClientIds", completeClientIds);
+            for (long serviceId: serviceIds) {
+                update.pushAll("serviceStatTotals." + serviceId + ".completeClientIds", completeClientIds);
+            }
+        }
+        if (statTotal.getProviderCancelTotal() > 0) {
+            update.inc("statTotal.providerCancelTotal", statTotal.getProviderCancelTotal());
+            for (long serviceId: serviceIds) {
+                update.inc("serviceStatTotals." + serviceId + ".providerCancelTotal", statTotal.getProviderCancelTotal());
+            }
+        }
+        if (statTotal.getClientCancelTotal() > 0) {
+            update.inc("statTotal.clientCancelTotal", statTotal.getClientCancelTotal());
+            for (long serviceId: serviceIds) {
+                update.inc("serviceStatTotals." + serviceId + ".clientCancelTotal", statTotal.getClientCancelTotal());
+            }
+        }
+        if (statTotal.getMatchTotal() > 0) {
+            update.inc("statTotal.matchTotal", statTotal.getMatchTotal());
+            for (long serviceId: serviceIds) {
+                update.inc("statTotal." + serviceId + ".matchTotal", statTotal.getMatchTotal());
+            }
+        }
+        if (statTotal.getAcceptTotal() > 0) {
+            update.inc("statTotal.acceptTotal", statTotal.getAcceptTotal());
+            for (long serviceId: serviceIds) {
+                update.inc("statTotal." + serviceId + ".acceptTotal", statTotal.getAcceptTotal());
+            }
+        }
+        if (statTotal.getCompleteTotal() > 0) {
+            update.inc("statTotal.completeTotal", statTotal.getCompleteTotal());
+            for (long serviceId: serviceIds) {
+                update.inc("statTotal." + serviceId + ".completeTotal", statTotal.getCompleteTotal());
+            }
+        }
+        mongoOps.upsert(query, update, ZipCodeStat.class);
+    }
+
+    public void save(ZipCodeStat stat) {
+        mongoOps.save(stat);
+    }
+
+    public void deleteBatch(List<String> ids) {
+        mongoOps.remove(new Query(Criteria.where("id").in(ids)), ZipCodeStat.class);
+    }
+}

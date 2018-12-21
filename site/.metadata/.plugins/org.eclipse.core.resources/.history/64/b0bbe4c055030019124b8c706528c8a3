@@ -1,0 +1,35 @@
+App.formObject.formEles = {
+		password: ["#oldPasswordAddIptId", App.formEleType.INPUT],
+		newPassword: ["#newPasswordAddIptId", App.formEleType.INPUT],
+		confirmNewPassword: ["#verifyPasswordAddIptId", App.formEleType.INPUT],
+}
+App.formObject.formId = '#changePasswordFrmId';
+App.formObject.submitId = '#changePasswordBtnId';
+App.formObject.checkData = function(data) {
+	if (!data) {
+		data = App.getFormData();
+	}
+	return data.password && data.newPassword && data.confirmNewPassword && data.newPassword == data.confirmNewPassword;
+}
+
+
+$(function(){
+	$(App.formObject.formId).submit(function(e) {
+		App.showLoader("Processing", App.formObject.formId);
+		App.initAjaxRequest(App.formObject.formId);
+		
+		var data = App.getFormData();
+		if (App.formObject.checkData(data)) {
+			var url = App.getFullUri(App.uris.password);
+			App.ajaxRequest('PUT', url, data, function(resp) {
+				var errors = [App.errors.OLD_PASSWORD_NOT_MATCH, App.errors.CONFIRM_NEW_PASSWORD_NOT_MATCH];
+				var successUrl = resp.code >= 0 ? App.uris.password : "";
+				App.callbackAjaxRequest2($(App.formObject.formId), resp, errors, successUrl, "Success! New password has been updated.", "");
+			})
+		} else {
+			App.hideLoader();
+		}
+		
+		return false;
+	})
+});

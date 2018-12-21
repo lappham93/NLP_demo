@@ -1,0 +1,46 @@
+package com.mit.controllers;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.mit.ai.bodies.CommentBody;
+import com.mit.ai.bodies.CommentLabelingBody;
+import com.mit.ai.bodies.EvaluateBody;
+import com.mit.ai.responses.SentimentPredictResponse;
+import com.mit.ai.services.SentimentService;
+import com.mit.define.ApiError;
+import com.mit.http.ApiResponse;
+
+@RestController
+@RequestMapping(value = {"/ai"})
+public class AIController {
+	public static final Logger _logger = LoggerFactory.getLogger(AIController.class);
+	
+	@Autowired
+	SentimentService sentimentService;
+
+	@RequestMapping(value = "/predict", method = RequestMethod.POST)
+	@ResponseBody
+	public ApiResponse<SentimentPredictResponse> predictComment(HttpServletRequest req, @RequestBody CommentBody body) {
+		SentimentPredictResponse response = sentimentService.predict(body);
+		if (response == null) {
+			return new ApiResponse<>(ApiError.SERVER_ERROR);
+		}
+		return new ApiResponse<>(response);
+	}
+	
+	@RequestMapping(value = "/labeling", method = RequestMethod.POST)
+	@ResponseBody
+	public ApiResponse<SentimentPredictResponse> labelingComment(HttpServletRequest req, @RequestBody CommentLabelingBody body) {
+		return new ApiResponse<>();
+	}
+
+}

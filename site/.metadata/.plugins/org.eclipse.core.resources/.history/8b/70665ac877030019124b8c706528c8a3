@@ -1,0 +1,5 @@
+package com.mit.comment.responses;
+
+public class SentimentPredictResponse {
+	private boolean positive;
+}

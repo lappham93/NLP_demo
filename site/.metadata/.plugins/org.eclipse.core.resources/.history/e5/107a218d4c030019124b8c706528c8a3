@@ -1,0 +1,27 @@
+package com.mit.navigation.entities;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.navigation.enums.IndoorLocationType;
+
+public class ElevatorLocation extends IndoorLocation {
+	public static final int TYPE = IndoorLocationType.ELEVATOR.getValue();
+	
+	private long elevatorId;
+	
+	public ElevatorLocation() {
+		super(TYPE);
+	}
+	
+	public long getElevatorId() {
+		return elevatorId;
+	}
+
+	public void setElevatorId(long elevatorId) {
+		this.elevatorId = elevatorId;
+	}
+
+	@Override
+	public int getObjectType() {
+		return ObjectType.ELEVATOR.getValue();
+	}
+}

@@ -1,0 +1,19 @@
+$(function(){
+	$('#confirmDeleteFloor').click(function(){
+		deleteFloor($('#deleteFloorMdlId #floorId').val(), $('#deleteFloorMdlId #locationId').val());
+	});
+});
+
+function showDeleteFloor(floorName, floorId) {
+	$('#deleteFloorMdlId #floorName').text(floorName);
+	$('#deleteFloorMdlId #floorId').val(floorId);
+	$('#deleteFloorMdlId').modal({backdrop: 'static', keyboard: false, show: true});
+}
+
+function deleteFloor(floorId, locationId) {
+	var url = App.getFullUri(App.uris.floorItem.replace('{0}', locationId).replace('{1}', floorId));
+	App.ajaxRequest('DELETE', url, null, function(resp) {
+		var successUrl = resp.code >= 0 ? App.uris.locationItem + "/" + locationId : "";
+		App.callbackAjaxRequest2($('#deleteFloorMdlId'), resp, null, successUrl, "", "");
+	})
+}

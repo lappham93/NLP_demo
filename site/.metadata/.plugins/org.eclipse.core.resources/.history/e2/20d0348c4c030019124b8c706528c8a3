@@ -1,0 +1,42 @@
+package com.mit.react.responses;
+
+import com.mit.react.entities.Rating;
+import com.mit.user.entities.Profile;
+import com.mit.user.responses.ProfileShortResponse;
+
+public class RatingResponse {
+	private long id;
+	private ProfileShortResponse user;
+	private double point;
+	
+	public RatingResponse(Rating rating, Profile profile) {
+		this.id = rating.getId();
+		this.user = new ProfileShortResponse(profile);
+		this.point = rating.getPoint();
+	}
+	
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public ProfileShortResponse getUser() {
+		return user;
+	}
+
+	public void setUser(ProfileShortResponse user) {
+		this.user = user;
+	}
+
+	public double getPoint() {
+		return point;
+	}
+
+	public void setPoint(double point) {
+		this.point = point;
+	}
+
+}

@@ -1,0 +1,25 @@
+package com.mit.comment.responses;
+
+public class SentimentPredictResponse {
+	private boolean positive;
+	
+	private double proba;
+
+	public boolean isPositive() {
+		return positive;
+	}
+
+	public void setPositive(boolean positive) {
+		this.positive = positive;
+	}
+
+	public double getProba() {
+		return proba;
+	}
+
+	public void setProba(double proba) {
+		this.proba = proba;
+	}
+	
+	
+}

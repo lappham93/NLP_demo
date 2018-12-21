@@ -1,0 +1,73 @@
+package com.mit.bodies;
+
+import com.mit.atlas.entities.AtlasAPIKey;
+import com.mit.utils.StringUtils;
+
+public class AtlasApiKeyBody {
+	private long appId;
+	private long userId;
+	private String name;
+	private String apiKey;
+	private String secretKey;
+	private boolean isActive;
+
+	public AtlasAPIKey toApiKey() {
+		AtlasAPIKey location = new AtlasAPIKey();
+		location.setAppId(appId);
+		location.setName(name);
+		location.setUserId(userId);
+		location.setApiKey(StringUtils.genNormalKey(30));
+		location.setSecretKey(StringUtils.genStrongKey(50));
+		location.setActive(true);
+		return location;
+	}
+
+	public long getAppId() {
+		return appId;
+	}
+
+	public void setAppId(long appId) {
+		this.appId = appId;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getApiKey() {
+		return apiKey;
+	}
+
+	public void setApiKey(String apiKey) {
+		this.apiKey = apiKey;
+	}
+
+	public String getSecretKey() {
+		return secretKey;
+	}
+
+	public void setSecretKey(String secretKey) {
+		this.secretKey = secretKey;
+	}
+
+	public boolean isActive() {
+		return isActive;
+	}
+
+	public void setActive(boolean isActive) {
+		this.isActive = isActive;
+	}
+
+}

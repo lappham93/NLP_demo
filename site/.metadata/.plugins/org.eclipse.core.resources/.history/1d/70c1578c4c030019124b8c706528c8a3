@@ -1,0 +1,67 @@
+package com.mit.react.entities;
+
+import java.util.Date;
+import java.util.List;
+
+/**
+ * Created by Hung on 3/19/2017.
+ */
+public class UserPromotion {
+    private long promotionCodeId;
+    private int promotionCodeType;
+    private List<LandscapingInfo> landscapingInfos;
+
+    public long getPromotionCodeId() {
+        return promotionCodeId;
+    }
+
+    public void setPromotionCodeId(long promotionCodeId) {
+        this.promotionCodeId = promotionCodeId;
+    }
+
+    public int getPromotionCodeType() {
+        return promotionCodeType;
+    }
+
+    public void setPromotionCodeType(int promotionCodeType) {
+        this.promotionCodeType = promotionCodeType;
+    }
+
+    public List<LandscapingInfo> getLandscapingInfos() {
+        return landscapingInfos;
+    }
+
+    public void setLandscapingInfos(List<LandscapingInfo> landscapingInfos) {
+        this.landscapingInfos = landscapingInfos;
+    }
+
+    public static class LandscapingInfo {
+        private long landscapingHistoryId;
+        private int landscapingTime;
+        private Date createdDate;
+
+        public long getLandscapingHistoryId() {
+            return landscapingHistoryId;
+        }
+
+        public void setLandscapingHistoryId(long landscapingHistoryId) {
+            this.landscapingHistoryId = landscapingHistoryId;
+        }
+
+        public int getLandscapingTime() {
+            return landscapingTime;
+        }
+
+        public void setLandscapingTime(int landscapingTime) {
+            this.landscapingTime = landscapingTime;
+        }
+
+        public Date getCreatedDate() {
+            return createdDate;
+        }
+
+        public void setCreatedDate(Date createdDate) {
+            this.createdDate = createdDate;
+        }
+    }
+}

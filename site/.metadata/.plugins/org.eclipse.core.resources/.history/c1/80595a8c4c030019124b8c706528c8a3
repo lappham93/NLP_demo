@@ -1,0 +1,50 @@
+package com.mit.react.entities;
+
+import java.util.List;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.common.entities.ActiveTimeDoc;
+
+@Document(collection = "connect")
+public class Connect extends ActiveTimeDoc<Long> {
+	@Id
+	private long id;
+	private long fromUserId;
+	private List<Long> userIds;
+	private int status;
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public long getFromUserId() {
+		return fromUserId;
+	}
+
+	public void setFromUserId(long fromUserId) {
+		this.fromUserId = fromUserId;
+	}
+
+	public List<Long> getUserIds() {
+		return userIds;
+	}
+
+	public void setUserIds(List<Long> userIds) {
+		this.userIds = userIds;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+}

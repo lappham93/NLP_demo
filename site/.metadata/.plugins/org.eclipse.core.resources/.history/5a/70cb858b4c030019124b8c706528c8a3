@@ -1,0 +1,36 @@
+package com.mit.stat.responses;
+
+import java.util.List;
+
+/**
+ * Created by Lap Pham on 6/7/17.
+ */
+public class AppStatGroupResponse {
+    private int objType;
+    private String objName;
+    private List<AppStatResponse> stats;
+
+    public int getObjType() {
+        return objType;
+    }
+
+    public void setObjType(int objType) {
+        this.objType = objType;
+    }
+
+    public String getObjName() {
+        return objName;
+    }
+
+    public void setObjName(String objName) {
+        this.objName = objName;
+    }
+
+    public List<AppStatResponse> getStats() {
+        return stats;
+    }
+
+    public void setStats(List<AppStatResponse> stats) {
+        this.stats = stats;
+    }
+}

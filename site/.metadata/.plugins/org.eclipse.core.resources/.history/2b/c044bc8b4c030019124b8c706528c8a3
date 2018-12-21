@@ -1,0 +1,28 @@
+package com.mit.social.responses;
+
+import java.util.List;
+
+import com.mit.react.entities.ReactStat;
+import com.mit.react.entities.UserStat;
+import com.mit.social.entities.PhotoFeed;
+import com.mit.user.responses.ProfileShortResponse;
+
+public class PhotoFeedResponse extends FeedResponse {
+
+	private List<FeedPhotoResponse> photos;
+
+	public PhotoFeedResponse(PhotoFeed feed, long viewUserId, ProfileShortResponse profile, List<ReactStat> reactStats,
+			List<FeedPhotoResponse> photos, UserStat userStat) {
+		super(feed, viewUserId, profile, reactStats, userStat);
+		this.photos = photos;
+	}
+
+	public List<FeedPhotoResponse> getPhotos() {
+		return photos;
+	}
+
+	public void setPhotos(List<FeedPhotoResponse> photos) {
+		this.photos = photos;
+	}
+
+}

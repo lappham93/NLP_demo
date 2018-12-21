@@ -1,0 +1,46 @@
+package com.mit.notification.responses;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.notification.entities.BoothNews;
+import com.mit.utils.LinkBuilder;
+
+/**
+ * Created by Lap Pham on 4/4/17.
+ */
+public class BoothNewsResponse extends NewsResponse {
+	private long boothId;
+	private String msg;
+	private String thumb;
+
+	public BoothNewsResponse(BoothNews boothNews) {
+		super(boothNews);
+		this.boothId = boothNews.getBoothId();
+		this.msg = boothNews.getMsg();
+		this.thumb = LinkBuilder.buildPhotoLink(boothNews.getThumb(), ObjectType.BOOTH.getLowerName());
+	}
+
+	public long getBoothId() {
+		return boothId;
+	}
+
+	public void setBoothId(long boothId) {
+		this.boothId = boothId;
+	}
+
+	public String getMsg() {
+		return msg;
+	}
+
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+
+	public String getThumb() {
+		return thumb;
+	}
+
+	public void setThumb(String thumb) {
+		this.thumb = thumb;
+	}
+
+}

@@ -1,0 +1,99 @@
+package com.mit.social.entities;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonFormat.Shape;
+import com.mit.common.entities.ActiveTimeDoc;
+
+@Document(collection = "feed_report")
+public class FeedReport extends ActiveTimeDoc<Long> {
+
+	@JsonFormat(shape = Shape.OBJECT)
+	public static enum ReportStatus {
+		NEW(1), REVIEWED(0);
+
+		private int value;
+
+		private ReportStatus(int value) {
+			this.value = value;
+		}
+
+		public int getValue() {
+			return this.value;
+		}
+
+		public static ReportStatus getReportStatusType(int value) {
+			for (ReportStatus status : ReportStatus.values()) {
+				if (status.getValue() == value) {
+					return status;
+				}
+			}
+			return null;
+		}
+	}
+
+	@Id
+	private long id;
+	@Indexed(unique = true)
+	private long feedId;
+	private int reports;
+	private List<Long> userReportIds;
+	private int status;
+
+	public void addReport(long userId) {
+		if (this.userReportIds == null) {
+			this.userReportIds = new ArrayList<Long>();
+		}
+		if (!this.userReportIds.contains(userId)) {
+			this.userReportIds.add(0, userId);
+			this.reports++;
+		}
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public long getFeedId() {
+		return feedId;
+	}
+
+	public void setFeedId(long feedId) {
+		this.feedId = feedId;
+	}
+
+	public int getReports() {
+		return reports;
+	}
+
+	public void setReports(int reports) {
+		this.reports = reports;
+	}
+
+	public List<Long> getUserReportIds() {
+		return userReportIds;
+	}
+
+	public void setUserReportIds(List<Long> userReportIds) {
+		this.userReportIds = userReportIds;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+}

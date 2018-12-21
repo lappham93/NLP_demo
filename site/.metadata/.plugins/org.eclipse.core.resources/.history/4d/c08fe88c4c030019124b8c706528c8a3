@@ -1,0 +1,106 @@
+package com.mit.navigation.responses;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.navigation.entities.Talk;
+import com.mit.react.entities.UserStat;
+import com.mit.user.responses.SpeakerResponse;
+import com.mit.utils.LinkBuilder;
+
+public class TalkResponse extends IndoorLocationResponse {
+	private SpeakerResponse speaker;
+	private String location;
+	private String title;
+	private String desc;
+	private String photo;
+	private long startTime;
+	private long endTime;
+	private boolean isLiked;
+
+	public TalkResponse(Talk talk, FloorShortResponse floorResponse, SpeakerResponse speaker) {
+		super(talk, floorResponse);
+		this.speaker = speaker;
+		this.location = talk.getLocation();
+		this.title = talk.getTitle();
+		this.desc = talk.getDesc();
+		this.photo = LinkBuilder.buildPhotoLink(talk.getPhoto(), ObjectType.USER.getLowerName());
+		this.startTime = talk.getStartTime();
+		this.endTime = talk.getEndTime();
+	}
+	
+	public TalkResponse(Talk talk, FloorShortResponse floorResponse, SpeakerResponse speaker, UserStat userStat) {
+		super(talk, floorResponse);
+		this.speaker = speaker;
+		this.location = talk.getLocation();
+		this.title = talk.getTitle();
+		this.desc = talk.getDesc();
+		this.photo = LinkBuilder.buildPhotoLink(talk.getPhoto(), ObjectType.USER.getLowerName());
+		this.startTime = talk.getStartTime();
+		this.endTime = talk.getEndTime();
+		this.isLiked = userStat != null && userStat.getTalkIds() != null && userStat.getTalkIds().contains(talk.getId());
+	}
+
+	public SpeakerResponse getSpeaker() {
+		return speaker;
+	}
+
+	public void setSpeaker(SpeakerResponse speaker) {
+		this.speaker = speaker;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getDesc() {
+		return desc;
+	}
+
+	public void setDesc(String desc) {
+		this.desc = desc;
+	}
+
+	public String getPhoto() {
+		return photo;
+	}
+
+	public void setPhoto(String photo) {
+		this.photo = photo;
+	}
+
+	public long getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(long startTime) {
+		this.startTime = startTime;
+	}
+
+	public long getEndTime() {
+		return endTime;
+	}
+
+	public void setEndTime(long endTime) {
+		this.endTime = endTime;
+	}
+
+	public String getLocation() {
+		return location;
+	}
+
+	public void setLocation(String location) {
+		this.location = location;
+	}
+
+	public boolean isLiked() {
+		return isLiked;
+	}
+
+	public void setLiked(boolean isLiked) {
+		this.isLiked = isLiked;
+	}
+
+}

@@ -1,0 +1,113 @@
+package com.mit.navigation.repositories;
+
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.navigation.entities.Floor;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+@Repository
+public class FloorRepo extends TimeDocRepo<Floor> {
+	
+	public int totalAll(long eventId, boolean onlyActive) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (eventId > 0) {
+			criteria.and("eventId").is(eventId);
+		}
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		return (int) mongoOps.count(new Query(criteria), Floor.class);
+	}
+	
+	public Floor getById(long id) {
+		return mongoOps.findById(id, Floor.class);
+	}
+	
+	public Floor getByPhotoId(long photo) {
+		return mongoOps.findOne(new Query(Criteria.where("photo").is(photo)), Floor.class);
+	}
+	
+	public Floor getByAtlasId(String atlasId) {
+		return mongoOps.findOne(new Query(Criteria.where("atlasId").is(atlasId)), Floor.class);
+	}
+
+	public List<Floor> getListByEvent(long eventId) {
+		Sort sort = new Sort(Direction.ASC, "number");
+		return mongoOps.find(new Query(Criteria.where("eventId").is(eventId).and("isActive").is(true).and("isDeleted").is(false)).with(sort), Floor.class);
+	}
+	
+	public Floor getByEventAndNumber(long eventId, int number) {
+		return mongoOps.findOne(new Query(Criteria.where("eventId").is(eventId).and("number").is(number).and("isActive").is(true).and("isDeleted").is(false)), Floor.class);
+	}
+	
+	public Floor getMaxFloorNumber(long eventId) {
+		Sort sort = new Sort(Direction.DESC, "number");
+		return mongoOps.findOne(new Query(Criteria.where("eventId").is(eventId).and("isActive").is(true).and("isDeleted").is(false)).with(sort), Floor.class);
+	}
+	
+	public List<Floor> getSlice(long eventId, boolean onlyActive, int from, int count) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (eventId > 0) {
+			criteria.and("eventId").is(eventId);
+		}
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		return mongoOps.find(new Query(criteria).skip(from).limit(count), Floor.class);
+	}
+	
+	public List<Floor> getList(long eventId) {
+		Criteria criteria = Criteria.where("eventId").is(eventId).and("isActive").is(true).and("isDeleted").is(false);
+		Sort sort = new Sort(new Order(Direction.ASC, "number"));
+		return mongoOps.find(new Query(criteria).with(sort), Floor.class);
+	}
+	
+	public List<Long> getListId(long eventId) {
+		List<Floor> floors = getList(eventId);
+		List<Long> ids = new LinkedList<>();
+		if (!CollectionUtils.isEmpty(floors)) {
+			floors.forEach(t -> ids.add(t.getId()));
+		}
+		return ids;
+	}
+	
+	public List<Floor> getListByIds(List<Long> ids) {
+		Criteria criteria = Criteria.where("id").in(ids);
+		return mongoOps.find(new Query(criteria), Floor.class);
+	}
+	
+	public Map<Long, Floor> getMapByIds(List<Long> ids) {
+		List<Floor> floors = getListByIds(ids);
+		Map<Long, Floor> map = new HashMap<>();
+		if (!CollectionUtils.isEmpty(floors)) {
+			floors.forEach(t -> map.put(t.getId(), t));
+		}
+		return map;
+	}
+	
+	public Map<Long, Floor> getMapByEvent(long eventId) {
+		List<Floor> floors = getList(eventId);
+		Map<Long, Floor> map = new HashMap<>();
+		if (!CollectionUtils.isEmpty(floors)) {
+			floors.forEach(t -> map.put(t.getId(), t));
+		}
+		return map;
+	}
+	
+	public void delete(long id) {
+		Update update = new Update().set("isDeleted", true);
+		Query query = new Query(Criteria.where("id").is(id));
+		mongoOps.updateFirst(query, update, Floor.class);
+	}
+}

@@ -1,0 +1,139 @@
+package com.mit.navigation.responses;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.navigation.entities.BoothProduct;
+import com.mit.utils.LinkBuilder;
+import org.springframework.util.CollectionUtils;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * Created by Lap Pham on 6/13/17.
+ */
+
+public class BoothProductShortResponse {
+    private long id;
+    private BoothShortResponse booth;
+    private String name;
+    private String desc;
+    private String photo;
+    private List<String> otherPhotos;
+    private BigDecimal retailPrice;
+    private BigDecimal salePrice;
+    private boolean isFeature;
+    private Date createdDate;
+    private Date updatedDate;
+
+    public BoothProductShortResponse() {
+    }
+
+    public BoothProductShortResponse(BoothProduct boothProduct, BoothShortResponse boothShortResponse) {
+        this.id = boothProduct.getId();
+        this.booth = boothShortResponse;
+        this.name = boothProduct.getName();
+        this.desc = boothProduct.getDesc();
+        this.photo = LinkBuilder.buildPhotoLink(boothProduct.getPhoto(), ObjectType.PRODUCT.getLowerName());
+        if (!CollectionUtils.isEmpty(boothProduct.getOtherPhotos())) {
+            this.otherPhotos = new ArrayList<>(boothProduct.getOtherPhotos().size());
+            for (long photo: boothProduct.getOtherPhotos()) {
+                this.otherPhotos.add(LinkBuilder.buildPhotoLink(photo, ObjectType.PRODUCT.getLowerName()));
+            }
+        }
+        this.retailPrice = boothProduct.getRetailPrice();
+        this.salePrice = boothProduct.getSalePrice();
+        this.isFeature = boothProduct.isFeature();
+        this.createdDate = boothProduct.getCreatedDate();
+        this.updatedDate = boothProduct.getUpdatedDate();
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public BoothShortResponse getBooth() {
+        return booth;
+    }
+
+    public void setBooth(BoothShortResponse booth) {
+        this.booth = booth;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
+    }
+
+    public String getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(String photo) {
+        this.photo = photo;
+    }
+
+    public List<String> getOtherPhotos() {
+        return otherPhotos;
+    }
+
+    public void setOtherPhotos(List<String> otherPhotos) {
+        this.otherPhotos = otherPhotos;
+    }
+
+    public BigDecimal getRetailPrice() {
+        return retailPrice;
+    }
+
+    public void setRetailPrice(BigDecimal retailPrice) {
+        this.retailPrice = retailPrice;
+    }
+
+    public BigDecimal getSalePrice() {
+        return salePrice;
+    }
+
+    public void setSalePrice(BigDecimal salePrice) {
+        this.salePrice = salePrice;
+    }
+
+    public boolean isFeature() {
+        return isFeature;
+    }
+
+    public void setFeature(boolean feature) {
+        isFeature = feature;
+    }
+
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public Date getUpdatedDate() {
+        return updatedDate;
+    }
+
+    public void setUpdatedDate(Date updatedDate) {
+        this.updatedDate = updatedDate;
+    }
+}

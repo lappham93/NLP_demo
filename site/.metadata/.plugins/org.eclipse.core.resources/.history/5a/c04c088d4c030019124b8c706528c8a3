@@ -1,0 +1,34 @@
+package com.mit.navigation.enums;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonFormat.Shape;
+
+@JsonFormat(shape = Shape.OBJECT)
+public enum EscalatorDirection {
+	UP(1, "Up"), DOWN(2, "Down"), BOTH(3, "Both Up and Down");
+	
+	int value;
+	String name;
+	
+	private EscalatorDirection(int value, String name) {
+		this.value = value;
+		this.name = name;
+	}
+
+	public int getValue() {
+		return value;
+	}
+	
+	public String getName() {
+		return name;
+	}
+	
+	public static EscalatorDirection getDirection(int value) {
+		for (EscalatorDirection direction: EscalatorDirection.values()) {
+			if (direction.getValue() == value) {
+				return direction;
+			}
+		}
+		return null;
+	}
+}

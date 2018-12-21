@@ -1,0 +1,12 @@
+package com.mit.social.entities;
+
+import com.mit.social.enums.FeedContentType;
+
+public class MessageFeed extends Feed {
+	public static final int TYPE = FeedContentType.MESSAGE.getValue();
+
+	public MessageFeed() {
+		super(TYPE);
+	}
+
+}

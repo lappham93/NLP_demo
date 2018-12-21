@@ -1,0 +1,10 @@
+package com.mit.ai.entities;
+
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.common.entities.TimeDoc;
+
+@Document(collection = "comment_labeling")
+public class CommentLabeling extends TimeDoc<Long>{
+
+}

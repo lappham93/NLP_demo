@@ -1,0 +1,101 @@
+package com.mit.navigation.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.asset.entities.HashTag;
+import com.mit.map.entities.Point;
+
+@Document(collection = "indoor_location")
+public abstract class IndoorLocation extends HashTag {
+	@Id
+	private long id;
+	private int type;
+	private long eventId;
+	private long floorId;
+	private String name;
+	private Point point;
+	private Point pxPoint;
+	private int status;
+	private boolean isLocated;
+
+	public IndoorLocation(int type) {
+		super();
+		this.type = type;
+	}
+
+	@Override
+	public Long getId() {
+		return id;
+	}
+
+	@Override
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+	public long getFloorId() {
+		return floorId;
+	}
+
+	public void setFloorId(long floorId) {
+		this.floorId = floorId;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public Point getPoint() {
+		return point;
+	}
+
+	public void setPoint(Point point) {
+		this.point = point;
+	}
+
+	public Point getPxPoint() {
+		return pxPoint;
+	}
+
+	public void setPxPoint(Point pxPoint) {
+		this.pxPoint = pxPoint;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	public boolean isLocated() {
+		return isLocated;
+	}
+
+	public void setLocated(boolean isLocated) {
+		this.isLocated = isLocated;
+	}
+
+}

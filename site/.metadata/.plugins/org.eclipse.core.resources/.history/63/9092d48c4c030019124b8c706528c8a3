@@ -1,0 +1,87 @@
+package com.mit.navigation.responses;
+
+import com.mit.map.entities.Coordinate;
+
+/**
+ * Created by Lap Pham on 6/21/17.
+ */
+public class CurrentLocationResponse {
+    private double x;
+    private double y;
+    private long floorId;
+    private Coordinate coordinate;
+    private boolean onEnterRegion;
+    private boolean onExitRegion;
+    private boolean onFloorChange;
+    
+
+    public CurrentLocationResponse(double x, double y, long floorId) {
+        this.x = x;
+        this.y = y;
+        this.floorId = floorId;
+    }
+    
+    public CurrentLocationResponse(double x, double y, long floorId, Coordinate coordinate) {
+        this.x = x;
+        this.y = y;
+        this.floorId = floorId;
+        this.coordinate = coordinate;
+    }
+
+    public double getX() {
+        return x;
+    }
+
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setY(double y) {
+        this.y = y;
+    }
+
+    public long getFloorId() {
+        return floorId;
+    }
+
+    public void setFloorId(long floorId) {
+        this.floorId = floorId;
+    }
+
+	public Coordinate getCoordinate() {
+		return coordinate;
+	}
+
+	public void setCoordinate(Coordinate coordinate) {
+		this.coordinate = coordinate;
+	}
+
+	public boolean isOnEnterRegion() {
+		return onEnterRegion;
+	}
+
+	public void setOnEnterRegion(boolean onEnterRegion) {
+		this.onEnterRegion = onEnterRegion;
+	}
+
+	public boolean isOnExitRegion() {
+		return onExitRegion;
+	}
+
+	public void setOnExitRegion(boolean onExitRegion) {
+		this.onExitRegion = onExitRegion;
+	}
+
+	public boolean isOnFloorChange() {
+		return onFloorChange;
+	}
+
+	public void setOnFloorChange(boolean onFloorChange) {
+		this.onFloorChange = onFloorChange;
+	}
+    
+}

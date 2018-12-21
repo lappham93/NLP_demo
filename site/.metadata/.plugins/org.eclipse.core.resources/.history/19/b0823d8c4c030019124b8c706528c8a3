@@ -1,0 +1,29 @@
+package com.mit.react.responses;
+
+public class GoingResponse {
+	private boolean isGoing;
+	private int totalGoing;
+
+	public GoingResponse(boolean isGoing, int totalGoing) {
+		super();
+		this.isGoing = isGoing;
+		this.totalGoing = totalGoing;
+	}
+
+	public boolean isGoing() {
+		return isGoing;
+	}
+
+	public void setGoing(boolean isGoing) {
+		this.isGoing = isGoing;
+	}
+
+	public int getTotalGoing() {
+		return totalGoing;
+	}
+
+	public void setTotalGoing(int totalGoing) {
+		this.totalGoing = totalGoing;
+	}
+
+}

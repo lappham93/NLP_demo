@@ -1,0 +1,26 @@
+package com.mit.navigation.repositories;
+
+import com.mit.common.repositories.ActiveTimeDocRepo;
+import com.mit.navigation.entities.NavigationPoint;
+import com.mit.navigation.entities.WayPoint;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+/**
+ * Created by Hung on 8/25/2017.
+ */
+
+@Repository
+public class WayPointRepo extends ActiveTimeDocRepo<WayPoint> {
+
+    public List<WayPoint> getListByFloor(long floorId) {
+        return getList(Criteria.where("floorId").is(floorId));
+    }
+    
+    public void deleteByFloorId(long floorId) {
+		mongoOps.remove(new Query(Criteria.where("floorId").is(floorId)), NavigationPoint.class);
+	}
+}

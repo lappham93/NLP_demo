@@ -1,0 +1,78 @@
+package com.mit.banner.responses;
+
+import com.mit.asset.entities.PhotoInfo;
+import com.mit.asset.responses.PhotoResponse;
+import com.mit.banner.entities.Banner;
+import com.mit.common.entities.ObjectRef;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel
+public class BannerResponse {
+	private long id;
+	@ApiModelProperty(value="WELCOME(4, \"Welcome\"), WEB(1, \"Web\"), EVENT(2, \"Event\"), BOOTH(3, \"Booth\")")
+	private int type;
+	private ObjectRef objectRef;
+	private String msg;
+	private PhotoResponse thumb;
+	private String content;
+	
+	public BannerResponse(Banner banner, PhotoInfo photo) {
+		this.id = banner.getId();
+		this.type = banner.getType();
+		this.objectRef = banner.getObjectRef();
+		this.msg = banner.getMsg();
+		if (photo != null) {
+			this.thumb = new PhotoResponse(photo);
+		}
+		this.content = banner.getContent();
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	public ObjectRef getObjectRef() {
+		return objectRef;
+	}
+
+	public void setObjectRef(ObjectRef objectRef) {
+		this.objectRef = objectRef;
+	}
+
+	public String getMsg() {
+		return msg;
+	}
+
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+
+	public PhotoResponse getThumb() {
+		return thumb;
+	}
+
+	public void setThumb(PhotoResponse thumb) {
+		this.thumb = thumb;
+	}
+
+	public String getContent() {
+		return content;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+}

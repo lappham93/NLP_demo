@@ -1,0 +1,122 @@
+package com.mit.responses;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.util.CollectionUtils;
+
+import com.mit.atlas.entities.AtlasLocation;
+import com.mit.map.entities.Coordinate;
+
+public class AtlasLocationResponse {
+	private long id;
+	private String idRef;
+	private String name;
+	private String desc;
+	private String address;
+	private Coordinate coordinate;
+	private List<AtlasFloorResponse> floors;
+	private Map<Integer, List<Long>> floorLevels;
+	private long createdDate;
+
+	public AtlasLocationResponse(AtlasLocation location, List<AtlasFloorResponse> floors) {
+		this.id = location.getId();
+		this.idRef = location.getIdRef();
+		this.name = location.getName();
+		this.desc = location.getDesc();
+		this.address = location.getAddress();
+		this.coordinate = location.getCoordinate();
+		this.floors = floors;
+		this.createdDate = location.getCreatedDate().getTime();
+		this.floorLevels = new HashMap<>();
+		// floors has been sorted: asc - number
+		if (!CollectionUtils.isEmpty(floors)) {
+			int currentLevel = floors.get(0).getNumber();
+			List<Long> ids = new LinkedList<>();
+			for (AtlasFloorResponse floor : floors) {
+				if (floor.getNumber() != currentLevel) {
+					floorLevels.put(currentLevel, ids);
+					currentLevel = floor.getNumber();
+					ids = new LinkedList<>();
+				}
+				ids.add(floor.getId());
+			}
+			floorLevels.put(currentLevel, ids);
+		}
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public String getIdRef() {
+		return idRef;
+	}
+
+	public void setIdRef(String idRef) {
+		this.idRef = idRef;
+	}
+
+	public Map<Integer, List<Long>> getFloorLevels() {
+		return floorLevels;
+	}
+
+	public void setFloorLevels(Map<Integer, List<Long>> floorLevels) {
+		this.floorLevels = floorLevels;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDesc() {
+		return desc;
+	}
+
+	public void setDesc(String desc) {
+		this.desc = desc;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+	public Coordinate getCoordinate() {
+		return coordinate;
+	}
+
+	public void setCoordinate(Coordinate coordinate) {
+		this.coordinate = coordinate;
+	}
+
+	public long getCreatedDate() {
+		return createdDate;
+	}
+
+	public void setCreatedDate(long createdDate) {
+		this.createdDate = createdDate;
+	}
+
+	public List<AtlasFloorResponse> getFloors() {
+		return floors;
+	}
+
+	public void setFloors(List<AtlasFloorResponse> floors) {
+		this.floors = floors;
+	}
+
+}

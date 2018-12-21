@@ -1,0 +1,44 @@
+body {
+	font-family: Montserrat,Roboto,Helvetica Neue,sans-serif;
+	background: #111111;
+}
+
+.container {
+}
+.restaurant img{
+	width: 100%;
+}
+
+.comment-form {
+	width: 100%;
+}
+
+.comment-form .comment-input {
+	width: 100%; border: none;  font-size: 20px; resize: none; background: #222222;
+}
+
+.emotion, .confirm img{
+	display: block; margin-left: auto; margin-right: auto; width: 80%; padding: 5% 15% 0% 15%;
+}
+
+.confirm a {
+	width: 50%; display: table-cell;
+}
+
+.confirm a img {
+	width: 80%;
+}
+
+.confirm a img:hover {
+	cursor: pointer; border: 1px dotted;
+}
+
+
+/* loading */
+.loader {
+	display: none; margin-left: 40%;
+}
+
+.loader .loader-text {
+	text-transform: uppercase; font-size: 15px; margin-left: 10px;
+}

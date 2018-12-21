@@ -1,0 +1,27 @@
+package com.mit.event.responses;
+
+import java.util.List;
+
+import com.mit.navigation.responses.TalkResponse;
+
+public class AgendaResponse {
+	private long date;
+	private List<TalkResponse> talks;
+
+	public long getDate() {
+		return date;
+	}
+
+	public void setDate(long date) {
+		this.date = date;
+	}
+
+	public List<TalkResponse> getTalks() {
+		return talks;
+	}
+
+	public void setTalks(List<TalkResponse> talks) {
+		this.talks = talks;
+	}
+
+}

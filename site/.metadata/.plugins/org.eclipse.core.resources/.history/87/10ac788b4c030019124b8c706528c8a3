@@ -1,0 +1,217 @@
+package com.mit.suggest.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldIndex;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.Setting;
+
+import com.mit.address.entities.City;
+import com.mit.address.entities.State;
+import com.mit.asset.entities.HashTag;
+import com.mit.common.entities.ObjectRef;
+import com.mit.common.enums.ObjectType;
+import com.mit.event.entities.Event;
+import com.mit.navigation.entities.Booth;
+import com.mit.navigation.entities.BoothProduct;
+import com.mit.navigation.entities.Elevator;
+import com.mit.navigation.entities.Escalator;
+import com.mit.navigation.entities.Talk;
+import com.mit.navigation.entities.WCLocation;
+import com.mit.user.entities.Profile;
+import com.mit.user.responses.ProfileResponse;
+
+/**
+ * Created by Lap Pham on 6/15/17.
+ */
+
+@Document(indexName = "sc_suggester")
+@Setting(settingPath = "/elasticsearch/autocomplete-analyzer.json")
+public class ElasticSuggester {
+    @Id
+    private String id;
+    @Field(type = FieldType.String, analyzer = "autocomplete-index")
+    private String keyword;
+    private long eventId;
+    private long boothId;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String city;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String state;
+    @Field(type = FieldType.String, index = FieldIndex.not_analyzed)
+    private String country;
+    @Field(type = FieldType.Object, index = FieldIndex.not_analyzed)
+    private ObjectRef objectRef;
+
+    public ElasticSuggester() {
+    }
+    
+    public ElasticSuggester(Escalator location) {
+    	int objectType = ObjectType.ESCALATOR.getValue();
+    	this.id = genId(objectType, location.getId());
+    	this.eventId = location.getEventId();
+    	this.keyword = location.getName();
+    	this.objectRef = new ObjectRef(objectType, location.getId());
+    }
+    
+    public ElasticSuggester(Elevator location) {
+    	int objectType = ObjectType.ELEVATOR.getValue();
+    	this.id = genId(objectType, location.getId());
+    	this.eventId = location.getEventId();
+    	this.keyword = location.getName();
+    	this.objectRef = new ObjectRef(objectType, location.getId());
+    }
+    
+    public ElasticSuggester(WCLocation location) {
+    	int objectType = ObjectType.WC.getValue();
+    	this.id = genId(objectType, location.getId());
+    	this.eventId = location.getEventId();
+    	this.keyword = location.getName();
+    	this.objectRef = new ObjectRef(objectType, location.getId());
+    }
+    
+    public ElasticSuggester(Talk talk) {
+    	int objectType = ObjectType.TALK.getValue();
+    	this.id = genId(objectType, talk.getId());
+    	this.eventId = talk.getEventId();
+    	this.keyword = talk.getName();
+    	this.objectRef = new ObjectRef(objectType, talk.getId());
+    }
+    
+    public ElasticSuggester(Profile profile) {
+    	int objectType = ObjectType.USER.getValue();
+    	this.id = genId(objectType, profile.getId());
+    	this.keyword = profile.getFullName();
+    	this.objectRef = new ObjectRef(objectType, profile.getId());
+    }
+    
+    public ElasticSuggester(ProfileResponse profile) {
+    	int objectType = ObjectType.USER.getValue();
+    	this.id = genId(objectType, profile.getId());
+    	this.keyword = profile.getDisplayName();
+    	this.objectRef = new ObjectRef(objectType, profile.getId());
+    }
+    
+    public ElasticSuggester(Event event) {
+        int objectType = ObjectType.EVENT.getValue();
+        this.id = genId(objectType, event.getId());
+        this.keyword = event.getName();
+        this.objectRef = new ObjectRef(objectType, event.getId());
+    }
+    
+    public ElasticSuggester(HashTag tag, int tagIdx) {
+    	this.id = genTagId(tag.getObjectType(), tag.getId(), tagIdx);
+    	this.keyword = tag.getHashTags() != null && tag.getHashTags().size() > tagIdx ? tag.getHashTags().get(tagIdx) : "";
+    	this.objectRef = new ObjectRef(tag.getObjectType(), tag.getId());
+    }
+
+    public ElasticSuggester(Booth booth) {
+        int objectType = ObjectType.BOOTH.getValue();
+        this.id = genId(objectType, booth.getId());
+        this.keyword = booth.getName();
+        this.eventId = booth.getEventId();
+        this.objectRef = new ObjectRef(objectType, booth.getId());
+    }
+
+    public ElasticSuggester(BoothProduct product) {
+        int objectType = ObjectType.PRODUCT.getValue();
+        this.id = genId(objectType, product.getId());
+        this.keyword = product.getName();
+        this.eventId = product.getEventId();
+        this.boothId = product.getBoothId();
+        this.objectRef = new ObjectRef(objectType, product.getId());
+    }
+
+    public ElasticSuggester(City city) {
+        int objectType = ObjectType.ADDRESS.getValue();
+        this.id = objectType + "_c_" + city.getId();
+        this.keyword = city.getName() + ", " + city.getStateName();
+        this.country = city.getCountryCode();
+        this.objectRef = new ObjectRef(objectType, 0);
+    }
+
+    public ElasticSuggester(State state) {
+        int objectType = ObjectType.ADDRESS.getValue();
+        this.id = objectType + "_s_" + state.getId();
+        this.keyword = state.getName();
+        this.country = state.getCountryCode();
+        this.objectRef = new ObjectRef(objectType, 0);
+    }
+
+    public static String genId(int objectType, Object idRef) {
+    	return objectType + "_" + idRef;
+    }
+    
+    public static String genTagId(int objectType, long objectId, int idx) {
+    	return objectType +  "_" + objectId + "_" + ElasticSuggestType.TAG.getValue() + "_" + idx;
+    }
+    
+    public static String parseIdRef(String id) {
+    	return id.split("_")[1];
+    }
+    
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getKeyword() {
+        return keyword;
+    }
+
+    public void setKeyword(String keyword) {
+        this.keyword = keyword;
+    }
+
+    public long getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(long eventId) {
+        this.eventId = eventId;
+    }
+
+    public long getBoothId() {
+        return boothId;
+    }
+
+    public void setBoothId(long boothId) {
+        this.boothId = boothId;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public ObjectRef getObjectRef() {
+        return objectRef;
+    }
+
+    public void setObjectRef(ObjectRef objectRef) {
+        this.objectRef = objectRef;
+    }
+}

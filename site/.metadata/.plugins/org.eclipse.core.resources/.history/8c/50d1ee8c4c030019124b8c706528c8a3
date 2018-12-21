@@ -1,0 +1,73 @@
+package com.mit.navigation.repositories;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.common.repositories.TimeDocRepo;
+import com.mit.navigation.entities.BoothCategory;
+
+@Repository
+public class BoothCategoryRepo extends TimeDocRepo<BoothCategory> {
+	
+	public int totalAll(long eventId, boolean onlyActive) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (eventId > 0) {
+			criteria.and("eventId").is(eventId);
+		}
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		return (int) mongoOps.count(new Query(criteria), BoothCategory.class);
+	}
+	
+	public BoothCategory getById(long id) {
+		return mongoOps.findById(id, BoothCategory.class);
+	}
+	
+	public List<BoothCategory> getSlice(long eventId, boolean onlyActive, int from, int count) {
+		Criteria criteria = Criteria.where("isDeleted").is(false);
+		if (eventId > 0) {
+			criteria.and("eventId").is(eventId);
+		}
+		if (onlyActive) {
+			criteria.and("isActive").is(true);
+		}
+		return mongoOps.find(new Query(criteria).skip(from).limit(count), BoothCategory.class);
+	}
+	
+	public List<BoothCategory> getList(long eventId) {
+		Criteria criteria = Criteria.where("eventId").is(eventId).and("isActive").is(true).and("isDeleted").is(false);
+		Sort sort = new Sort(new Order(Direction.ASC, "name"));
+		return mongoOps.find(new Query(criteria).with(sort), BoothCategory.class);
+	}
+	
+	public List<BoothCategory> getListByIds(List<Long> ids) {
+		Criteria criteria = Criteria.where("id").in(ids);
+		return mongoOps.find(new Query(criteria), BoothCategory.class);
+	}
+	
+	public Map<Long, BoothCategory> getMapByIds(List<Long> ids) {
+		List<BoothCategory> cates = getListByIds(ids);
+		Map<Long, BoothCategory> map = new HashMap<>();
+		if (!CollectionUtils.isEmpty(cates)) {
+			cates.forEach(t -> map.put(t.getId(), t));
+		}
+		return map;
+	}
+	
+	public void delete(long id) {
+		Update update = new Update().set("isDeleted", true);
+		Query query = new Query(Criteria.where("id").is(id));
+		mongoOps.updateFirst(query, update, BoothCategory.class);
+	}
+}

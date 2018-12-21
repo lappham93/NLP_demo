@@ -1,0 +1,83 @@
+package com.mit.blog.services;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.blog.entities.Blog;
+import com.mit.blog.entities.BlogCategory;
+import com.mit.blog.repositories.BlogCategoryRepo;
+import com.mit.blog.repositories.BlogRepo;
+import com.mit.blog.responses.BlogCategoryResponse;
+import com.mit.blog.responses.BlogResponse;
+
+@Service
+public class BlogService {
+	@Autowired
+	private BlogCategoryRepo blogCategoryRepo;
+	@Autowired
+	private BlogRepo blogRepo;
+	
+	public BlogResponse getDetail(long id) {
+		Blog blog = blogRepo.getById(id);
+		blogRepo.updateView(id);
+		return buildBlog(blog);
+	}
+	
+	public List<BlogResponse> getSlice(List<Long> categoryIds, boolean onlyActive, int from, int count) {
+		List<Blog> blogs = blogRepo.getSlice(categoryIds, onlyActive, from, count);
+		return buildBlogList(blogs);
+	}
+	
+	public List<BlogResponse> getTop(int count) {
+		List<Blog> blogs = blogRepo.getTopView(count);
+		return buildBlogList(blogs);
+	}
+	
+	public List<BlogResponse> getRelate(long id, int count) {
+		Blog blog = blogRepo.getById(id);
+		if (blog == null) {
+			return null;
+		}
+		List<Blog> blogs = blogRepo.getListInCategory(blog.getId(), blog.getCategoryId(), count);
+		return buildBlogList(blogs);
+	}
+	
+	public List<BlogCategoryResponse> buildBlogCategoryList(List<BlogCategory> categories) {
+		if (CollectionUtils.isEmpty(categories)) {
+			return null;
+		}
+		List<BlogCategoryResponse> categoryResponses = new LinkedList<>();
+		categories.forEach(t -> categoryResponses.add(new BlogCategoryResponse(t)));
+		return categoryResponses;
+	}
+	
+	public BlogCategoryResponse buildBlogCategory(BlogCategory category) {
+		if (category == null) {
+			return null;
+		}
+		return new BlogCategoryResponse(category);
+	}
+	
+	public List<BlogResponse> buildBlogList(List<Blog> blogs) {
+		if (CollectionUtils.isEmpty(blogs)) {
+			return null;
+		}
+		List<BlogResponse> blogResponses = new LinkedList<>();
+		blogs.forEach(t -> blogResponses.add(buildBlog(t)));
+		return blogResponses;
+	}
+	
+	public BlogResponse buildBlog(Blog blog) {
+		if (blog == null) {
+			return null;
+		}
+		BlogCategory category = blogCategoryRepo.getById(blog.getCategoryId());
+		BlogCategoryResponse categoryResponse = buildBlogCategory(category);
+		return new BlogResponse(blog, categoryResponse);
+	}
+
+}

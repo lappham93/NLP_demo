@@ -1,0 +1,188 @@
+package com.mit.social.responses;
+
+import java.util.List;
+
+import com.mit.react.entities.ReactStat;
+import com.mit.react.entities.UserStat;
+import com.mit.react.enums.ReactType;
+import com.mit.social.entities.Feed;
+import com.mit.user.responses.ProfileShortResponse;
+import com.mit.utils.LinkBuilder;
+
+public class FeedResponse {
+	private long id;
+	private long feedItemId;
+	private String realtimeCommentLink;
+	private ProfileShortResponse user;
+	private String message;
+	private int type;
+	private int totalLike;
+	private int totalComment;
+	private int totalView;
+	private int emoteType;
+	private boolean isLiked;
+	private boolean isViewed;
+	private boolean isFollowed;
+	private boolean isConnected;
+	private long createTime;
+	private long updateTime;
+
+	public FeedResponse(Feed feed, long viewUserId, ProfileShortResponse profile, List<ReactStat> reactStats, UserStat userStat) {
+		this.id = feed.getId();
+		this.user = profile;
+		this.feedItemId = feed.getId();
+		this.message = feed.getMessage();
+		this.type = feed.getType();
+		this.realtimeCommentLink = LinkBuilder.buildCommentSocketLink(feed.getId(), false);
+		if (reactStats != null) {
+			for (ReactStat rs : reactStats) {
+				int reactType = rs.getReactType();
+				if (reactType == ReactType.LIKE.getValue()) {
+					this.totalLike = rs.getTotal();
+					this.isLiked = rs.getUserIds() != null && rs.getUserIds().contains(viewUserId);
+					this.emoteType = isLiked ? 1 : 0;
+				} else if (reactType == ReactType.COMMENT.getValue()) {
+					this.totalComment = rs.getTotal();
+				} else if (reactType == ReactType.VIEW.getValue()) {
+					this.totalView = rs.getTotal();
+					this.isViewed = rs.getUserIds() != null && rs.getUserIds().contains(viewUserId);
+				}
+			}
+		}
+		this.isFollowed = userStat != null && userStat.getUserFollowIds() != null
+				&& userStat.getUserFollowIds().contains(viewUserId);
+		this.isConnected = userStat != null && userStat.getConnectUserIds() != null
+				&& userStat.getConnectUserIds().contains(viewUserId);
+		this.createTime = feed.getCreatedDate().getTime();
+		this.updateTime = feed.getUpdatedDate().getTime();
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public long getFeedItemId() {
+		return feedItemId;
+	}
+
+	public void setFeedItemId(long feedItemId) {
+		this.feedItemId = feedItemId;
+	}
+
+	public String getRealtimeCommentLink() {
+		return realtimeCommentLink;
+	}
+
+	public void setRealtimeCommentLink(String realtimeCommentLink) {
+		this.realtimeCommentLink = realtimeCommentLink;
+	}
+
+	public ProfileShortResponse getUser() {
+		return user;
+	}
+
+	public void setUser(ProfileShortResponse user) {
+		this.user = user;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
+
+	public int getTotalLike() {
+		return totalLike;
+	}
+
+	public void setTotalLike(int totalLike) {
+		this.totalLike = totalLike;
+	}
+
+	public int getTotalComment() {
+		return totalComment;
+	}
+
+	public void setTotalComment(int totalComment) {
+		this.totalComment = totalComment;
+	}
+
+	public int getTotalView() {
+		return totalView;
+	}
+
+	public void setTotalView(int totalView) {
+		this.totalView = totalView;
+	}
+
+	public int getEmoteType() {
+		return emoteType;
+	}
+
+	public void setEmoteType(int emoteType) {
+		this.emoteType = emoteType;
+	}
+
+	public boolean isLiked() {
+		return isLiked;
+	}
+
+	public void setLiked(boolean isLiked) {
+		this.isLiked = isLiked;
+	}
+
+	public boolean isViewed() {
+		return isViewed;
+	}
+
+	public void setViewed(boolean isViewed) {
+		this.isViewed = isViewed;
+	}
+
+	public boolean isFollowed() {
+		return isFollowed;
+	}
+
+	public void setFollowed(boolean isFollowed) {
+		this.isFollowed = isFollowed;
+	}
+
+	public long getCreateTime() {
+		return createTime;
+	}
+
+	public void setCreateTime(long createTime) {
+		this.createTime = createTime;
+	}
+
+	public long getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(long updateTime) {
+		this.updateTime = updateTime;
+	}
+
+	public boolean isConnected() {
+		return isConnected;
+	}
+
+	public void setConnected(boolean isConnected) {
+		this.isConnected = isConnected;
+	}
+
+}

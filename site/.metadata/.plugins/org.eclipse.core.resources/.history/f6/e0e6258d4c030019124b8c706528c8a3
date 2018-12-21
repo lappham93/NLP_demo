@@ -1,0 +1,74 @@
+package com.mit.navigation.entities;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.common.entities.ActiveTimeDoc;
+
+@Document(collection = "booth_category")
+public class BoothCategory extends ActiveTimeDoc<Long> {
+	@Id
+	private long id;
+	private long eventId;
+	private long commonBoothCategoryId;
+	private String name;
+	private String desc;
+	private long photo;
+	private int status;
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+	public long getCommonBoothCategoryId() {
+		return commonBoothCategoryId;
+	}
+
+	public void setCommonBoothCategoryId(long commonBoothCategoryId) {
+		this.commonBoothCategoryId = commonBoothCategoryId;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDesc() {
+		return desc;
+	}
+
+	public void setDesc(String desc) {
+		this.desc = desc;
+	}
+
+	public long getPhoto() {
+		return photo;
+	}
+
+	public void setPhoto(long photo) {
+		this.photo = photo;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+}

@@ -1,0 +1,186 @@
+package com.mit.navigation.repositories;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.common.unit.DistanceUnit;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder.Operator;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.core.query.SearchQuery;
+import org.springframework.data.elasticsearch.core.query.UpdateQuery;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.common.repositories.ElasticRepo;
+import com.mit.event.enums.EventStatus;
+import com.mit.navigation.entities.ElasticEvent;
+import com.mit.navigation.enums.SortOption;
+
+/**
+ * Created by Lap Pham on 6/14/17.
+ */
+
+@Repository
+public class ElasticEventRepo extends ElasticRepo<ElasticEvent> {
+
+	@Autowired
+	private ElasticsearchTemplate elasticsearchTemplate;
+
+	public Page<ElasticEvent> find(List<Integer> types, List<Long> categoryIds, int status, String place, String query, boolean isFeature,
+			double distance, double lat, double lon, int page, int size, SortBuilder sort, long period,
+			List<Long> ignoreIdList, long fromTime, long toTime) {
+		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+		if (!CollectionUtils.isEmpty(types)) {
+			boolQuery.must(QueryBuilders.termsQuery("type", types));
+		}
+		
+		if (!CollectionUtils.isEmpty(categoryIds)) {
+			boolQuery.must(QueryBuilders.termsQuery("categoryIds", categoryIds));
+		}
+
+		Calendar now = Calendar.getInstance();
+		if (status == EventStatus.FINISHED.getValue()) {
+			boolQuery.must(QueryBuilders.rangeQuery("endTime").lt(now.getTimeInMillis()));
+		} else if (status == EventStatus.ONGOING.getValue()) {
+			boolQuery.must(QueryBuilders.rangeQuery("startTime").lte(now.getTimeInMillis()));
+			boolQuery.must(QueryBuilders.rangeQuery("endTime").gte(now.getTimeInMillis()));
+		} else if (status == EventStatus.UPCOMMING.getValue()) {
+			boolQuery.must(QueryBuilders.rangeQuery("startTime").gt(now.getTimeInMillis()));
+		} else {
+			boolQuery.must(QueryBuilders.rangeQuery("endTime").gte(now.getTimeInMillis()));
+		}
+
+		if (period > 0) {
+			if (status == EventStatus.UPCOMMING.getValue()) {
+				boolQuery.must(QueryBuilders.rangeQuery("startTime").lte(now.getTimeInMillis() + period));
+				sort = SortBuilders.fieldSort("startTime").order(SortOrder.ASC);
+			} else if (status == EventStatus.ONGOING.getValue()) {
+				boolQuery.must(QueryBuilders.rangeQuery("endTime").lte(now.getTimeInMillis() + period));
+				sort = SortBuilders.fieldSort("endTime").order(SortOrder.ASC);
+			}
+		}
+		
+		if (fromTime > 0 && toTime > fromTime) {
+			boolQuery.mustNot(QueryBuilders.orQuery(QueryBuilders.rangeQuery("startTime").gt(toTime), QueryBuilders.rangeQuery("endTime").lt(fromTime)));
+		}
+
+		if (!StringUtils.isEmpty(place)) {
+			boolQuery.must(QueryBuilders.matchQuery("place", place).operator(Operator.AND));
+		}
+
+		if (isFeature) {
+			boolQuery.must(QueryBuilders.termQuery("feature", isFeature));
+		}
+
+		if (distance > 0) {
+			boolQuery.must(QueryBuilders.geoDistanceQuery("location").distance(distance, DistanceUnit.METERS).lat(lat)
+					.lon(lon));
+		}
+
+		if (!StringUtils.isEmpty(query)) {
+//			boolQuery.must(QueryBuilders.queryStringQuery(query).field("name").analyzer("autocomplete-search"));
+			boolQuery.minimumNumberShouldMatch(1).should(QueryBuilders.queryStringQuery(query).field("name").analyzer("autocomplete-search"))
+					.should(QueryBuilders.matchQuery("hashTags", query));
+		}
+
+		if (!CollectionUtils.isEmpty(ignoreIdList)) {
+			boolQuery.mustNot(QueryBuilders.termsQuery("_id", ignoreIdList));
+		}
+
+		boolQuery.must(QueryBuilders.rangeQuery("status").gt(0));
+
+		NativeSearchQueryBuilder nativeSearchQuery = new NativeSearchQueryBuilder().withQuery(boolQuery).withSort(sort);
+
+		nativeSearchQuery.withPageable(new PageRequest(page, size));
+
+		SearchQuery searchQuery = nativeSearchQuery.build();
+
+		Page<ElasticEvent> productPage = elasticsearchTemplate.queryForPage(searchQuery, ElasticEvent.class);
+		return productPage;
+	}
+
+	public Page<ElasticEvent> findDefault(List<Integer> types, List<Long> categoryIds, int status, String place, String query, double distance, double lat,
+			double lon, int page, int size, List<Long> ignoreIdList, int sortOption, long fromTime, long toTime) {
+		SortBuilder sort = getSortOption(sortOption, lon, lat);
+		if (sort == null) {
+			sort = SortBuilders.geoDistanceSort("location").point(lat, lon).order(SortOrder.ASC);
+		}
+		return find(types, categoryIds, status, place, query, false, distance, lat, lon, page, size, sort, -1, ignoreIdList, fromTime, toTime);
+	}
+
+	public Page<ElasticEvent> findNearby(List<Integer> types, List<Long> categoryIds, int status, String place, String query, double distance,
+			double lat, double lon, int page, int size, List<Long> ignoreIdList, int sortOption, long fromTime, long toTime) {
+		SortBuilder sort = getSortOption(sortOption, lon, lat);
+		if (sort == null) {
+			sort = SortBuilders.geoDistanceSort("location").point(lat, lon).order(SortOrder.ASC);
+		}
+		return find(types, categoryIds, status, place, query, false, distance, lat, lon, page, size, sort, -1, ignoreIdList, fromTime, toTime);
+	}
+
+	public Page<ElasticEvent> findFeature(List<Integer> types, List<Long> categoryIds, int status, String place, String query, double lat, double lon, int page,
+			int size, List<Long> ignoreIdList, int sortOption, long fromTime, long toTime) {
+		SortBuilder sort = getSortOption(sortOption, lon, lat);
+		if (sort == null) {
+			sort = SortBuilders.geoDistanceSort("location").point(lat, lon).order(SortOrder.ASC);
+		}
+		return find(types, categoryIds, status, place, query, true, 0, lat, lon, page, size, sort, -1, ignoreIdList, fromTime, toTime);
+	}
+
+	public Page<ElasticEvent> findInPeriod(List<Integer> types, List<Long> categoryIds, int status, String place, String query, double distance,
+			double lat, double lon, int page, int size, long period, List<Long> ignoreIdList, long fromTime, long toTime) {
+		SortBuilder sort = null;// add sort depend status
+		return find(types, categoryIds, status, place, query, false, distance, lat, lon, page, size, sort, period,
+				ignoreIdList, fromTime, toTime);
+	}
+	
+	public SortBuilder getSortOption(int sortOption, double lon, double lat) {
+		if (SortOption.AZ.getValue() == sortOption) {
+			return SortBuilders.fieldSort("name").order(SortOrder.ASC);
+		}
+		if (SortOption.ZA.getValue() == sortOption) {
+			return SortBuilders.fieldSort("name").order(SortOrder.DESC);
+		}
+		if (SortOption.DISTANCE.getValue() == sortOption) {
+			return SortBuilders.geoDistanceSort("location").point(lat, lon).order(SortOrder.ASC);
+		}
+		if (SortOption.TIME.getValue() == sortOption) {
+			return SortBuilders.fieldSort("startTime").order(SortOrder.ASC);
+		}
+		return null;
+	}
+
+	public List<Long> page2Ids(Page<ElasticEvent> page) {
+		List<ElasticEvent> events = page.getContent();
+		List<Long> ids = new ArrayList<>(events.size());
+		for (ElasticEvent event : events) {
+			ids.add(NumberUtils.toLong(event.getId()));
+		}
+		return ids;
+	}
+	
+	public void updateStatus(List<Long> ids, int status) {
+		List<UpdateQuery> updates = new LinkedList<>();
+		for (long id: ids) {
+			UpdateQuery update = new UpdateQuery();
+			update.setId(id + "");
+			update.setClazz(ElasticEvent.class);
+			update.setUpdateRequest(new UpdateRequest().doc("status", status));
+			updates.add(update);
+		}
+		elasticsearchTemplate.bulkUpdate(updates);
+    }
+}

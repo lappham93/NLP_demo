@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+    layout:decorator="location_layout">
+<head>
+	<script type="text/javascript" th:src="${resources_path} + '/js/app/floor.js'"></script>
+</head>
+<body>
+<div layout:fragment="content" th:with="hasFloor = ${location.floors != null and #lists.size(location.floors) > 0}">
+	<div class="col-md-7">
+		<div class="panel panel-flat" style="padding-left: 0px" th:if="${not(hasFloor)}">
+			<div class="panel-body flow">
+				<div class="col-md-12">
+					<div class="app-warning">
+						<p>You don't have any floor plans yet!</p>
+					</div>
+					<button id="createFloor2BtnId" class="btn btn-primary btn-rounded" th:onclick="'window.location.replace(\'' + ${#strings.replace(floor_add_url, '{0}', location.idRef)} + '\')'">
+						Add new floor plan
+					</button>
+				</div>
+			</div>
+		</div>
+		<div class="" th:if="${hasFloor}" th:each="floorLevel:${location.floorLevels}">
+			<h3 class="floor-level" th:text="${'Floor level ' + floorLevel.key}"></h3>
+			<div class="panel panel-flat" style="padding-left: 0px">
+				<div class="panel-body flow">
+					<div th:each="floorId: ${floorLevel.value}" th:remove="tag">
+						<div class="col-md-12 floor-list-item" th:each="floor:${location.floors}" th:if="${floor.id == floorId}">
+							<div class="row floor-list-name">
+								<div class="col-xs-8" style="padding: 0px;">
+									<h4><a th:text="${floor.name}"></a></h4>
+								</div>
+								<div class="col-xs-4 floor-list-actions">
+									<ul class="list list-inline">
+										<li class="dropdown">
+											<a href="#" class="dropdown-toggle"
+												data-toggle="dropdown"> <i class="icon-more2" style="font-size: 20px;"></i>
+											</a>
+			
+											<ul class="dropdown-menu dropdown-menu-right">
+												<li><a th:href="${#strings.replace(#strings.replace(floor_plan_edit_url, '{0}', location.idRef), '{1}', floor.idRef)}" data-toggle="modal">Edit floor plan info and image</a></li>
+												<li><a th:href="${#strings.replace(#strings.replace(floor_align_edit_url, '{0}', location.idRef), '{1}', floor.idRef)}" data-toggle="modal">Edit floor plan alignment</a></li>
+												<li><a href="#" data-toggle="modal" th:onclick="'showDeleteFloor(\'' + ${floor.name} + '\',\'' + ${floor.idRef} + '\'' + ')'">Delete floor plan</a></li>
+											</ul>
+										</li>
+									</ul>
+								</div>
+							</div>
+							<div class="floor-list-id">
+								<span th:text="${'Floor plan ID: ' + floor.idRef}"></span>
+							</div>
+							<div class="floor-list-suggest">
+								<span>To enable positioning in this floor, please go on-site and use MapCreator mobile tool for mapping the area.</span>
+							</div>
+							<div class="floor-list-moreinfo">
+								<a onclick="showMoreInfo();">More information…</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-5">
+		<div class="location-detail">
+			<div>
+				<h2 class="location-detail-header">Location details</h2>
+			</div>
+			<div class="location-detail-feature">
+				<div class="location-detail-feature-name">
+					<span>Location ID</span>
+				</div>
+				<div class="location-detail-feature-text">
+					<p th:text="${location.idRef}"></p>
+				</div>
+			</div>
+			<div class="location-detail-feature">
+				<div class="location-detail-feature-name">
+					<span>Create at</span>
+				</div>
+				<div class="location-detail-feature-text">
+					<p th:text="${#dates.format(location.createdDate, 'yyyy-MM-dd HH:mm')}"></p>
+				</div>
+			</div>
+			<div class="location-detail-feature">
+				<div class="location-detail-feature-name">
+					<span>Address</span>
+				</div>
+				<div class="location-detail-feature-text">
+					<p th:utext="${location.address + '&lt;br/&gt;' + location.coordinate.lat + ', ' + location.coordinate.lon}"></p>
+				</div>
+			</div>
+			<p class="location-detail-map">
+				<img alt="mapbox" th:src="${'https://api.mapbox.com/v4/indooratlas.k4e5o551/pin-l-circle+000(' + location.coordinate.lon + ',' + location.coordinate.lat + ')/' + location.coordinate.lon + ',' + location.coordinate.lat + ',16/500x300.png?access_token=pk.eyJ1IjoibGFwcGhhbSIsImEiOiJjamEwdzh2aGsxemx3MndsN3ZlOWIzeXEwIn0.r6WxJPzuAJyk8o43fW01eg'}" />
+			</p>
+			<div class="location-detail-feature" th:if="${location.desc != null and location.desc != ''}">
+				<div class="location-detail-feature-name">
+					<span>About location</span>
+				</div>
+				<div class="location-detail-feature-text">
+					<p th:text="${location.desc}"></p>
+				</div>
+			</div>
+			<div class="text-left" style="float:left">
+				<button class="btn btn-default btn-rounded btn-submit text-primary" th:onclick="'window.location.replace(\'' + ${#strings.replace(locations_edit_url, '{0}', location.idRef)} + '\')'">Edit details</button>
+			</div>
+			<div class="text-right">
+				<button class="btn btn-default btn-rounded btn-submit text-danger" id="deleteLocationBtnId">Delete location</button>
+			</div>
+		</div>
+	</div>
+	
+	<div id="mapFlowMdlId" class="modal fade" role="dialog">
+		<div class="modal-dialog modal-lg static-model">
+			<div class="modal-content">
+				<div class="modal-body col-md-12">
+					<h2 class="static-model-header">Congratulations!</h2>
+					<p class="static-model-subheader">Now it's time to start mapping your location with the IndoorAtlas MapCreator 2.0 application.</p>
+					<div th:replace="fragments/fragments :: map-flow"></div>
+				</div>
+				
+				<div class="modal-footer">
+					<button type="button" class="btn btn-primary btn-rounded" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div id="deleteLocationMdlId" class="modal fade" role="dialog">
+		<div class="modal-dialog modal-lg static-model">
+			<div class="modal-content">
+				<div th:replace="fragments/fragments :: form_error_2"></div>
+				<div th:replace="fragments/fragments :: form_success_2"></div>
+				<div th:replace="fragments/fragments :: loader"></div>
+				<div class="modal-body col-md-12">
+					<h2 class="action-model-header">Delete location</h2>
+					<p class="action-model-confirm">Are you sure you want to permanently delete <span th:text="${location.name}"></span>? This action cannot be reverted.</p>
+				</div>
+				<div class="text-right action-model-actions">
+					<button class="btn btn-primary btn-rounded" data-dismiss="modal">Cancel</button>
+					<button class="btn btn-primary btn-rounded" th:onclick="'deleteLocation(\'' + ${location.idRef} + '\')'">Delete location</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div id="deleteFloorMdlId" class="modal fade" role="dialog">
+		<div class="modal-dialog modal-lg static-model">
+			<div class="modal-content">
+				<div th:replace="fragments/fragments :: form_error_2"></div>
+				<div th:replace="fragments/fragments :: form_success_2"></div>
+				<div th:replace="fragments/fragments :: loader"></div>
+				<div class="modal-body col-md-12">
+					<h2 class="action-model-header">Delete floor plan</h2>
+					<p class="action-model-confirm">Are you sure you want to permanently delete <span id="floorName"></span>? This action cannot be reverted.</p>
+				</div>
+				<input type="hidden" id="locationId" th:value="${location.idRef}"/>
+				<input type="hidden" id="floorId" />
+				<div class="text-right action-model-actions">
+					<button class="btn btn-primary btn-rounded" data-dismiss="modal">Cancel</button>
+					<button class="btn btn-primary btn-rounded" id="confirmDeleteFloor">Delete floor plan</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>

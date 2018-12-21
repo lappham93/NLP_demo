@@ -1,0 +1,108 @@
+package com.mit.controllers;
+
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.mit.atlas.repositories.AtlasProfileRepo;
+import com.mit.atlas.repositories.AtlasUserRepo;
+import com.mit.bodies.AtlasNewPassword;
+import com.mit.bodies.AtlasProfileUpdate;
+import com.mit.define.ApiError;
+import com.mit.errcode.UserErrCode;
+import com.mit.http.ApiResponse;
+import com.mit.responses.AtlasProfileResponse;
+import com.mit.services.AtlasUserService;
+import com.mit.session.entities.UserSession;
+import com.mit.utils.ControllerUtils;
+
+@RestController
+@RequestMapping(value = "/profile")
+public class ProfileController {
+	public static final Logger logger = LoggerFactory.getLogger(ProfileController.class);
+
+	@Autowired
+	AtlasProfileRepo profileRepo;
+	@Autowired
+	AtlasUserRepo userRepo;
+	@Autowired
+	AtlasUserService userService;
+
+	@RequestMapping(value = "", method = RequestMethod.GET)
+	@ModelAttribute
+	public ModelAndView renderProfileEdit(HttpServletRequest req, Model model) {
+		UserSession userSession = (UserSession) req.getAttribute("session");
+		ModelAndView rs = ControllerUtils.initPage("profile", "Dashboard", null, "isProfileTab", "isProfileNav");
+		rs.addObject("profile", userService.getProfile(userSession.getUserId()));
+		return rs;
+	}
+
+	@RequestMapping(value = "", method = RequestMethod.PUT)
+	public ApiResponse<AtlasProfileResponse> editProfile(HttpServletRequest req, Model model,
+			@RequestBody AtlasProfileUpdate body) {
+		try {
+			UserSession userSesion = (UserSession) req.getAttribute("session");
+			body.setUserId(userSesion.getUserId());
+			Map<String, Object> updateMap = userService.updateProfile(body);
+			int err = (int) updateMap.get("err");
+			if (err == UserErrCode.SUCCESS) {
+				AtlasProfileResponse profile = (AtlasProfileResponse) updateMap.get("profile");
+				return new ApiResponse<>(profile);
+			}
+			if (err == UserErrCode.MISSING_PARAMS) {
+				return new ApiResponse<>(ApiError.MISSING_PARAM);
+			}
+			if (err == UserErrCode.EMAIL_INVALID) {
+				return new ApiResponse<>(ApiError.PARAMS_INVALID);
+			}
+			if (err == UserErrCode.DUPLICATE_USERNAME) {
+				return new ApiResponse<>(ApiError.USERNAME_EXIST);
+			}
+		} catch (Exception e) {
+			logger.info("Exception: ", e);
+		}
+		return new ApiResponse<>(ApiError.SERVER_ERROR);
+	}
+	
+	@RequestMapping(value = "/password", method = RequestMethod.GET)
+	@ModelAttribute
+	public ModelAndView renderChangePassword(HttpServletRequest req, Model model) {
+		ModelAndView rs = ControllerUtils.initPage("profile_password", "Dashboard", null, "isProfileTab", "isPasswordNav");
+		return rs;
+	}
+
+	
+	@RequestMapping(value = "/password", method = RequestMethod.PUT)
+	public ApiResponse<AtlasProfileResponse> changePassword(HttpServletRequest req, Model model,
+			@RequestBody AtlasNewPassword body) {
+		try {
+			UserSession userSesion = (UserSession) req.getAttribute("session");
+			body.setUserId(userSesion.getUserId());
+			Map<String, Object> updateMap = userService.changePassword(body);
+			int err = (int) updateMap.get("err");
+			if (err == UserErrCode.SUCCESS) {
+				return new ApiResponse<>();
+			}
+			if (err == UserErrCode.ERR_PASSWORD) {
+				return new ApiResponse<>(ApiError.OLD_PASSWORD_NOT_MATCH);
+			}
+			if (err == UserErrCode.CONFIRM_NEW_PASSWORD_NOT_MATCH) {
+				return new ApiResponse<>(ApiError.CONFIRM_NEW_PASSWORD_NOT_MATCH);
+			}
+		} catch (Exception e) {
+			logger.info("Exception: ", e);
+		}
+		return new ApiResponse<>(ApiError.SERVER_ERROR);
+	}
+}

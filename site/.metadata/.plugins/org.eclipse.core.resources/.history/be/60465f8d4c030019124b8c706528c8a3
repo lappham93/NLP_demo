@@ -1,0 +1,34 @@
+package com.mit.hashtag.services;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.mit.asset.entities.HashTag;
+import com.mit.suggest.entities.ElasticSuggester;
+import com.mit.suggest.repositories.ElasticSuggesterRepo;
+
+@Service
+public class HashTagService {
+	@Autowired
+	ElasticSuggesterRepo elasticSuggesterRepo;
+	
+	public void updateHashTagSuggest(HashTag hashTag) {
+		if (hashTag.getHashTags() != null) {
+			List<Object> suggests = new LinkedList<>();
+			for (int idx = 0; idx < hashTag.getHashTags().size(); idx ++) {
+				ElasticSuggester suggest = new ElasticSuggester(hashTag, idx);
+				suggests.add(suggest);
+			}
+			elasticSuggesterRepo.saveBatch(suggests);
+		}
+	}
+	
+	public void deleteHashTagSuggest(HashTag hashTag, int numTag) {
+		for (int idx = 0; idx < numTag; idx++) {
+			elasticSuggesterRepo.delete(ElasticSuggester.genTagId(hashTag.getObjectType(), hashTag.getId(), idx));
+		}
+	}
+}	

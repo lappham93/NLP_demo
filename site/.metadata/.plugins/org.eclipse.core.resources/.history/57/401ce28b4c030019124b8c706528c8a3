@@ -1,0 +1,109 @@
+package com.mit.social.bodies;
+
+import java.util.List;
+
+import com.mit.social.entities.Feed;
+import com.mit.social.entities.LinkFeed;
+import com.mit.social.entities.MessageFeed;
+import com.mit.social.entities.PhotoFeed;
+import com.mit.social.entities.StickerFeed;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel
+public class FeedBody {
+	private long userId;
+	private String feedMessage;
+	private long feedLink;
+	private String feedSticker;
+	private List<Long> feedPhotos;
+	private long eventId;
+
+	public Feed toFeed() {
+		Feed feed = null;
+		if (feedLink != 0) {
+			feed = new LinkFeed();
+			((LinkFeed) feed).setLinkId(feedLink);
+		} else if (feedSticker != null && !feedSticker.isEmpty()) {
+			feed = new StickerFeed();
+			((StickerFeed) feed).setSticker(feedSticker);
+		} else if (feedPhotos != null && !feedPhotos.isEmpty()) {
+			feed = new PhotoFeed();
+			((PhotoFeed) feed).setPhotos(feedPhotos);
+			feed.setSubFeed(feedPhotos.size() > 1);
+		} else {
+			feed = new MessageFeed();
+		}
+		if (feedMessage != null) {
+			feed.setMessage(feedMessage);
+		}
+		feed.setUserId(userId);
+		feed.setEventId(eventId);
+		feed.setStatus(1);
+
+		return feed;
+	}
+
+	public void toFeed(Feed feed) {
+		if (feed instanceof LinkFeed) {
+			((LinkFeed) feed).setLinkId(feedLink);
+		} else if (feed instanceof StickerFeed) {
+			((StickerFeed) feed).setSticker(feedSticker);
+		} else if (feed instanceof PhotoFeed) {
+			((PhotoFeed) feed).setPhotos(feedPhotos);
+			feed.setSubFeed(feedPhotos.size() > 1);
+		}
+		feed.setMessage(feedMessage);
+	}
+
+	@ApiModelProperty(required = false, hidden = true)
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	public String getFeedMessage() {
+		return feedMessage;
+	}
+
+	public void setFeedMessage(String feedMessage) {
+		this.feedMessage = feedMessage;
+	}
+
+	public long getFeedLink() {
+		return feedLink;
+	}
+
+	public void setFeedLink(long feedLink) {
+		this.feedLink = feedLink;
+	}
+
+	public String getFeedSticker() {
+		return feedSticker;
+	}
+
+	public void setFeedSticker(String feedSticker) {
+		this.feedSticker = feedSticker;
+	}
+
+	public List<Long> getFeedPhotos() {
+		return feedPhotos;
+	}
+
+	public void setFeedPhotos(List<Long> feedPhotos) {
+		this.feedPhotos = feedPhotos;
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+}

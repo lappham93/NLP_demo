@@ -1,0 +1,30 @@
+$(function(){
+	$('#deleteLocationBtnId').on('click', function(){
+		showDeleteLocation();
+	});
+	
+	$('#locationSltId').on('change', function() {
+		App.redirect(App.uris.locationItem + '/' + $(this).val());
+	});
+});
+
+function showMoreInfo() {
+	$('#mapFlowMdlId').modal({backdrop: 'static', keyboard: false, show: true});
+}
+
+function hideMoreInfo() {
+	$('#mapFlowMdlId').modal({backdrop: 'static', keyboard: false, show: false});
+}
+
+function showDeleteLocation() {
+	$('#deleteLocationMdlId').modal({backdrop: 'static', keyboard: false, show: true});
+}
+
+
+function deleteLocation(locationId) {
+	var url = App.getFullUri(App.uris.locationDelete.replace('{0}', locationId));
+	App.ajaxRequest('DELETE', url, null, function(resp) {
+		var successUrl = resp.code >= 0 ? App.uris.location: "";
+		App.callbackAjaxRequest2($('#deleteLocationMdlId'), resp, null, successUrl, "", "");
+	})
+}

@@ -1,0 +1,7 @@
+package com.mit.stat.entities;
+
+/**
+ * Created by Lap Pham on 4/19/17.
+ */
+public class AppStat extends RegionTimelineStat<AppStatTotal> {
+}

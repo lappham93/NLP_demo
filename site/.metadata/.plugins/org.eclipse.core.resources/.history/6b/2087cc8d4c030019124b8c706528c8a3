@@ -1,0 +1,9 @@
+package com.mit.atlas.entities;
+
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.mit.user.entities.Profile;
+
+@Document(collection = "atlas_profile")
+public class AtlasProfile extends Profile {
+}

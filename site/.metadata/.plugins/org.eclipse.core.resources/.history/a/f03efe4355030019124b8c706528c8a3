@@ -1,0 +1,72 @@
+package com.mit.responses;
+
+import java.util.List;
+
+import com.mit.atlas.entities.AtlasApp;
+
+public class AtlasAppResponse {
+	private long id;
+	private String idRef;
+	private String name;
+	private String desc;
+	private List<AtlasAPIKeyResponse> apiKeys;
+	private long createdDate;
+
+	public AtlasAppResponse(AtlasApp app, List<AtlasAPIKeyResponse> apiKeys) {
+		this.id = app.getId();
+		this.idRef = app.getIdRef();
+		this.apiKeys = apiKeys;
+		this.name = app.getName();
+		this.desc = app.getDesc();
+		this.createdDate = app.getCreatedDate().getTime();
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public List<AtlasAPIKeyResponse> getApiKeys() {
+		return apiKeys;
+	}
+
+	public void setApiKeys(List<AtlasAPIKeyResponse> apiKeys) {
+		this.apiKeys = apiKeys;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDesc() {
+		return desc;
+	}
+
+	public void setDesc(String desc) {
+		this.desc = desc;
+	}
+
+	public long getCreatedDate() {
+		return createdDate;
+	}
+
+	public void setCreatedDate(long createdDate) {
+		this.createdDate = createdDate;
+	}
+
+	public String getIdRef() {
+		return idRef;
+	}
+
+	public void setIdRef(String idRef) {
+		this.idRef = idRef;
+	}
+
+}

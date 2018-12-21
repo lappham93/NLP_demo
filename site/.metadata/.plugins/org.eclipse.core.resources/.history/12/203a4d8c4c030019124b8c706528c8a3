@@ -1,0 +1,169 @@
+package com.mit.react.repositories;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.react.entities.UserStat;
+
+@Repository
+public class UserStatRepo {
+	@Autowired
+	MongoOperations mongoOps;
+
+	public UserStat getByUserId(long userId, boolean createIfNull) {
+		UserStat us = mongoOps.findOne(new Query().addCriteria(Criteria.where("userId").is(userId)), UserStat.class);
+		if (createIfNull && us == null) {
+			us = new UserStat();
+			us.setUserId(userId);
+		}
+		return us;
+	}
+	
+	public List<UserStat> getListByIds(List<Long> userIds) {
+		return mongoOps.find(new Query(Criteria.where("userId").in(userIds)), UserStat.class);
+	}
+	
+	public Map<Long, UserStat> getMapByIds(List<Long> ids) {
+		List<UserStat> entities = getListByIds(ids);
+		
+		Map<Long, UserStat> entityMap = new HashMap<>();
+		for (UserStat entity: entities) {
+			entityMap.put(entity.getUserId(), entity);
+		}
+
+		return entityMap;
+	}
+	
+	public List<UserStat> getMatchingUserIdList(List<Long> eventIds) {
+		Criteria criteria = new Criteria().orOperator(Criteria.where("eventIds").in(eventIds), Criteria.where("goingIds").in(eventIds)); 
+		return mongoOps.find(new Query(criteria), UserStat.class);
+	}
+	
+	public void addToWishList(long userId, long statId, int type) {
+		String field = "";
+		if (type == ObjectType.EVENT.getValue()) {
+			field = "eventIds";
+		} else if (type == ObjectType.BOOTH.getValue()) {
+			field = "boothIds";
+		} else if (type == ObjectType.PRODUCT.getValue()) {
+			field = "productIds";
+		} else if (type == ObjectType.TALK.getValue()) {
+			field = "talkIds";
+		}
+		if (!StringUtils.isEmpty(field)) {
+			addStat(userId, statId, field);
+		}
+	}
+	
+	public void removeFromWishList(long userId, long statId, int type) {
+		String field = "";
+		if (type == ObjectType.EVENT.getValue()) {
+			field = "eventIds";
+		} else if (type == ObjectType.BOOTH.getValue()) {
+			field = "boothIds";
+		} else if (type == ObjectType.PRODUCT.getValue()) {
+			field = "productIds";
+		} else if (type == ObjectType.TALK.getValue()) {
+			field = "talkIds";
+		}
+		if (!StringUtils.isEmpty(field)) {
+			removeStat(userId, statId, field);
+		}
+	}
+	
+	public void pullAllReact(long deletedUserId) {
+		Update update = new Update().pull("connectUserIds", deletedUserId).pull("requesteds", deletedUserId);
+    	mongoOps.updateMulti(new Query(), update, UserStat.class);
+	}
+	
+	public void pushRequest(long userId, long requestUserId) {
+		addStat(userId, requestUserId, "requests");
+	}
+	
+	public void pullRequest(long userId, long requestUserId) {
+		removeStat(userId, requestUserId, "requests");
+	}
+	
+	public void pushRequested(long userId, long requestUserId) {
+		addStat(userId, requestUserId, "requesteds");
+	}
+	
+	public void pullRequested(long userId, long requestUserId) {
+		removeStat(userId, requestUserId, "requesteds");
+	}
+	
+	public void pushConnect(long userId, long connectedUserId) {
+		addStat(userId, connectedUserId, "connectUserIds");
+	}
+	
+	public void pullConnect(long userId, long connectedUserId) {
+		removeStat(userId, connectedUserId, "connectUserIds");
+	}
+	
+	public void pushGoing(long userId, long eventId) {
+		addStat(userId, eventId, "goingIds");
+	}
+	
+	public void pullGoing(long userId, long eventId) {
+		removeStat(userId, eventId, "goingIds");
+	}
+	
+	public void pushCheckedIn(long userId, long eventId) {
+		addStat(userId, eventId, "checkedInIds");
+	}
+	
+	public void setEventCategory(long userId, List<Long> categoryIds) {
+		setStat(userId, list2ObjectArray(categoryIds), "eventCategoryIds");
+	}
+	
+	public void setFilter(long userId, List<Long> categoryIds, double distance) {
+		Criteria criteria = Criteria.where("userId").is(userId);
+    	Update update = new Update().set("eventDistanceFilter", distance)
+    			.set("eventCategoryFilter", list2ObjectArray(categoryIds));
+    	mongoOps.upsert(new Query(criteria), update, UserStat.class);
+	}
+	
+	public void deleteByUser(long userId) {
+		Query query = new Query(Criteria.where("userId").is(userId));
+		mongoOps.remove(query, UserStat.class);
+	}
+	
+	public void save(UserStat userStat) {
+		mongoOps.save(userStat);
+	}
+	
+	private void addStat(long userId, long statId, String field) {
+		Criteria criteria = Criteria.where("userId").is(userId);
+    	Update update = new Update().addToSet(field, statId);
+    	mongoOps.upsert(new Query(criteria), update, UserStat.class);
+    }
+    
+    private void removeStat(long userId, long statId, String field) {
+    	Criteria criteria = Criteria.where("userId").is(userId);
+    	Update update = new Update().pull(field, statId);
+    	mongoOps.updateFirst(new Query(criteria), update, UserStat.class);
+    }
+    
+    private void setStat(long userId, Object[] statIds, String field) {
+		Criteria criteria = Criteria.where("userId").is(userId);
+    	Update update = new Update().set(field, statIds);
+    	mongoOps.upsert(new Query(criteria), update, UserStat.class);
+    }
+    
+    private Object[] list2ObjectArray(List<Long> statIds) {
+    	if (statIds == null) {
+    		return null;
+    	}
+    	return statIds.toArray();
+    }
+}

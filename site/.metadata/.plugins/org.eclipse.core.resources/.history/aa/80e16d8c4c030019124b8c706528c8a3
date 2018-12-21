@@ -1,0 +1,40 @@
+package com.mit.react.bodies;
+
+import com.mit.common.entities.ObjectRef;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel
+public class ViewBody {
+	private long userId;
+	private ObjectRef objectRef;
+	private long photoId;
+
+	@ApiModelProperty(hidden = true)
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	@ApiModelProperty(required = true, value = "type: FEED(2)")
+	public ObjectRef getObjectRef() {
+		return objectRef;
+	}
+
+	public void setObjectRef(ObjectRef objectRef) {
+		this.objectRef = objectRef;
+	}
+
+	public long getPhotoId() {
+		return photoId;
+	}
+
+	public void setPhotoId(long photoId) {
+		this.photoId = photoId;
+	}
+
+}

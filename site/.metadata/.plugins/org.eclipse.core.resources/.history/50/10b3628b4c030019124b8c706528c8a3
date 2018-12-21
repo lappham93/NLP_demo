@@ -1,0 +1,68 @@
+package com.mit.suggest.responses;
+
+import java.util.List;
+
+import com.mit.event.responses.EventShortResponse;
+import com.mit.message.responses.MessageResponse;
+import com.mit.navigation.responses.BoothProductShortResponse;
+import com.mit.navigation.responses.BoothShortResponse;
+import com.mit.navigation.responses.TalkResponse;
+import com.mit.user.responses.ProfileShortResponse;
+
+public class SearchResponse {
+	List<EventShortResponse> events;
+	List<BoothShortResponse> booths;
+	List<BoothProductShortResponse> products;
+	List<ProfileShortResponse> users;
+	List<MessageResponse> messages;
+	List<TalkResponse> keyNotes;
+
+	public List<EventShortResponse> getEvents() {
+		return events;
+	}
+
+	public void setEvents(List<EventShortResponse> events) {
+		this.events = events;
+	}
+
+	public List<BoothShortResponse> getBooths() {
+		return booths;
+	}
+
+	public void setBooths(List<BoothShortResponse> booths) {
+		this.booths = booths;
+	}
+
+	public List<BoothProductShortResponse> getProducts() {
+		return products;
+	}
+
+	public void setProducts(List<BoothProductShortResponse> products) {
+		this.products = products;
+	}
+
+	public List<ProfileShortResponse> getUsers() {
+		return users;
+	}
+
+	public void setUsers(List<ProfileShortResponse> users) {
+		this.users = users;
+	}
+
+	public List<MessageResponse> getMessages() {
+		return messages;
+	}
+
+	public void setMessages(List<MessageResponse> messages) {
+		this.messages = messages;
+	}
+
+	public List<TalkResponse> getKeyNotes() {
+		return keyNotes;
+	}
+
+	public void setKeyNotes(List<TalkResponse> keyNotes) {
+		this.keyNotes = keyNotes;
+	}
+
+}

@@ -1,0 +1,7 @@
+package com.mit.ai.bodies;
+
+public class EvaluateBody {
+	private String comment;
+	private int predict;
+	private int evaluate;
+}

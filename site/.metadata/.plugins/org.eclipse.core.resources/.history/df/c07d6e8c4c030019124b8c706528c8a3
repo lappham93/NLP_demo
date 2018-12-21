@@ -1,0 +1,85 @@
+package com.mit.react.bodies;
+
+import com.mit.common.entities.ObjectRef;
+import com.mit.react.entities.Comment;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel
+public class CommentBody {
+	private long userId;
+	private ObjectRef objectRef;
+	private long feedPhotoId;
+	private String text;
+	private String sticker;
+	private long photoId;
+
+	public Comment toComment() {
+		Comment comment = new Comment();
+		comment.setUserId(userId);
+		comment.setObjectRef(objectRef);
+		comment.setStatus(1);
+		toComment(comment);
+		return comment;
+	}
+
+	public void toComment(Comment comment) {
+		comment.setText(text);
+		comment.setSticker(sticker);
+		comment.setPhotoCmtId(photoId);
+	}
+
+	@ApiModelProperty(required = false)
+	public long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(long userId) {
+		this.userId = userId;
+	}
+
+	@ApiModelProperty(required = true, value = "type: FEED(2), COMMENT(4)")
+	public ObjectRef getObjectRef() {
+		return objectRef;
+	}
+
+	public void setObjectRef(ObjectRef objectRef) {
+		this.objectRef = objectRef;
+	}
+
+	@ApiModelProperty(required = false)
+	public String getText() {
+		return text;
+	}
+
+	public void setText(String text) {
+		this.text = text;
+	}
+
+	@ApiModelProperty(required = false)
+	public String getSticker() {
+		return sticker;
+	}
+
+	public void setSticker(String sticker) {
+		this.sticker = sticker;
+	}
+
+	public long getFeedPhotoId() {
+		return feedPhotoId;
+	}
+
+	public void setFeedPhotoId(long feedPhotoId) {
+		this.feedPhotoId = feedPhotoId;
+	}
+
+	public long getPhotoId() {
+		return photoId;
+	}
+
+	public void setPhotoId(long photoId) {
+		this.photoId = photoId;
+	}
+
+}

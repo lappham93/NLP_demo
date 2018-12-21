@@ -1,0 +1,169 @@
+package com.mit.suggest.services;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.lang.math.NumberUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import com.mit.common.enums.ObjectType;
+import com.mit.event.enums.EventFilter;
+import com.mit.event.responses.EventShortResponse;
+import com.mit.event.services.EventService;
+import com.mit.navigation.entities.Booth;
+import com.mit.navigation.entities.Floor;
+import com.mit.navigation.entities.IndoorLocation;
+import com.mit.navigation.entities.Talk;
+import com.mit.navigation.enums.ProductSortOption;
+import com.mit.navigation.enums.SortOption;
+import com.mit.navigation.repositories.FloorRepo;
+import com.mit.navigation.repositories.IndoorLocationRepo;
+import com.mit.navigation.responses.BoothProductShortResponse;
+import com.mit.navigation.responses.BoothShortResponse;
+import com.mit.navigation.responses.TalkResponse;
+import com.mit.navigation.services.NavigationService;
+import com.mit.react.services.ReactService;
+import com.mit.suggest.entities.ElasticSuggester;
+import com.mit.suggest.repositories.ElasticSuggesterRepo;
+import com.mit.suggest.responses.SearchInMapResponse;
+import com.mit.suggest.responses.SearchResponse;
+import com.mit.suggest.responses.SuggestResponse;
+import com.mit.user.responses.ProfileShortResponse;
+import com.mit.utils.LinkBuilder;
+
+/**
+ * Created by Lap Pham on 6/19/17.
+ */
+
+@Service
+public class SuggestService {
+
+    @Autowired
+    private ElasticSuggesterRepo elasticSuggesterRepo;
+    @Autowired
+    private EventService eventService;
+    @Autowired
+    private NavigationService navigationService;
+    @Autowired
+    private ReactService reactService;
+    @Autowired
+    private IndoorLocationRepo indoorLocationRepo;
+    @Autowired
+    private FloorRepo floorRepo;
+    
+    public List<SuggestResponse> search(String q, int objectType, long eventId, long boothId, String country, int size, boolean inMap) {
+    	List<Integer> objectTypes = objectType > 0 ? Arrays.asList(objectType) : null;
+        Page<ElasticSuggester> suggesterPage = inMap ? elasticSuggesterRepo.searchInMap(q, eventId, 0, size) :
+        	elasticSuggesterRepo.search(q, objectTypes, eventId, boothId, country, 0, size);
+        List<ElasticSuggester> suggesters = suggesterPage.getContent();
+        List<SuggestResponse> suggestResponses = new ArrayList<>();
+        Set<String> unique = new HashSet<>();
+        for (ElasticSuggester suggester: suggesters) {
+        	if (!unique.contains(suggester.getKeyword())) {
+	            SuggestResponse suggestResponse = new SuggestResponse(suggester);
+	            suggestResponses.add(suggestResponse);
+	            unique.add(suggester.getKeyword());
+        	}
+        }
+
+
+        return suggestResponses;
+    }
+    
+    public SearchResponse search(String q, long eventId, int count, long userId) {
+    	SearchResponse searchResponse = new SearchResponse();
+    	Map<String, Object> eventMap = eventService.getListEvent(null, null, 0, "", q, 0, 0.0, 0.0, 0, count, EventFilter.DEFAULT.getValue(), userId, SortOption.AZ.getValue(), 0, 0);
+    	searchResponse.setEvents((List<EventShortResponse>)eventMap.get("events"));
+    	Map<String, Object> boothMap = navigationService.getBoothList(eventId, 0, 0, 0, 0, q, false, 0, count, "", SortOption.DEFAULT, userId);
+    	searchResponse.setBooths((List<BoothShortResponse>)boothMap.get("booths"));
+    	Map<String, Object> productMap = navigationService.getProductList(0, eventId, q, false, 0, count, "", ProductSortOption.DEFAULT, userId);
+    	searchResponse.setProducts((List<BoothProductShortResponse>)productMap.get("products"));
+    	Map<String, Object> userMap = reactService.searchFriend(userId, q, "", "", "", 0, count);
+    	searchResponse.setUsers((List<ProfileShortResponse>)userMap.get("users"));
+    	if (eventId > 0) {
+	    	Map<String, Object> talkMap = navigationService.getTalkList(q, eventId, 0, count);
+	    	searchResponse.setKeyNotes((List<TalkResponse>) talkMap.get("talks"));
+    	}
+    	return searchResponse;
+    }
+    
+    public List<SearchInMapResponse> searchInMap(String q, long eventId, int page, int size, long userId) {
+    	Page<ElasticSuggester> suggesterPage = elasticSuggesterRepo.searchInMap(q, eventId, page, size);
+        List<ElasticSuggester> suggesters = suggesterPage.getContent();
+        if (CollectionUtils.isEmpty(suggesters)) {
+        	return null;
+        }
+        List<SearchInMapResponse> rs = new LinkedList<>();
+        List<Long> ids = new LinkedList<>();
+        List<Long> allIds = new LinkedList<>();
+        List<IndoorLocation> indoors = new LinkedList<>();
+        for (ElasticSuggester suggest: suggesters) {
+        	long id = NumberUtils.toLong(ElasticSuggester.parseIdRef(suggest.getId()));
+        	if (suggest.getObjectRef().getType() != ObjectType.ELEVATOR.getValue() && suggest.getObjectRef().getType() != ObjectType.ESCALATOR.getValue()) {
+        		ids.add(id);
+        	}
+        	allIds.add(id);
+        }
+        Map<Long, IndoorLocation> indoorMap = indoorLocationRepo.getMapByIds(ids);
+    	for (long id: ids) {
+    		if (indoorMap.containsKey(id)) {
+    			indoors.add(indoorMap.get(id));
+    		}
+    	}
+        for (int idx = 0; idx < suggesters.size(); idx ++) {
+        	ElasticSuggester suggest = suggesters.get(idx);
+        	List<IndoorLocation> lst = null;
+        	if (suggest.getObjectRef().getType() == ObjectType.ELEVATOR.getValue()) {
+        		lst = indoorLocationRepo.getListLocationOfElevator(allIds.get(idx));
+        	} else if (suggest.getObjectRef().getType() == ObjectType.ESCALATOR.getValue()) {
+        		lst = indoorLocationRepo.getListLocationOfEscalator(allIds.get(idx));
+        	}
+        	if (lst != null) {
+        		if (idx < indoors.size()) {
+        			indoors.addAll(idx, lst);
+        		} else {
+        			indoors.addAll(lst);
+        		}
+        	}
+        }
+        Map<Long, Floor> floorMap = new HashMap<>();
+        for (IndoorLocation indoor: indoors) {
+        	SearchInMapResponse item = new SearchInMapResponse();
+        	item.setName(indoor.getName());
+        	item.setEventId(indoor.getEventId());
+        	item.setFloorId(indoor.getFloorId());
+        	item.setId(indoor.getId());
+        	item.setType(indoor.getType());
+        	if (indoor.isLocated()) {
+	        	item.setX(indoor.getPoint().getX());
+	        	item.setY(indoor.getPoint().getY());
+        	}
+        	Floor floor = floorMap.get(indoor.getFloorId());
+        	if (floor == null) {
+        		floor = floorRepo.getById(indoor.getFloorId());
+        		floorMap.put(floor.getId(), floor);
+        	}
+        	item.setDesc(floor.buildName());
+        	if (indoor instanceof Booth) {
+        		Booth booth = (Booth) indoor;
+        		item.setPhoto(LinkBuilder.buildPhotoLink(booth.getPhoto(), ObjectType.BOOTH.getLowerName()));
+        	} else if (indoor instanceof Talk) {
+        		Talk talk = (Talk) indoor;
+        		item.setPhoto(LinkBuilder.buildPhotoLink(talk.getPhoto(), ObjectType.USER.getLowerName()));
+        	}
+        	
+        	rs.add(item);
+        }
+    	return rs;
+    }
+
+}

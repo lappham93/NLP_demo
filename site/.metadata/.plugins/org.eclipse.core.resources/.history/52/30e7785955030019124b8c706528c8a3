@@ -1,0 +1,34 @@
+package com.mit.controllers;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.mit.utils.ControllerUtils;
+
+@RestController
+@RequestMapping(value = "")
+public class HomeController {
+	public static final Logger _logger = LoggerFactory.getLogger(HomeController.class);
+
+	@RequestMapping(value = { "/", "/home" }, method = RequestMethod.GET)
+	@ModelAttribute
+	public ModelAndView render(HttpServletRequest req, Model model,
+		@RequestParam(value = "location", required = false, defaultValue = "") String locationId,
+		@RequestParam(value = "floor", required = false, defaultValue = "") String floorId,
+		@RequestParam(value = "userId", required = false, defaultValue = "0") long userId) {
+		long eventId = 12, eventFloorId = 15;
+		
+		ModelAndView rs = ControllerUtils.initPage("home", "Dashboard", null, "isDashboardTab");
+		return rs;
+	}
+	
+}

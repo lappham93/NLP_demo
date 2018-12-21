@@ -1,0 +1,19 @@
+package com.mit.asset.services;
+
+public class SensorFileClient extends PhotoClient {
+
+	public static final String nameConfig = "saocoo_sensorfile";
+
+	private static SensorFileClient _instance;
+
+	public static SensorFileClient getInstance() {
+		if (_instance == null) {
+			_instance = new SensorFileClient();
+		}
+		return _instance;
+	}
+
+	public SensorFileClient() {
+		super(nameConfig);
+	}
+}

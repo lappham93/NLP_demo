@@ -1,0 +1,51 @@
+App.uris = {
+	'predict': '/ai/predict'
+}
+
+$(function(){
+	$('#comment-form').submit(function(){
+		if ($('#comment') != '') {
+		}
+		return false;
+	})
+})
+
+function predict(comment) {
+	data = JSON.stringify({
+		'comment': comment
+	});
+	$.ajax({
+    	  headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+    	  url: App.sitePrefix + App.uris['predict'],
+    	  method: 'POST',
+    	  dataType: 'json',
+    	  data: data,
+    	  success: function(response) {
+    		  processResult(response);
+    	  },
+    	  error: function(httpObj) {
+    		  alert('Oops! Application is not available now.');
+    	  }
+	});
+}
+
+function processResult(response) {
+	if (response.code < 0) {
+		alert(response.msg);
+		return;
+	}
+	$('.evaluate').show();
+	hideForm();
+	if (response.data && response.data.positive) {
+		$('.positive').show();
+		$('.negative').hide();
+	} else {
+		$('.positive').hide();
+		$('.negative').show();
+	}
+}
+
+function hideForm() {
+	$('.comment-form .comment-input').prop('disabled', 'disabled');
+	$('.comment-form .submit-btn').hide();
+}

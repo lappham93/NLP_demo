@@ -1,0 +1,60 @@
+package com.mit.responses;
+
+import com.mit.atlas.entities.AtlasAPIKey;
+
+public class AtlasAPIKeyResponse {
+	private long id;
+	private String name;
+	private String apiKey;
+	private boolean isActive;
+	private long createdDate;
+
+	public AtlasAPIKeyResponse(AtlasAPIKey key) {
+		this.id = key.getId();
+		this.name = key.getName();
+		this.apiKey = key.getApiKey();
+		this.createdDate = key.getCreatedDate().getTime();
+		this.isActive = key.isActive();
+	}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getApiKey() {
+		return apiKey;
+	}
+
+	public void setApiKey(String apiKey) {
+		this.apiKey = apiKey;
+	}
+
+	public long getCreatedDate() {
+		return createdDate;
+	}
+
+	public void setCreatedDate(long createdDate) {
+		this.createdDate = createdDate;
+	}
+
+	public boolean isActive() {
+		return isActive;
+	}
+
+	public void setActive(boolean isActive) {
+		this.isActive = isActive;
+	}
+
+}

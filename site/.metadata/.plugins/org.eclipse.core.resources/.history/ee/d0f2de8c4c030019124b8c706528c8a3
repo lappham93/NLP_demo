@@ -1,0 +1,141 @@
+package com.mit.navigation.responses;
+
+import com.mit.navigation.entities.MapLevel;
+
+public class MapLevelResponse {
+	private long id;
+	private long eventId;
+	private long floorId;
+	private int level;
+	private double tilePcW;
+	private double tilePcH;
+	private int tilePxW;
+	private int tilePxH;
+	private int mapPxW;
+	private int mapPxH;
+	private int status;
+	private long createTime;
+	private long updateTime;
+
+	public MapLevelResponse(MapLevel mapLevel) {
+			super();
+			this.id = mapLevel.getId();
+			this.eventId = mapLevel.getEventId();
+			this.floorId = mapLevel.getFloorId();
+			this.level = mapLevel.getLevel();
+			this.tilePcW = mapLevel.getTilePcW();
+			this.tilePcH = mapLevel.getTilePcH();
+			this.tilePxW = mapLevel.getTilePxW();
+			this.tilePxH = mapLevel.getTilePxH();
+			this.mapPxW = (int)(mapLevel.getTilePxW() / mapLevel.getTilePcW());
+			this.mapPxH = (int)(mapLevel.getTilePxH() / mapLevel.getTilePcH());
+			this.status = mapLevel.getStatus();
+			this.createTime = mapLevel.getCreatedDate().getTime();
+			this.updateTime = mapLevel.getUpdatedDate().getTime();
+		}
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public long getEventId() {
+		return eventId;
+	}
+
+	public void setEventId(long eventId) {
+		this.eventId = eventId;
+	}
+
+	public long getFloorId() {
+		return floorId;
+	}
+
+	public void setFloorId(long floorId) {
+		this.floorId = floorId;
+	}
+
+	public int getLevel() {
+		return level;
+	}
+
+	public void setLevel(int level) {
+		this.level = level;
+	}
+
+	public double getTilePcW() {
+		return tilePcW;
+	}
+
+	public void setTilePcW(double tilePcW) {
+		this.tilePcW = tilePcW;
+	}
+
+	public double getTilePcH() {
+		return tilePcH;
+	}
+
+	public void setTilePcH(double tilePcH) {
+		this.tilePcH = tilePcH;
+	}
+
+	public int getTilePxW() {
+		return tilePxW;
+	}
+
+	public void setTilePxW(int tilePxW) {
+		this.tilePxW = tilePxW;
+	}
+
+	public int getTilePxH() {
+		return tilePxH;
+	}
+
+	public void setTilePxH(int tilePxH) {
+		this.tilePxH = tilePxH;
+	}
+
+	public int getMapPxW() {
+		return mapPxW;
+	}
+
+	public void setMapPxW(int mapPxW) {
+		this.mapPxW = mapPxW;
+	}
+
+	public int getMapPxH() {
+		return mapPxH;
+	}
+
+	public void setMapPxH(int mapPxH) {
+		this.mapPxH = mapPxH;
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public void setStatus(int status) {
+		this.status = status;
+	}
+
+	public long getCreateTime() {
+		return createTime;
+	}
+
+	public void setCreateTime(long createTime) {
+		this.createTime = createTime;
+	}
+
+	public long getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(long updateTime) {
+		this.updateTime = updateTime;
+	}
+
+}
