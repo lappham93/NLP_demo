@@ -4,5 +4,5 @@ BASEDIR=$(dirname "$0")
 cd $BASEDIR/..
 git pull
 mvn -f common/pom.xml install
-mvn -f ep-models/pom.xml install
-mvn -f ep-site/pom.xml package -DskipTests
+mvn -f nlp-models/pom.xml install
+mvn -f nlp-site/pom.xml package -DskipTests
