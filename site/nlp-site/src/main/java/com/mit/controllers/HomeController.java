@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
 @RestController
-@RequestMapping(value = "home")
+@RequestMapping(value = {"", "/", "home"})
 public class HomeController {
 	public static final Logger _logger = LoggerFactory.getLogger(HomeController.class);
 
