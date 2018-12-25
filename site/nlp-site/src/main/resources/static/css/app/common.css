@@ -3,9 +3,6 @@ body {
 	background: #111;
 }
 
-.container {
-	margin-left: -40px;
-}
 .restaurant img{
 	width: 100%;
 }
@@ -36,6 +33,18 @@ body {
 
 .confirm a img:hover {
 	cursor: pointer; border: 2px solid #fff;
+}
+
+@media screen and (min-width: 800px)
+{
+	.container {
+		margin-left: -40px;
+	}
+	
+	.review {
+		position: fixed;
+		margin-left: 60%;
+	}	
 }
 
 
