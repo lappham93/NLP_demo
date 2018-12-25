@@ -56,7 +56,7 @@ def detectNegative(text, numGram=2):
     """
     negation = False
     delims = "?.,!:;"
-    negatives = ["not", "n't", "no"]
+    negatives = ["not", "n't", "no", "never", "rarely"]
     result = []
     words = text.split()
     ps = PorterStemmer()
