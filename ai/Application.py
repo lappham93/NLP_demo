@@ -45,7 +45,10 @@ def predict():
     with graph.as_default():
         # gen feature
         feature = fp.genFeature(comment, featureMethod)
+        negative = len(fp.detectNegative(comment))
         label = model.predict(feature)
+        if (negative > 0):
+            label = 1 - label
         print(label)
 
     # return response by json
